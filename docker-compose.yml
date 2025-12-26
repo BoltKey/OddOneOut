@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16 # CHANGED: Pinned to version 16 (Stable)
+    container_name: wordgame_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: WordGameDb
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata_clean:/var/lib/postgresql/data # CHANGED: New volume name
+
+volumes:
+  pgdata_clean: # CHANGED: Matches the name above
