@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization; // Add this
 
 namespace OddOneOut.Data; // Ensure this namespace matches your project name
 
@@ -21,6 +22,7 @@ public class WordCard
     public Guid Id { get; set; }
     public string Word { get; set; } = string.Empty;
     public string Category { get; set; } = string.Empty;
+    [JsonIgnore]
     public List<CardSet> CardSet { get; set; } = new();
 }
 

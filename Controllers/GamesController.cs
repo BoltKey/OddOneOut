@@ -29,9 +29,11 @@ public class GamesController : ControllerBase
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         // check if user has assigned set
         var cardSet = await _context.Users
-            .Where(u => u.Id == userIdString)
-            .Select(u => u.assignedCardSet)
-            .FirstOrDefaultAsync();
+        .Where(u => u.Id == userIdString)
+        .Include(u => u.assignedCardSet)       // 1. Load the Set
+            .ThenInclude(cs => cs.WordCards)   // 2. Load the Cards inside the Set
+        .Select(u => u.assignedCardSet)
+        .FirstOrDefaultAsync();
         if (cardSet == null)
         {
             cardSet = await _context.CardSet
@@ -55,21 +57,29 @@ public class GamesController : ControllerBase
                 Id = Guid.NewGuid(),
                 WordCards = randomWords
             };
+            _context.CardSet.Add(cardSet);
+            await _context.SaveChangesAsync();
         }
         if (cardSet == null)
         {
             _logger.LogWarning("no cardset found");
             return Unauthorized("No available CardSets found for the user.");
         }
-      /*await _context.SaveChangesAsync();
+      await _context.SaveChangesAsync();
         _context.Users
             .Where(u => u.Id == userIdString)
             .ToList()
-            .ForEach(u => u.assignedCardSet = cardSet);*/
+            .ForEach(u => u.assignedCardSet = cardSet);
 
         await _context.SaveChangesAsync();
+        var response = new CardSetResponseDto
+{
+            Id = cardSet.Id,
+            // Extract just the word strings, or a simple object if you need IDs too
+            Words = cardSet.WordCards.Select(w => w.Word).ToList()
+        };
 
-        return Ok(cardSet);
+        return Ok(response);
     }
     [HttpPost("createGame")]
     public async Task<IActionResult> CreateGame(CreateGameDto request)
@@ -129,4 +139,10 @@ public class CreateGameDto
 }
 public class StartCreatingGameDto
 {
+}
+
+public class CardSetResponseDto
+{
+    public Guid Id { get; set; }
+    public List<string> Words { get; set; } = new(); // Just a list of strings! Cleaner.
 }

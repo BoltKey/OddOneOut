@@ -2,6 +2,7 @@ using OddOneOut.Data; // <--- ADD THIS
 using Microsoft.EntityFrameworkCore; // <--- ADD THIS
 using Microsoft.AspNetCore.Identity;
 using Microsoft.OpenApi.Models;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,7 +11,13 @@ var builder = WebApplication.CreateBuilder(args);
 //builder.Services.AddOpenApi();
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // This prevents the "Cycle Detected" error
+        // It simply ignores the "parent" reference if it's already serializing the child
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    });
 builder.Services.AddEndpointsApiExplorer(); // (Might already be there)
 builder.Services.AddSwaggerGen(options =>
 {
@@ -83,30 +90,7 @@ app.MapIdentityApi<User>(); // <--- Exposes /register, /login, etc.
 app.UseHttpsRedirection();
 
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
 
 app.MapControllers();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
