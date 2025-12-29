@@ -12,18 +12,33 @@ using OddOneOut.Data;
 namespace OddOneOut.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251226184743_AddUsersCards")]
-    partial class AddUsersCards
+    [Migration("20251229101700_identity")]
+    partial class identity
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.0")
+                .HasAnnotation("ProductVersion", "10.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("GameWordCard", b =>
+                {
+                    b.Property<Guid>("GamesId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("WordCardsId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("GamesId", "WordCardsId");
+
+                    b.HasIndex("WordCardsId");
+
+                    b.ToTable("GameWordCard");
+                });
 
             modelBuilder.Entity("OddOneOut.Data.Game", b =>
                 {
@@ -47,6 +62,28 @@ namespace OddOneOut.Migrations
                     b.ToTable("Games");
                 });
 
+            modelBuilder.Entity("OddOneOut.Data.User", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("RegisteredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Users");
+                });
+
             modelBuilder.Entity("OddOneOut.Data.WordCard", b =>
                 {
                     b.Property<Guid>("Id")
@@ -57,30 +94,28 @@ namespace OddOneOut.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("GameId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("Word")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("GameId");
-
                     b.ToTable("WordCard");
                 });
 
-            modelBuilder.Entity("OddOneOut.Data.WordCard", b =>
+            modelBuilder.Entity("GameWordCard", b =>
                 {
                     b.HasOne("OddOneOut.Data.Game", null)
-                        .WithMany("WordCard")
-                        .HasForeignKey("GameId");
-                });
+                        .WithMany()
+                        .HasForeignKey("GamesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-            modelBuilder.Entity("OddOneOut.Data.Game", b =>
-                {
-                    b.Navigation("WordCard");
+                    b.HasOne("OddOneOut.Data.WordCard", null)
+                        .WithMany()
+                        .HasForeignKey("WordCardsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }
