@@ -47,6 +47,7 @@ public class GamesController : ControllerBase
                   gu.Game.Id == g.Id &&
                   gu.PlayerId == userIdString
               ))
+              .Where(g => g != user.CurrentGame)
               .OrderBy(c => Guid.NewGuid())
               .Include(g => g.CardSet)   // 2. Load the Cards inside the Set
                   .ThenInclude(cs => cs.WordCards) // 3. Load the WordCards inside the CardSet
@@ -115,7 +116,9 @@ public class GamesController : ControllerBase
             cardSet = await _context.CardSet
               .Where(cs => !_context.Games.Any(g =>
                   g.CardSet.Id == cs.Id &&           // Match the game to the card set
-                  g.ClueGivers.Contains(user) // Check if user is in that game
+                  g.ClueGivers.Contains(user) && // Check if user is in that game
+                  g.Guesses.Any(gu => gu.PlayerId == userIdString) && // Check if user has guessed in that game
+                  g != user.CurrentGame              // Exclude current game
               ))
               .OrderBy(c => Guid.NewGuid())
               .Include(cs => cs.WordCards)   // 2. Load the Cards inside the Set
@@ -157,6 +160,34 @@ public class GamesController : ControllerBase
         };
 
         return Ok(response);
+    }
+    [HttpPost("makeGuess"), Authorize]
+    public async Task<IActionResult> MakeGuess(MakeGuessDto request)
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var user = await _context.Users.Include(u => u.CurrentCard).FirstOrDefaultAsync(u => u.Id == userIdString);
+        if (user == null)
+        {
+            _logger.LogWarning("user not found");
+            return Unauthorized("User not found.");
+        }
+        var game = await _context.Games
+            .Include(g => g.OddOneOut)
+            .FirstOrDefaultAsync(g => g.Id == user.CurrentGameId);
+        if (game == null)
+        {
+            _logger.LogWarning("game not found");
+            return NotFound("Game not found.");
+        }
+        var currentCard = user.CurrentCard;
+        if (currentCard == null)
+        {
+            _logger.LogWarning("current card not found");
+            return NotFound("Current card not found for the user.");
+        }
+        var isInSet = currentCard.Id != game.OddOneOut.Id;
+        var isCorrect = isInSet == request.GuessIsInSet;
+        return Ok(isCorrect);
     }
     [HttpPost("createGame"), Authorize]
     public async Task<IActionResult> CreateGame(CreateGameDto request)
@@ -261,4 +292,9 @@ public class GameGuessResponseDto
     public Guid GameId { get; set; }
     public string CurrentCard { get; set; }
     public string CurrentClue { get; set; }
+}
+
+public class MakeGuessDto
+{
+    public bool GuessIsInSet { get; set; }
 }

@@ -60,6 +60,7 @@ public class Game
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public string Clue { get; set; } = string.Empty;
     public WordCard OddOneOut { get; set; } = new();
+    public List<Guess> Guesses { get; set; } = new();
 }
 public class Guess
 {
