@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OddOneOut.Data;
@@ -11,9 +12,11 @@ using OddOneOut.Data;
 namespace OddOneOut.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251229202816_guesses1")]
+    partial class guesses1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -39,17 +42,17 @@ namespace OddOneOut.Migrations
 
             modelBuilder.Entity("GameUser", b =>
                 {
-                    b.Property<string>("ClueGiversId")
+                    b.Property<string>("ClueGiverId")
                         .HasColumnType("text");
 
                     b.Property<Guid>("CreatedGamesId")
                         .HasColumnType("uuid");
 
-                    b.HasKey("ClueGiversId", "CreatedGamesId");
+                    b.HasKey("ClueGiverId", "CreatedGamesId");
 
                     b.HasIndex("CreatedGamesId");
 
-                    b.ToTable("GameClueGivers", (string)null);
+                    b.ToTable("GameUser");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -259,7 +262,7 @@ namespace OddOneOut.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Guesses");
+                    b.ToTable("Guess");
                 });
 
             modelBuilder.Entity("OddOneOut.Data.User", b =>
@@ -270,18 +273,9 @@ namespace OddOneOut.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("integer");
 
-                    b.Property<Guid?>("AssignedCardSetId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("text");
-
-                    b.Property<Guid?>("CurrentCardId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("CurrentGameId")
-                        .HasColumnType("uuid");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
@@ -323,13 +317,10 @@ namespace OddOneOut.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<Guid?>("assignedCardSetId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
-
-                    b.HasIndex("AssignedCardSetId");
-
-                    b.HasIndex("CurrentCardId");
-
-                    b.HasIndex("CurrentGameId");
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
@@ -337,6 +328,8 @@ namespace OddOneOut.Migrations
                     b.HasIndex("NormalizedUserName")
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex");
+
+                    b.HasIndex("assignedCardSetId");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
@@ -379,7 +372,7 @@ namespace OddOneOut.Migrations
                 {
                     b.HasOne("OddOneOut.Data.User", null)
                         .WithMany()
-                        .HasForeignKey("ClueGiversId")
+                        .HasForeignKey("ClueGiverId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -485,23 +478,11 @@ namespace OddOneOut.Migrations
 
             modelBuilder.Entity("OddOneOut.Data.User", b =>
                 {
-                    b.HasOne("OddOneOut.Data.CardSet", "AssignedCardSet")
+                    b.HasOne("OddOneOut.Data.CardSet", "assignedCardSet")
                         .WithMany()
-                        .HasForeignKey("AssignedCardSetId");
+                        .HasForeignKey("assignedCardSetId");
 
-                    b.HasOne("OddOneOut.Data.WordCard", "CurrentCard")
-                        .WithMany()
-                        .HasForeignKey("CurrentCardId");
-
-                    b.HasOne("OddOneOut.Data.Game", "CurrentGame")
-                        .WithMany()
-                        .HasForeignKey("CurrentGameId");
-
-                    b.Navigation("AssignedCardSet");
-
-                    b.Navigation("CurrentCard");
-
-                    b.Navigation("CurrentGame");
+                    b.Navigation("assignedCardSet");
                 });
 
             modelBuilder.Entity("OddOneOut.Data.CardSet", b =>

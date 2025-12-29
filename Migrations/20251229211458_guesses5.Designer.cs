@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OddOneOut.Data;
@@ -11,9 +12,11 @@ using OddOneOut.Data;
 namespace OddOneOut.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251229211458_guesses5")]
+    partial class guesses5
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -277,9 +280,6 @@ namespace OddOneOut.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("CurrentCardId")
-                        .HasColumnType("uuid");
-
                     b.Property<Guid?>("CurrentGameId")
                         .HasColumnType("uuid");
 
@@ -326,8 +326,6 @@ namespace OddOneOut.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AssignedCardSetId");
-
-                    b.HasIndex("CurrentCardId");
 
                     b.HasIndex("CurrentGameId");
 
@@ -489,17 +487,11 @@ namespace OddOneOut.Migrations
                         .WithMany()
                         .HasForeignKey("AssignedCardSetId");
 
-                    b.HasOne("OddOneOut.Data.WordCard", "CurrentCard")
-                        .WithMany()
-                        .HasForeignKey("CurrentCardId");
-
                     b.HasOne("OddOneOut.Data.Game", "CurrentGame")
                         .WithMany()
                         .HasForeignKey("CurrentGameId");
 
                     b.Navigation("AssignedCardSet");
-
-                    b.Navigation("CurrentCard");
 
                     b.Navigation("CurrentGame");
                 });
