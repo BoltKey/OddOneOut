@@ -62,7 +62,7 @@ public class GamesController : ControllerBase
 
         if (game == null)
         {
-            return UnprocessableEntity("No available Games found for the user.");
+            return BadRequest("No available Games found for the user.");
         }
         var currentCard = user.CurrentCard;
         if (user.CurrentCard == null)
@@ -288,17 +288,6 @@ public class GamesController : ControllerBase
         await _context.SaveChangesAsync(); // Saves to Postgres!
 
         return Ok(newGame);
-    }
-
-    // 2. GET: Load a game by ID
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetGame(Guid id)
-    {
-        var game = await _context.Games.FindAsync(id);
-
-        if (game == null) return NotFound();
-
-        return Ok(game);
     }
 }
 

@@ -37,7 +37,7 @@ public class StatsController : ControllerBase
 
         var totalGamesCreated = user.CreatedGames.Count;
         var totalGuessesMade = user.Guesses.Count;
-        var correctGuesses = user.Guesses.Count(g => g.Game.OddOneOut == g.SelectedCard);
+        var correctGuesses = user.Guesses.Count(g => g.Game?.OddOneOut == g.SelectedCard);
 
         var stats = new
         {
@@ -147,4 +147,43 @@ public class StatsController : ControllerBase
         TotalPages = totalPages
       });
     }
+    [HttpGet("me"), Authorize]
+    public async Task<ActionResult<UserProfileDto>> GetMe()
+    {
+        // 2. Get the User ID from the ClaimsPrincipal (the token)
+        // This doesn't hit the DB, it just reads the "sub" or "nameid" claim
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized();
+        }
+
+        // 3. Query the DB including necessary relationships
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user == null)
+        {
+            return NotFound("User profile not found.");
+        }
+
+        // 4. Map to DTO to avoid circular reference loops
+        var response = new UserProfileDto
+        {
+            Id = user.Id,
+            UserName = user.UserName,
+            Email = user.Email,
+        };
+
+        return Ok(response);
+    }
+}
+
+
+public class UserProfileDto
+{
+    public string Id { get; set; }
+    public string UserName { get; set; }
+    public string Email { get; set; }
 }

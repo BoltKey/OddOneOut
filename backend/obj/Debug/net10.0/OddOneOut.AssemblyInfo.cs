@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("OddOneOut")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+51fcdb0f2587d99375da82447a7358ec6006e9c6")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+20b9d59cd0029c5a1a38b3fc2a62244b0e25b848")]
 [assembly: System.Reflection.AssemblyProductAttribute("OddOneOut")]
 [assembly: System.Reflection.AssemblyTitleAttribute("OddOneOut")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

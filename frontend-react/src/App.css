@@ -1,0 +1,24 @@
+.button-related {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  margin: 5px;
+  cursor: pointer;
+}
+.button-odd-one-out {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  margin: 5px;
+  cursor: pointer;
+}
+.solution-word {
+  font-size: 18px;
+  margin: 5px;
+}
+.solution-word.odd-one-out {
+  font-weight: bold;
+  color: #f44336;
+}
