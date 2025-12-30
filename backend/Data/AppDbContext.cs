@@ -68,7 +68,6 @@ public class Guess
     public Game? Game { get; set; }
     public User? Guesser { get; set; }
     public WordCard? SelectedCard { get; set; }
-    public bool IsCorrect { get; set; }
     public bool GuessIsInSet { get; set; }
     public DateTime GuessedAt { get; set; } = DateTime.UtcNow;
 }

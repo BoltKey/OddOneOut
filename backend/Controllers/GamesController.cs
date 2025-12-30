@@ -45,9 +45,9 @@ public class GamesController : ControllerBase
             // assign new game to user
             game = await _context.Games
               .Where(g => !g.ClueGivers.Any(u => u.Id == userIdString)) // Ensure user is not a ClueGiver in the game
-              // ensure user hasn't guessed in this game yet
+              // ensure user hasn't guessed in any game with same word set yet
               .Where(g => !_context.Guesses.Any(gu =>
-                  gu.Game.Id == g.Id &&
+                  gu.Game.CardSet.Id == g.CardSet.Id &&
                   gu.Guesser == user
               ))
               .Where(g => g != user.CurrentGame)
@@ -174,12 +174,15 @@ public class GamesController : ControllerBase
         }
         var game = await _context.Games
             .Include(g => g.OddOneOut)
+            .Include(g => g.CardSet)
+                .ThenInclude(cs => cs.WordCards)
             .FirstOrDefaultAsync(g => g.Id == user.CurrentGameId);
         if (game == null)
         {
             _logger.LogWarning("game not found");
             return NotFound("Game not found.");
         }
+        var allWords = game.CardSet.WordCards;
         var currentCard = user.CurrentCard;
         if (currentCard == null)
         {
@@ -193,7 +196,6 @@ public class GamesController : ControllerBase
             Id = Guid.NewGuid(),
             Game = game,
             Guesser = user,
-            IsCorrect = isCorrect,
             GuessIsInSet = request.GuessIsInSet,
             SelectedCard = currentCard,
             GuessedAt = DateTime.UtcNow
@@ -201,8 +203,18 @@ public class GamesController : ControllerBase
         // clear assigned guess
         user.CurrentCard = null;
         user.CurrentGame = null;
+        // construct response with all other words and success rate on them
+
+
         await _context.SaveChangesAsync();
-        return Ok(isCorrect);
+        return Ok(new {
+          isCorrect,
+          clue = game.Clue,
+          allWords = allWords.Select(w => new {
+            Word = w.Word,
+            IsOddOneOut = w.Id == game.OddOneOut.Id
+          })
+    });
     }
     [HttpPost("CreateGame"), Authorize]
     public async Task<IActionResult> CreateGame(CreateGameDto request)

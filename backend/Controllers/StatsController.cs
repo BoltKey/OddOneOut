@@ -37,7 +37,7 @@ public class StatsController : ControllerBase
 
         var totalGamesCreated = user.CreatedGames.Count;
         var totalGuessesMade = user.Guesses.Count;
-        var correctGuesses = user.Guesses.Count(g => g.IsCorrect);
+        var correctGuesses = user.Guesses.Count(g => g.Game.OddOneOut == g.SelectedCard);
 
         var stats = new
         {
@@ -87,7 +87,6 @@ public class StatsController : ControllerBase
         SelectedCard = g.SelectedCard.Word,
         OddOneOut = g.Game.OddOneOut.Word,
         g.GuessedAt,
-        g.IsCorrect,
         g.GuessIsInSet
       }).ToList();
 
