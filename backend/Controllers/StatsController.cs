@@ -83,9 +83,18 @@ public class StatsController : ControllerBase
       {
         Game = g.Game.Id,
         CardSetId = g.Game.CardSet.Id,
-        CardSetWords = g.Game.CardSet.WordCards.Select(wc => wc.Word).ToList(),
+        CardSetWords = g.Game.CardSet.WordCards.Select(wc => new
+        {
+        wc.Word,
+        GuessCount = _context.Guesses.Count(
+          gg => gg.SelectedCard.Id == wc.Id && gg.Game.Id == g.Game.Id),
+        CorrectGuesses = _context.Guesses.Count(
+          gg => gg.SelectedCard.Id == wc.Id && gg.Game.Id == g.Game.Id && gg.GuessIsInSet != (gg.SelectedCard == g.Game.OddOneOut)
+        )
+        }).ToList(),
         SelectedCard = g.SelectedCard.Word,
         OddOneOut = g.Game.OddOneOut.Word,
+        Clue = g.Game.Clue,
         g.GuessedAt,
         g.GuessIsInSet
       }).ToList();
@@ -132,7 +141,15 @@ public class StatsController : ControllerBase
       {
         Game = g.Id,
         CardSetId = g.CardSet.Id,
-        CardSetWords = g.CardSet.WordCards.Select(wc => wc.Word).ToList(),
+        CardSetWords = g.CardSet.WordCards.Select(wc => new
+        {
+        wc.Word,
+        GuessCount = _context.Guesses.Count(
+          gg => gg.SelectedCard.Id == wc.Id && gg.Game.Id == g.Id),
+        CorrectGuesses = _context.Guesses.Count(
+          gg => gg.SelectedCard.Id == wc.Id && gg.Game.Id == g.Id && gg.GuessIsInSet != (gg.SelectedCard == g.OddOneOut)
+        )
+        }).ToList(),
         g.Clue,
         OddOneOut = g.OddOneOut.Word,
         g.CreatedAt

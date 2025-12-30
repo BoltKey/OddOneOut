@@ -9,10 +9,15 @@ export default function GuessHistoryTab({ userId }: { userId: string }) {
     {
       game: string;
       oddOneOut: string;
-      cardSetWords: string[];
+      cardSetWords: {
+        word: string;
+        guessCount: number;
+        correctGuesses: number;
+      }[];
       guessedAt: string;
       guessIsInSet: boolean;
       selectedCard: string;
+      clue: string;
     }[]
   >([]);
   const [message, setMessage] = useState<string | null>(null);
@@ -47,17 +52,18 @@ export default function GuessHistoryTab({ userId }: { userId: string }) {
                 }
               >
                 {entry.guessedAt}
-                {entry.cardSetWords.map((word) => (
+                {entry.clue && <div>Clue: "{entry.clue}"</div>}
+                {entry.cardSetWords.map((card) => (
                   <div
-                    key={word}
+                    key={card.word}
                     className={
                       "history-word-container " +
                       "guess-word " +
-                      (word === entry.oddOneOut ? "odd-one-out " : "") +
-                      (word === entry.selectedCard ? "selected-card" : "")
+                      (card.word === entry.oddOneOut ? "odd-one-out " : "") +
+                      (card.word === entry.selectedCard ? "selected-card" : "")
                     }
                   >
-                    {word}
+                    {card.word} {card.correctGuesses}/{card.guessCount}
                   </div>
                 ))}
               </div>
