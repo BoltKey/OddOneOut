@@ -49,6 +49,15 @@ export const api = {
     }
     return res.json();
   },
+  assignedClueGiving: async () => {
+    const res = await fetch(`${BASE_URL}/Games/AssignedGiveClue`, {
+      method: "POST",
+    });
+    if (!res.ok) {
+      throw new Error("Failed to fetch assigned clue giving.");
+    }
+    return res.json();
+  },
 
   submitGuess: async (guess: boolean) => {
     const res = await fetch(`${BASE_URL}/Games/MakeGuess`, {
@@ -58,6 +67,30 @@ export const api = {
     });
     if (!res.ok) {
       throw new Error("Failed to submit guess.");
+    }
+    return res.json();
+  },
+  submitClue: async (clue: string, gameId: string, oddOneOut: string) => {
+    const res = await fetch(`${BASE_URL}/Games/CreateGame`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clue, wordSetId: gameId, oddOneOut }),
+    });
+    if (!res.ok) {
+      throw new Error("Failed to submit clue.");
+    }
+  },
+  getGuessHistory: async (page: number) => {
+    const res = await fetch(`${BASE_URL}/Stats/GuessHistory?page=${page}`);
+    if (!res.ok) {
+      throw new Error("Failed to fetch guess history.");
+    }
+    return res.json();
+  },
+  getClueHistory: async (page: number) => {
+    const res = await fetch(`${BASE_URL}/Stats/ClueHistory?page=${page}`);
+    if (!res.ok) {
+      throw new Error("Failed to fetch clue history.");
     }
     return res.json();
   },

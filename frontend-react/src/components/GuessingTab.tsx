@@ -21,6 +21,9 @@ export default function GuessingTab({ userId }: { userId: string }) {
       setCurrentCard(currentCard);
       setCurrentClue(currentClue);
       setGameId(gameId);
+      setSolutionWords([]);
+      setIsCorrect(null);
+      setMessage(null);
     } catch (err: any) {
       setMessage(err.message);
     }
@@ -32,19 +35,28 @@ export default function GuessingTab({ userId }: { userId: string }) {
   let solution = null;
   if (solutionWords.length > 0) {
     solution = (
-      <div>
-        Solution Words:{" "}
-        {solutionWords.map((word) => (
-          <div
-            className={
-              "solution-word " + (word.isOddOneOut ? "odd-one-out" : "")
-            }
-            key={word.word}
-          >
-            {word.word}
-          </div>
-        ))}
-      </div>
+      <>
+        <div className="solution-words-container">
+          Solution Words:{" "}
+          {solutionWords.map((word) => (
+            <div
+              className={
+                "solution-word " + (word.isOddOneOut ? "odd-one-out" : "")
+              }
+              key={word.word}
+            >
+              {word.word}
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={async () => {
+            fetchAssignedGame();
+          }}
+        >
+          Next game
+        </button>
+      </>
     );
   }
   if (currentCard) {
@@ -72,7 +84,7 @@ export default function GuessingTab({ userId }: { userId: string }) {
     }
   }
   return (
-    <div>
+    <div className={isCorrect ? "correct" : "incorrect"}>
       {message && <div>{message}</div>}
       {currentCard && <div>Current Card: {currentCard}</div>}
       {currentClue && <div>Current Clue: {currentClue}</div>}

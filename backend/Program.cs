@@ -81,7 +81,8 @@ if (app.Environment.IsDevelopment())
     using (var scope = app.Services.CreateScope())
     {
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        // DataSeeder.SeedWordCards(db); // Uncomment when you have your seeder
+        var env = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
+        DataSeeder.SeedWordCards(db, env); // Uncomment when you have your seeder ready
     }
     app.UseSwagger();
     app.UseSwaggerUI();

@@ -117,8 +117,8 @@ public class GamesController : ControllerBase
             cardSet = await _context.CardSet
               .Where(cs => !_context.Games.Any(g =>
                   g.CardSet.Id == cs.Id &&           // Match the game to the card set
-                  g.ClueGivers.Contains(user) && // Check if user is in that game
-                  g.Guesses.Any(gu => gu.Guesser == user) && // Check if user has guessed in that game
+                  (g.ClueGivers.Contains(user) || // Check if user is in that game
+                  g.Guesses.Any(gu => gu.Guesser == user)) && // Check if user has guessed in that game
                   g != user.CurrentGame              // Exclude current game
               ))
               .OrderBy(c => Guid.NewGuid())
@@ -129,6 +129,7 @@ public class GamesController : ControllerBase
         if (cardSet == null)
         {
             // create new card set of 5 random words for user and assign to user
+            Console.WriteLine("Creating new CardSet for user");
             var randomWords = await _context.WordCard
                 .OrderBy(c => Guid.NewGuid())
                 .Take(5)

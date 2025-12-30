@@ -1,36 +1,44 @@
 using OddOneOut.Data;
+using Microsoft.AspNetCore.Hosting; // Needed for IWebHostEnvironment
+using System.IO; // Needed for Path
 
 public static class DataSeeder
 {
-    public static void SeedWordCards(AppDbContext context)
+    // 1. Add IWebHostEnvironment env to the parameters
+    public static void SeedWordCards(AppDbContext context, IWebHostEnvironment env)
     {
         if (context.WordCard.Any()) return;
 
-        // 1. Define your data compactly
-        var categories = new[]
+        // 2. Use env.ContentRootPath to find the project folder dynamically
+        // Note: Make sure the file is actually inside a "Data" folder in your project
+        var path = Path.Combine(env.ContentRootPath, "Data", "possibleCards.txt");
+        Console.WriteLine($"Seeding WordCards from: {path}");
+        // 3. Check if file exists to prevent crashing
+        if (!File.Exists(path))
         {
-            new { Name = "Fruit", Words = new[] { "Apple", "Banana", "Orange", "Grape", "Mango" } },
-            new { Name = "Cars",  Words = new[] { "Tesla", "Ford", "BMW", "Honda", "Fiat" } },
-            new { Name = "Tech",  Words = new[] { "Mouse", "Keyboard", "Screen", "Laptop" } }
-        };
+            Console.WriteLine($"ERROR: File not found at {path}");
+            return;
+        }
+
+        // 4. Use the 'path' variable, not the hardcoded string
+        var words = File.ReadAllText(path)
+            .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(w => w.Trim())
+            .Where(w => !string.IsNullOrEmpty(w))
+            .ToList();
 
         var entities = new List<WordCard>();
 
-        // 2. Iterate and flatten into objects
-        foreach (var cat in categories)
+        foreach (var word in words)
         {
-            foreach (var word in cat.Words)
+            entities.Add(new WordCard
             {
-                entities.Add(new WordCard
-                {
-                    Id = Guid.NewGuid(),
-                    Category = cat.Name,
-                    Word = word
-                });
-            }
+                Id = Guid.NewGuid(),
+                Category = "word",
+                Word = word
+            });
         }
 
-        // 3. Bulk insert
         context.WordCard.AddRange(entities);
         context.SaveChanges();
     }

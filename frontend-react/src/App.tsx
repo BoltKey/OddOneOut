@@ -4,11 +4,17 @@ import GuessingTab from "./components/GuessingTab"; // Make sure this exists
 import { api } from "./services/api";
 import type { User } from "./types";
 import "./App.css";
+import ClueGivingTab from "./components/ClueGivingTab";
+import GuessHistoryTab from "./components/GuessHistoryTab";
+import ClueHistoryTab from "./components/ClueHistoryTab";
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [loggedOut, setLoggedOut] = useState(false);
+  const [selectedTab, setSelectedTab] = useState<
+    "guessing" | "clueGiving" | "guessHistory" | "clueHistory"
+  >("guessing");
 
   // Function to load user data (called on mount AND after login)
   const loadUser = async () => {
@@ -66,7 +72,36 @@ function App() {
       </header>
 
       <main>
-        <GuessingTab userId={user.id} />
+        <div className="tab-buttons">
+          <button
+            className={selectedTab === "guessing" ? "active" : ""}
+            onClick={() => setSelectedTab("guessing")}
+          >
+            Guess
+          </button>
+          <button
+            className={selectedTab === "clueGiving" ? "active" : ""}
+            onClick={() => setSelectedTab("clueGiving")}
+          >
+            Give Clues
+          </button>
+          <button
+            className={selectedTab === "guessHistory" ? "active" : ""}
+            onClick={() => setSelectedTab("guessHistory")}
+          >
+            Guess History
+          </button>
+          <button
+            className={selectedTab === "clueHistory" ? "active" : ""}
+            onClick={() => setSelectedTab("clueHistory")}
+          >
+            Clue History
+          </button>
+        </div>
+        {selectedTab === "guessing" && <GuessingTab userId={user.id} />}
+        {selectedTab === "clueGiving" && <ClueGivingTab userId={user.id} />}
+        {selectedTab === "guessHistory" && <GuessHistoryTab userId={user.id} />}
+        {selectedTab === "clueHistory" && <ClueHistoryTab userId={user.id} />}
       </main>
     </div>
   );

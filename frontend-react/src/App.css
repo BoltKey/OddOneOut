@@ -1,3 +1,27 @@
+* {
+  color: #333;
+  box-sizing: border-box;
+}
+
+button {
+  font-size: 16px;
+  border-radius: 5px;
+  background-color: #008cba;
+}
+
+input {
+  background-color: #008cba;
+}
+
+.button-related {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  margin: 5px 0;
+  border-radius: 5px;
+}
+
 .button-related {
   background-color: #4caf50;
   color: white;
@@ -21,4 +45,79 @@
 .solution-word.odd-one-out {
   font-weight: bold;
   color: #f44336;
+}
+
+#root {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  background-color: #f0f0f0;
+  min-height: 100vh;
+  margin: auto;
+}
+.app-container {
+  max-width: 800px;
+  margin: 0 auto;
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+.correct {
+  background-color: #d4edda;
+  color: #155724;
+  padding: 15px;
+  border-radius: 5px;
+}
+.incorrect {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 15px;
+  border-radius: 5px;
+}
+.solution-words-container {
+  margin-top: 20px;
+}
+
+.clue-card {
+  cursor: pointer;
+  background-color: #4caf50;
+  color: black;
+  padding: 5px;
+  border-radius: 5px;
+  margin: 2px 0;
+  text-align: center;
+  font-size: 150%;
+  font-weight: bold;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.clue-card.selected {
+  background-color: #721c24;
+  color: white;
+}
+
+.history-word-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  color: #155724;
+}
+.history-word-container.odd-one-out {
+  font-weight: bold;
+  color: #f44336;
+}
+.history-word-container.selected-card {
+  outline: solid black 2px;
+}
+
+.guess-history-entry {
+  border-bottom: 1px solid #ccc;
+  padding: 10px 0;
+}
+.guess-history-entry.correct-guess {
+  background-color: #d4edda;
+}
+
+.guess-history-entry.incorrect-guess {
+  background-color: #f8d7da;
 }
