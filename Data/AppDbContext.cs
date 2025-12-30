@@ -40,8 +40,8 @@ protected override void OnModelCreating(ModelBuilder builder)
 public class WordCard
 {
     public Guid Id { get; set; }
-    public string Word { get; set; } = string.Empty;
-    public string Category { get; set; } = string.Empty;
+    public string? Word { get; set; }
+    public string? Category { get; set; }
     [JsonIgnore]
     public List<CardSet> CardSet { get; set; } = new();
 }
@@ -56,18 +56,18 @@ public class Game
 {
     public Guid Id { get; set; }
     public List<User> ClueGivers { get; set; } = new();
-    public CardSet CardSet { get; set; } = new();
+    public CardSet? CardSet { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public string Clue { get; set; } = string.Empty;
-    public WordCard OddOneOut { get; set; } = new();
+    public string? Clue { get; set; }
+    public WordCard? OddOneOut { get; set; }
     public List<Guess> Guesses { get; set; } = new();
 }
 public class Guess
 {
     public Guid Id { get; set; }
-    public Game Game { get; set; } = new();
-    public string PlayerId { get; set; } = string.Empty;
-    public WordCard SelectedCard { get; set; } = new();
+    public Game? Game { get; set; }
+    public User? Guesser { get; set; }
+    public WordCard? SelectedCard { get; set; }
     public bool IsCorrect { get; set; }
     public bool GuessIsInSet { get; set; }
     public DateTime GuessedAt { get; set; } = DateTime.UtcNow;

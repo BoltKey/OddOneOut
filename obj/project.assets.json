@@ -2,6 +2,18 @@
   "version": 3,
   "targets": {
     "net10.0": {
+      "DotnetBadWordDetector/2.0.0": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.ML": "1.7.0"
+        },
+        "compile": {
+          "lib/net8.0/DotnetBadWordDetector.dll": {}
+        },
+        "runtime": {
+          "lib/net8.0/DotnetBadWordDetector.dll": {}
+        }
+      },
       "Humanizer.Core/2.14.1": {
         "type": "package",
         "compile": {
@@ -808,6 +820,153 @@
           "buildTransitive/net8.0/_._": {}
         }
       },
+      "Microsoft.ML/1.7.0": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.ML.CpuMath": "1.7.0",
+          "Microsoft.ML.DataView": "1.7.0",
+          "Newtonsoft.Json": "10.0.3",
+          "System.CodeDom": "4.4.0"
+        },
+        "compile": {
+          "lib/netstandard2.0/Microsoft.ML.Core.dll": {
+            "related": ".xml"
+          },
+          "lib/netstandard2.0/Microsoft.ML.Data.dll": {
+            "related": ".xml"
+          },
+          "lib/netstandard2.0/Microsoft.ML.KMeansClustering.dll": {
+            "related": ".xml"
+          },
+          "lib/netstandard2.0/Microsoft.ML.PCA.dll": {
+            "related": ".xml"
+          },
+          "lib/netstandard2.0/Microsoft.ML.StandardTrainers.dll": {
+            "related": ".xml"
+          },
+          "lib/netstandard2.0/Microsoft.ML.Transforms.dll": {
+            "related": ".xml"
+          },
+          "lib/netstandard2.0/Microsoft.ML.dll": {
+            "related": ".Core.xml;.Data.xml;.KMeansClustering.xml;.PCA.xml;.StandardTrainers.xml;.Transforms.xml;.xml"
+          }
+        },
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.ML.Core.dll": {
+            "related": ".xml"
+          },
+          "lib/netstandard2.0/Microsoft.ML.Data.dll": {
+            "related": ".xml"
+          },
+          "lib/netstandard2.0/Microsoft.ML.KMeansClustering.dll": {
+            "related": ".xml"
+          },
+          "lib/netstandard2.0/Microsoft.ML.PCA.dll": {
+            "related": ".xml"
+          },
+          "lib/netstandard2.0/Microsoft.ML.StandardTrainers.dll": {
+            "related": ".xml"
+          },
+          "lib/netstandard2.0/Microsoft.ML.Transforms.dll": {
+            "related": ".xml"
+          },
+          "lib/netstandard2.0/Microsoft.ML.dll": {
+            "related": ".Core.xml;.Data.xml;.KMeansClustering.xml;.PCA.xml;.StandardTrainers.xml;.Transforms.xml;.xml"
+          }
+        },
+        "build": {
+          "build/netstandard2.0/_._": {}
+        },
+        "runtimeTargets": {
+          "runtimes/linux-arm/native/libLdaNative.so": {
+            "assetType": "native",
+            "rid": "linux-arm"
+          },
+          "runtimes/linux-arm64/native/libLdaNative.so": {
+            "assetType": "native",
+            "rid": "linux-arm64"
+          },
+          "runtimes/linux-x64/native/libLdaNative.so": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/osx-arm64/native/libLdaNative.dylib": {
+            "assetType": "native",
+            "rid": "osx-arm64"
+          },
+          "runtimes/osx-x64/native/libLdaNative.dylib": {
+            "assetType": "native",
+            "rid": "osx-x64"
+          },
+          "runtimes/win-x64/native/LdaNative.dll": {
+            "assetType": "native",
+            "rid": "win-x64"
+          },
+          "runtimes/win-x86/native/LdaNative.dll": {
+            "assetType": "native",
+            "rid": "win-x86"
+          }
+        }
+      },
+      "Microsoft.ML.CpuMath/1.7.0": {
+        "type": "package",
+        "compile": {
+          "lib/netcoreapp3.1/Microsoft.ML.CpuMath.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/netcoreapp3.1/Microsoft.ML.CpuMath.dll": {
+            "related": ".xml"
+          }
+        },
+        "build": {
+          "build/netstandard2.0/_._": {}
+        },
+        "runtimeTargets": {
+          "runtimes/linux-arm/nativeassets/netcoreapp3.1/_._": {
+            "assetType": "native",
+            "rid": "linux-arm"
+          },
+          "runtimes/linux-arm64/nativeassets/netcoreapp3.1/_._": {
+            "assetType": "native",
+            "rid": "linux-arm64"
+          },
+          "runtimes/linux-x64/nativeassets/netcoreapp3.1/_._": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/osx-arm64/nativeassets/netcoreapp3.1/_._": {
+            "assetType": "native",
+            "rid": "osx-arm64"
+          },
+          "runtimes/osx-x64/nativeassets/netcoreapp3.1/_._": {
+            "assetType": "native",
+            "rid": "osx-x64"
+          },
+          "runtimes/win-x64/nativeassets/netcoreapp3.1/_._": {
+            "assetType": "native",
+            "rid": "win-x64"
+          },
+          "runtimes/win-x86/nativeassets/netcoreapp3.1/_._": {
+            "assetType": "native",
+            "rid": "win-x86"
+          }
+        }
+      },
+      "Microsoft.ML.DataView/1.7.0": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard2.0/Microsoft.ML.DataView.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.ML.DataView.dll": {
+            "related": ".xml"
+          }
+        }
+      },
       "Microsoft.NET.StringTools/17.14.28": {
         "type": "package",
         "compile": {
@@ -852,7 +1011,7 @@
       "Newtonsoft.Json/13.0.3": {
         "type": "package",
         "compile": {
-          "lib/net6.0/_._": {
+          "lib/net6.0/Newtonsoft.Json.dll": {
             "related": ".xml"
           }
         },
@@ -959,7 +1118,7 @@
       "System.CodeDom/9.0.0": {
         "type": "package",
         "compile": {
-          "lib/net9.0/_._": {
+          "lib/net9.0/System.CodeDom.dll": {
             "related": ".xml"
           }
         },
@@ -1231,6 +1390,18 @@
     }
   },
   "libraries": {
+    "DotnetBadWordDetector/2.0.0": {
+      "sha512": "7sadEIiIBguwQkVl/kIQHzNN4MpZmgOYQDsfoW2o9mxG6ZyO5qiUfEz5EjTelAJNyesHWvmgv7fQItD10miDzw==",
+      "type": "package",
+      "path": "dotnetbadworddetector/2.0.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "dotnetbadworddetector.2.0.0.nupkg.sha512",
+        "dotnetbadworddetector.nuspec",
+        "lib/net8.0/DotnetBadWordDetector.dll"
+      ]
+    },
     "Humanizer.Core/2.14.1": {
       "sha512": "lQKvtaTDOXnoVJ20ibTuSIOf2i0uO0MPbDhd1jm238I+U/2ZnRENj0cktKZhtchBMtCUSRQ5v4xBCUbKNmyVMw==",
       "type": "package",
@@ -2759,6 +2930,89 @@
         "useSharedDesignerContext.txt"
       ]
     },
+    "Microsoft.ML/1.7.0": {
+      "sha512": "VWNzTz3Owt7qBxsLD1cxjx3fN7YuyVKu26OIwKIF83r+3Fm8B/OkiXugP8rjIYg0c3+KK8G3ks96eiOfdzT26g==",
+      "type": "package",
+      "path": "microsoft.ml/1.7.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE",
+        "THIRD-PARTY-NOTICES.TXT",
+        "build/netstandard2.0/Microsoft.ML.props",
+        "build/netstandard2.0/Microsoft.ML.targets",
+        "lib/netstandard2.0/Microsoft.ML.Core.dll",
+        "lib/netstandard2.0/Microsoft.ML.Core.xml",
+        "lib/netstandard2.0/Microsoft.ML.Data.dll",
+        "lib/netstandard2.0/Microsoft.ML.Data.xml",
+        "lib/netstandard2.0/Microsoft.ML.KMeansClustering.dll",
+        "lib/netstandard2.0/Microsoft.ML.KMeansClustering.xml",
+        "lib/netstandard2.0/Microsoft.ML.PCA.dll",
+        "lib/netstandard2.0/Microsoft.ML.PCA.xml",
+        "lib/netstandard2.0/Microsoft.ML.StandardTrainers.dll",
+        "lib/netstandard2.0/Microsoft.ML.StandardTrainers.xml",
+        "lib/netstandard2.0/Microsoft.ML.Transforms.dll",
+        "lib/netstandard2.0/Microsoft.ML.Transforms.xml",
+        "lib/netstandard2.0/Microsoft.ML.dll",
+        "lib/netstandard2.0/Microsoft.ML.xml",
+        "microsoft.ml.1.7.0.nupkg.sha512",
+        "microsoft.ml.nuspec",
+        "mlnetlogo.png",
+        "runtimes/linux-arm/native/libLdaNative.so",
+        "runtimes/linux-arm64/native/libLdaNative.so",
+        "runtimes/linux-x64/native/libLdaNative.so",
+        "runtimes/osx-arm64/native/libLdaNative.dylib",
+        "runtimes/osx-x64/native/libLdaNative.dylib",
+        "runtimes/win-x64/native/LdaNative.dll",
+        "runtimes/win-x86/native/LdaNative.dll"
+      ]
+    },
+    "Microsoft.ML.CpuMath/1.7.0": {
+      "sha512": "ibot+EJKOG21DE47YQCy8djLpSJ31hgbwkJPkG2a5KSieb2eEGySCzzMLBAcP2jR5vd8+5Gss3FuGYvfY9Bncw==",
+      "type": "package",
+      "path": "microsoft.ml.cpumath/1.7.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE",
+        "THIRD-PARTY-NOTICES.TXT",
+        "build/netstandard2.0/Microsoft.ML.CpuMath.props",
+        "lib/netcoreapp3.1/Microsoft.ML.CpuMath.dll",
+        "lib/netcoreapp3.1/Microsoft.ML.CpuMath.xml",
+        "lib/netstandard2.0/Microsoft.ML.CpuMath.dll",
+        "lib/netstandard2.0/Microsoft.ML.CpuMath.xml",
+        "microsoft.ml.cpumath.1.7.0.nupkg.sha512",
+        "microsoft.ml.cpumath.nuspec",
+        "mlnetlogo.png",
+        "runtimes/linux-arm/nativeassets/netcoreapp3.1/_._",
+        "runtimes/linux-arm64/nativeassets/netcoreapp3.1/_._",
+        "runtimes/linux-x64/nativeassets/netcoreapp3.1/_._",
+        "runtimes/linux-x64/nativeassets/netstandard2.0/libCpuMathNative.so",
+        "runtimes/osx-arm64/nativeassets/netcoreapp3.1/_._",
+        "runtimes/osx-x64/nativeassets/netcoreapp3.1/_._",
+        "runtimes/osx-x64/nativeassets/netstandard2.0/libCpuMathNative.dylib",
+        "runtimes/win-x64/nativeassets/netcoreapp3.1/_._",
+        "runtimes/win-x64/nativeassets/netstandard2.0/CpuMathNative.dll",
+        "runtimes/win-x86/nativeassets/netcoreapp3.1/_._",
+        "runtimes/win-x86/nativeassets/netstandard2.0/CpuMathNative.dll"
+      ]
+    },
+    "Microsoft.ML.DataView/1.7.0": {
+      "sha512": "pMfpOsoRcexVnsNqwRqcqRsdfzw2dN3kBu3QzmZ3YqPuiZLLoDHaB3ZYEAvnIUEhpnIe4wVD4UnUWvatzoVWcQ==",
+      "type": "package",
+      "path": "microsoft.ml.dataview/1.7.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE",
+        "THIRD-PARTY-NOTICES.TXT",
+        "lib/netstandard2.0/Microsoft.ML.DataView.dll",
+        "lib/netstandard2.0/Microsoft.ML.DataView.xml",
+        "microsoft.ml.dataview.1.7.0.nupkg.sha512",
+        "microsoft.ml.dataview.nuspec",
+        "mlnetlogo.png"
+      ]
+    },
     "Microsoft.NET.StringTools/17.14.28": {
       "sha512": "DMIeWDlxe0Wz0DIhJZ2FMoGQAN2yrGZOi5jjFhRYHWR5ONd0CS6IpAHlRnA7uA/5BF+BADvgsETxW2XrPiFc1A==",
       "type": "package",
@@ -3409,6 +3663,7 @@
   },
   "projectFileDependencyGroups": {
     "net10.0": [
+      "DotnetBadWordDetector >= 2.0.0",
       "Microsoft.AspNetCore.Identity.EntityFrameworkCore >= 10.0.1",
       "Microsoft.EntityFrameworkCore.Design >= 10.0.0",
       "Microsoft.OpenApi >= 1.6.14",
@@ -3459,6 +3714,10 @@
       "net10.0": {
         "targetAlias": "net10.0",
         "dependencies": {
+          "DotnetBadWordDetector": {
+            "target": "Package",
+            "version": "[2.0.0, )"
+          },
           "Microsoft.AspNetCore.Identity.EntityFrameworkCore": {
             "target": "Package",
             "version": "[10.0.1, )"

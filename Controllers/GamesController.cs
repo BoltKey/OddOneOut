@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OddOneOut.Data; // Ensure this matches your namespace
+using OddOneOut.Services;
 using System.Security.Claims;
 
 [ApiController]
@@ -11,12 +12,14 @@ public class GamesController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly ILogger<GamesController> _logger;
+    private readonly IWordCheckerService _wordCheckerService;
 
     // Inject the database connection we set up in Program.cs
-    public GamesController(AppDbContext context, ILogger<GamesController> logger)
+    public GamesController(AppDbContext context, ILogger<GamesController> logger, IWordCheckerService wordCheckerService)
     {
         _context = context;
         _logger = logger;
+        _wordCheckerService = wordCheckerService;
     }
 
 
@@ -45,7 +48,7 @@ public class GamesController : ControllerBase
               // ensure user hasn't guessed in this game yet
               .Where(g => !_context.Guesses.Any(gu =>
                   gu.Game.Id == g.Id &&
-                  gu.PlayerId == userIdString
+                  gu.Guesser == user
               ))
               .Where(g => g != user.CurrentGame)
               .OrderBy(c => Guid.NewGuid())
@@ -59,8 +62,7 @@ public class GamesController : ControllerBase
 
         if (game == null)
         {
-            _logger.LogWarning("no game found");
-            return Unauthorized("No available Games found for the user.");
+            return UnprocessableEntity("No available Games found for the user.");
         }
         var currentCard = user.CurrentCard;
         if (user.CurrentCard == null)
@@ -75,8 +77,7 @@ public class GamesController : ControllerBase
             }
             else
               {
-                _logger.LogWarning("no card found in set");
-                return Unauthorized("No available Cards found in the selected Game's CardSet.");
+                return BadRequest("No available Cards found in the selected Game's CardSet.");
               }
         }
         await _context.SaveChangesAsync();
@@ -117,7 +118,7 @@ public class GamesController : ControllerBase
               .Where(cs => !_context.Games.Any(g =>
                   g.CardSet.Id == cs.Id &&           // Match the game to the card set
                   g.ClueGivers.Contains(user) && // Check if user is in that game
-                  g.Guesses.Any(gu => gu.PlayerId == userIdString) && // Check if user has guessed in that game
+                  g.Guesses.Any(gu => gu.Guesser == user) && // Check if user has guessed in that game
                   g != user.CurrentGame              // Exclude current game
               ))
               .OrderBy(c => Guid.NewGuid())
@@ -161,7 +162,7 @@ public class GamesController : ControllerBase
 
         return Ok(response);
     }
-    [HttpPost("makeGuess"), Authorize]
+    [HttpPost("MakeGuess"), Authorize]
     public async Task<IActionResult> MakeGuess(MakeGuessDto request)
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -187,9 +188,23 @@ public class GamesController : ControllerBase
         }
         var isInSet = currentCard.Id != game.OddOneOut.Id;
         var isCorrect = isInSet == request.GuessIsInSet;
+        _context.Guesses.Add(new Guess
+        {
+            Id = Guid.NewGuid(),
+            Game = game,
+            Guesser = user,
+            IsCorrect = isCorrect,
+            GuessIsInSet = request.GuessIsInSet,
+            SelectedCard = currentCard,
+            GuessedAt = DateTime.UtcNow
+        });
+        // clear assigned guess
+        user.CurrentCard = null;
+        user.CurrentGame = null;
+        await _context.SaveChangesAsync();
         return Ok(isCorrect);
     }
-    [HttpPost("createGame"), Authorize]
+    [HttpPost("CreateGame"), Authorize]
     public async Task<IActionResult> CreateGame(CreateGameDto request)
     {
         if (!Guid.TryParse(request.WordSetId, out var wordSetId))
@@ -200,8 +215,13 @@ public class GamesController : ControllerBase
           var oddOneOut = request.OddOneOut;
           if (string.IsNullOrWhiteSpace(oddOneOut))
           {
-            return BadRequest("OddOneOut cannot be empty.");
+            return BadRequest("Clue cannot be empty.");
           }
+        bool result = _wordCheckerService.IsValidPlay(request.clue);
+        if (!result)
+        {
+            return BadRequest("Clue word is not valid.");
+        }
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var user = await _context.Users
             .Include(u => u.AssignedCardSet)

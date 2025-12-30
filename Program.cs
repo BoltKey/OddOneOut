@@ -56,6 +56,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // 1. Add authentication and authorization
 builder.Services.AddAuthentication().AddBearerToken(IdentityConstants.BearerScheme);
+builder.Services.AddSingleton<OddOneOut.Services.IWordCheckerService, OddOneOut.Services.WordCheckerService>();
 builder.Services.AddAuthorizationBuilder();
 
 // 2. Add Identity Core and Entity Framework stores

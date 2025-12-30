@@ -1,0 +1,151 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization.Infrastructure;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using OddOneOut.Data; // Ensure this matches your namespace
+using System.Security.Claims;
+
+[ApiController]
+[Route("api/[controller]")] // URL will be: localhost:xxxx/api/stats
+public class StatsController : ControllerBase
+{
+    private readonly AppDbContext _context;
+
+    public StatsController(AppDbContext context)
+    {
+        _context = context;
+    }
+
+    [HttpGet("UserStats"), Authorize]
+    public async Task<IActionResult> GetUserStats()
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userIdString == null)
+        {
+            return Unauthorized("User not authenticated.");
+        }
+
+        var user = await _context.Users
+            .Include(u => u.CreatedGames)
+            .Include(u => u.Guesses)
+            .FirstOrDefaultAsync(u => u.Id == userIdString);
+
+        if (user == null)
+        {
+            return NotFound("User not found.");
+        }
+
+        var totalGamesCreated = user.CreatedGames.Count;
+        var totalGuessesMade = user.Guesses.Count;
+        var correctGuesses = user.Guesses.Count(g => g.IsCorrect);
+
+        var stats = new
+        {
+            TotalGamesCreated = totalGamesCreated,
+            TotalGuessesMade = totalGuessesMade,
+            CorrectGuesses = correctGuesses,
+            Accuracy = totalGuessesMade > 0 ? (double)correctGuesses / totalGuessesMade * 100 : 0
+        };
+
+        return Ok(stats);
+    }
+    [HttpGet("GuessHistory"), Authorize]
+    public async Task<IActionResult> GetHistory([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    {
+      var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+      if (userIdString == null)
+      {
+        return Unauthorized("User not authenticated.");
+      }
+
+      // Validate pagination parameters
+      if (page < 1) page = 1;
+      if (pageSize < 1) pageSize = 10;
+      if (pageSize > 50) pageSize = 50; // Cap page size
+
+      // Query guesses directly instead of loading the entire user object
+      var query = _context.Guesses
+        .Where(g => g.Guesser.Id == userIdString)
+        .Include(g => g.Game)
+        .ThenInclude(game => game.CardSet)
+        .ThenInclude(cs => cs.WordCards)
+        .OrderByDescending(g => g.GuessedAt);
+
+      var totalCount = await query.CountAsync();
+      var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+      var guesses = await query
+        .Skip((page - 1) * pageSize)
+        .Take(pageSize)
+        .ToListAsync();
+
+      var history = guesses.Select(g => new
+      {
+        Game = g.Game.Id,
+        CardSetId = g.Game.CardSet.Id,
+        CardSetWords = g.Game.CardSet.WordCards.Select(wc => wc.Word).ToList(),
+        SelectedCard = g.SelectedCard.Word,
+        OddOneOut = g.Game.OddOneOut.Word,
+        g.GuessedAt,
+        g.IsCorrect,
+        g.GuessIsInSet
+      }).ToList();
+
+      return Ok(new
+      {
+        Data = history,
+        Page = page,
+        PageSize = pageSize,
+        TotalCount = totalCount,
+        TotalPages = totalPages
+      });
+    }
+    [HttpGet("ClueHistory"), Authorize]
+    public async Task<IActionResult> GetClueHistory([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    {
+      var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+      if (userIdString == null)
+      {
+        return Unauthorized("User not authenticated.");
+      }
+
+      // Validate pagination parameters
+      if (page < 1) page = 1;
+      if (pageSize < 1) pageSize = 10;
+      if (pageSize > 50) pageSize = 50; // Cap page size
+
+      // Query games directly instead of loading the entire user object
+      var query = _context.Games
+        .Where(g => g.ClueGivers.Any(u => u.Id == userIdString))
+        .Include(g => g.CardSet)
+        .ThenInclude(cs => cs.WordCards)
+        .OrderByDescending(g => g.CreatedAt);
+
+      var totalCount = await query.CountAsync();
+      var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+      var games = await query
+        .Skip((page - 1) * pageSize)
+        .Take(pageSize)
+        .ToListAsync();
+
+      var history = games.Select(g => new
+      {
+        Game = g.Id,
+        CardSetId = g.CardSet.Id,
+        CardSetWords = g.CardSet.WordCards.Select(wc => wc.Word).ToList(),
+        g.Clue,
+        OddOneOut = g.OddOneOut.Word,
+        g.CreatedAt
+      }).ToList();
+
+      return Ok(new
+      {
+        Data = history,
+        Page = page,
+        PageSize = pageSize,
+        TotalCount = totalCount,
+        TotalPages = totalPages
+      });
+    }
+}
