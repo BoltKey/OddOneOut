@@ -198,3 +198,4 @@ C:\rando-webdev\OddOneOut\backend\obj\Debug\net10.0\refint\OddOneOut.dll
 C:\rando-webdev\OddOneOut\backend\obj\Debug\net10.0\OddOneOut.pdb
 C:\rando-webdev\OddOneOut\backend\obj\Debug\net10.0\OddOneOut.genruntimeconfig.cache
 C:\rando-webdev\OddOneOut\backend\obj\Debug\net10.0\ref\OddOneOut.dll
+C:\rando-webdev\OddOneOut\backend\bin\Debug\net10.0\OddOneOut.staticwebassets.runtime.json

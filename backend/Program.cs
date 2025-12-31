@@ -23,7 +23,7 @@ builder.Services.AddIdentityApiEndpoints<User>()
 // B. Configure Password Rules (Moved here from your deleted IdentityCore block)
 builder.Services.Configure<IdentityOptions>(options =>
 {
-    options.User.RequireUniqueEmail = true;
+    options.User.RequireUniqueEmail = false;
     options.Password.RequireDigit = false;
     options.Password.RequireLowercase = false;
     options.Password.RequireUppercase = false;
@@ -92,26 +92,60 @@ app.UseHttpsRedirection();
 
 // --- 6. Endpoints ---
 
-// A. Map the Identity API (Login, Register, etc.)
-app.MapGroup("/api/auth").MapIdentityApi<User>();
 
-// B. Map the "Get Me" endpoint (Crucial for your React App)
-app.MapGet("/api/users/me", async (ClaimsPrincipal user, AppDbContext db) =>
+var authGroup = app.MapGroup("/api/auth");
+
+// 2. Login Endpoint (Native Username Support)
+authGroup.MapPost("/login", async (SignInManager<User> signInManager, LoginRequest request) =>
 {
-    var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
-    if (string.IsNullOrEmpty(userId)) return Results.Unauthorized();
+    // The "false" means "Don't lock the account out on failure"
+    // The "true" means "Remember Me" (Persist cookie across restarts)
+    var result = await signInManager.PasswordSignInAsync(request.Username, request.Password, isPersistent: true, lockoutOnFailure: false);
 
-    var userData = await db.Users
-        .Include(u => u.CurrentGame)
-            .ThenInclude(g => g.CardSet)
-            .ThenInclude(cs => cs.WordCards)
-        .Include(u => u.Guesses)
-        .FirstOrDefaultAsync(u => u.Id == userId);
+    if (result.Succeeded) return Results.Ok();
+    return Results.Unauthorized();
+});
 
-    return userData is null ? Results.NotFound() : Results.Ok(userData);
-})
-.RequireAuthorization();
+// 3. Logout Endpoint (Clears the cookie)
+authGroup.MapPost("/logout", async (SignInManager<User> signInManager) =>
+{
+    await signInManager.SignOutAsync();
+    return Results.Ok();
+});
+
+// 4. Signup Endpoint (Your Custom Logic)
+authGroup.MapPost("/signup", async (UserManager<User> userManager, SignInManager<User> signInManager, SignupRequest request) =>
+{
+    var user = new User
+    {
+        UserName = request.Username,
+        Email = null
+    };
+    var result = await userManager.CreateAsync(user, request.Password);
+
+    if (!result.Succeeded)
+    {
+        return Results.ValidationProblem(result.Errors.ToDictionary(e => e.Code, e => new[] { e.Description }));
+    }
+
+    // Optional: Auto-login after register
+    await signInManager.SignInAsync(user, isPersistent: true);
+
+    return Results.Ok();
+});
+
+// 5. Get "Me" Endpoint
+authGroup.MapGet("/me", (ClaimsPrincipal user) =>
+{
+    // This works automatically because the Cookie is read by UseAuthentication()
+    if (user.Identity?.IsAuthenticated != true) return Results.Unauthorized();
+    return Results.Ok(new { Username = user.Identity.Name });
+});
 
 app.MapControllers();
 
 app.Run();
+
+// 1. DTOs (Clean Contracts)
+class LoginRequest { public required string Username { get; set; } public required string Password { get; set; } }
+class SignupRequest { public required string Username { get; set; } public required string Password { get; set; } public string? Email { get; set; } }

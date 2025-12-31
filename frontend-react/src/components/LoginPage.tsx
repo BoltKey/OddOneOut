@@ -8,6 +8,7 @@ interface Props {
 export default function LoginPage({ onLoginSuccess }: Props) {
   const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -19,11 +20,15 @@ export default function LoginPage({ onLoginSuccess }: Props) {
 
     try {
       if (isRegistering) {
-        await api.register(email, password);
+        await api.register(
+          username,
+          password,
+          email === "" ? undefined : email
+        );
         // After register, usually auto-login or ask to login. Let's auto-login.
-        await api.login(email, password);
+        // await api.login(username, password);
       } else {
-        await api.login(email, password);
+        await api.login(username, password);
       }
       onLoginSuccess(); // Tell App.tsx we are done
     } catch (err: any) {
@@ -51,12 +56,12 @@ export default function LoginPage({ onLoginSuccess }: Props) {
         style={{ display: "flex", flexDirection: "column", gap: 15 }}
       >
         <div>
-          <label>Email</label>
+          <label>Username</label>
           <input
-            type="email"
+            type="text"
             required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             style={{ width: "100%", padding: 8, marginTop: 5 }}
           />
         </div>
@@ -71,7 +76,17 @@ export default function LoginPage({ onLoginSuccess }: Props) {
             style={{ width: "100%", padding: 8, marginTop: 5 }}
           />
         </div>
-
+        {isRegistering && (
+          <div>
+            <label>Email (optional)</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={{ width: "100%", padding: 8, marginTop: 5 }}
+            />
+          </div>
+        )}
         {error && (
           <div style={{ color: "red", fontSize: "0.9em" }}>{error}</div>
         )}

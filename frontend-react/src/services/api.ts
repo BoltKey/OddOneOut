@@ -4,11 +4,11 @@ const BASE_URL = "/api";
 
 export const api = {
   // 1. REGISTER (Create new user)
-  register: async (email: string, password: string) => {
-    const res = await fetch(`${BASE_URL}/auth/register`, {
+  register: async (username: string, password: string, email?: string) => {
+    const res = await fetch(`${BASE_URL}/auth/signup`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ username, password, email }),
     });
     if (!res.ok) {
       const err = await res.json();
@@ -23,7 +23,7 @@ export const api = {
   },
 
   // 2. LOGIN (Get Access)
-  login: async (email: string, password: string) => {
+  login: async (username: string, password: string) => {
     // useCookies: true tells .NET to set a secure HttpOnly cookie
     // useSessionCookies: true tells it to delete cookie when browser closes
     const res = await fetch(
@@ -31,7 +31,7 @@ export const api = {
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ username, password }),
       }
     );
 

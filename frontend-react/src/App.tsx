@@ -60,7 +60,7 @@ function App() {
           justifyContent: "space-between",
         }}
       >
-        <span>User: {user.email || user.id}</span>
+        <span>User: {user.userName || user.id}</span>
         <button
           onClick={() => {
             setLoggedOut(true);
