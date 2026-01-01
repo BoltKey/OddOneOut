@@ -112,6 +112,7 @@ else
 app.UseStaticFiles();
 app.MapFallbackToFile("index.html");
 app.UseRouting();
+app.UseAuthorization();
 
 // --- 6. Endpoints ---
 
