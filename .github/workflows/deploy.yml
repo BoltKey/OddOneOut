@@ -7,7 +7,7 @@ on:
 
 env:
   # Replace with your actual registry URL (e.g., myregistry5592.azurecr.io)
-  REGISTRY_LOGIN_SERVER: <YOUR_REGISTRY_NAME>.azurecr.io
+  REGISTRY_LOGIN_SERVER: myregistry12399.azurecr.io
   IMAGE_NAME: my-dotnet-react-app
 
 jobs:
