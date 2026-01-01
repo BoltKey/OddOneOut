@@ -30,5 +30,5 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 EXPOSE 8080
 COPY --from=backend-build /app/publish .
-COPY --from=frontend-build /app-frontend/build ./wwwroot
+COPY --from=frontend-build /app-frontend/dist ./wwwroot
 ENTRYPOINT ["dotnet", "OddOneOut.dll"]
