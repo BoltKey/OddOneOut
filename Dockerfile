@@ -2,10 +2,10 @@
 # Use Node.js image to build the frontend
 FROM node:18 AS frontend-build
 WORKDIR /app-frontend
-COPY ./ClientApp/package*.json ./
+COPY ./frontend-react/package*.json ./
 # ^ Adjust './ClientApp' to your actual React folder name
 RUN npm install
-COPY ./ClientApp ./
+COPY ./frontend-react ./
 RUN npm run build
 
 # STAGE 2: Build the .NET Backend
