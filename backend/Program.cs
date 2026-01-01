@@ -95,8 +95,9 @@ else
     var services = scope.ServiceProvider;
     try
     {
-        var context = services.GetRequiredService<AppDbContext>();
-        context.Database.Migrate(); // This is the command that creates tables
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var env = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
+        DataSeeder.SeedWordCards(db, env); // Uncomment when you have your seeder ready
     }
     catch (Exception ex)
     {
