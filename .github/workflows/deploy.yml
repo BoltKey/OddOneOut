@@ -45,4 +45,4 @@ jobs:
         with:
           imageToDeploy: ${{ env.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           resourceGroup: my-app-rg
-          containerAppName: my-web-app
+          containerAppName: my-dotnet-app
