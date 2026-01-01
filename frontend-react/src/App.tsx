@@ -7,6 +7,8 @@ import "./App.css";
 import ClueGivingTab from "./components/ClueGivingTab";
 import GuessHistoryTab from "./components/GuessHistoryTab";
 import ClueHistoryTab from "./components/ClueHistoryTab";
+import GuessLeaderboardTab from "./components/GuessLeaderboardTab";
+import ClueLeaderboardTab from "./components/ClueLeaderboardTab";
 
 export const UserStatsContext = createContext<{
   guessRating: number | null;
@@ -29,7 +31,12 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [loggedOut, setLoggedOut] = useState(false);
   const [selectedTab, setSelectedTab] = useState<
-    "guessing" | "clueGiving" | "guessHistory" | "clueHistory"
+    | "guessing"
+    | "clueGiving"
+    | "guessHistory"
+    | "clueHistory"
+    | "guessLeaderboard"
+    | "clueLeaderboard"
   >("guessing");
 
   // Function to load user data (called on mount AND after login)
@@ -106,30 +113,22 @@ function App() {
 
       <main>
         <div className="tab-buttons">
-          <button
-            className={selectedTab === "guessing" ? "active" : ""}
-            onClick={() => setSelectedTab("guessing")}
-          >
-            Guess
-          </button>
-          <button
-            className={selectedTab === "clueGiving" ? "active" : ""}
-            onClick={() => setSelectedTab("clueGiving")}
-          >
-            Give Clues
-          </button>
-          <button
-            className={selectedTab === "guessHistory" ? "active" : ""}
-            onClick={() => setSelectedTab("guessHistory")}
-          >
-            Guess History
-          </button>
-          <button
-            className={selectedTab === "clueHistory" ? "active" : ""}
-            onClick={() => setSelectedTab("clueHistory")}
-          >
-            Clue History
-          </button>
+          {[
+            { key: "guessing", label: "Guess" },
+            { key: "clueGiving", label: "Give Clues" },
+            { key: "guessHistory", label: "Guess History" },
+            { key: "clueHistory", label: "Clue History" },
+            { key: "guessLeaderboard", label: "Guess Leaderboard" },
+            { key: "clueLeaderboard", label: "Clue Leaderboard" },
+          ].map(({ key, label }) => (
+            <button
+              key={key}
+              className={selectedTab === key ? "active" : ""}
+              onClick={() => setSelectedTab(key as typeof selectedTab)}
+            >
+              {label}
+            </button>
+          ))}
         </div>
         <UserStatsContext.Provider
           value={{
@@ -145,6 +144,12 @@ function App() {
             <GuessHistoryTab userId={user.id} />
           )}
           {selectedTab === "clueHistory" && <ClueHistoryTab userId={user.id} />}
+          {selectedTab === "guessLeaderboard" && (
+            <GuessLeaderboardTab userId={user.id} />
+          )}
+          {selectedTab === "clueLeaderboard" && (
+            <ClueLeaderboardTab userId={user.id} />
+          )}
         </UserStatsContext.Provider>
       </main>
     </div>

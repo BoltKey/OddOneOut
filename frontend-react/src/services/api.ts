@@ -95,6 +95,24 @@ export const api = {
     }
     return res.json();
   },
+  getGuessLeaderboard: async (): Promise<
+    { userName: string; guessRating: number; rank: number }[]
+  > => {
+    const res = await fetch(`${BASE_URL}/Stats/GuessLeaderboard`);
+    if (!res.ok) {
+      throw new Error("Failed to fetch guess leaderboard.");
+    }
+    return res.json();
+  },
+  getClueLeaderboard: async (): Promise<
+    { userName: string; clueRating: number; rank: number }[]
+  > => {
+    const res = await fetch(`${BASE_URL}/Stats/ClueLeaderboard`);
+    if (!res.ok) {
+      throw new Error("Failed to fetch clue leaderboard.");
+    }
+    return res.json();
+  },
   getMe: async (): Promise<User> => {
     const res = await fetch(`${BASE_URL}/Stats/me`);
     if (!res.ok) {

@@ -189,6 +189,38 @@ public class StatsController : ControllerBase
         TotalPages = totalPages,
       });
     }
+    [HttpGet("GuessLeaderboard")]
+    public async Task<IActionResult> GetAllTimeLeaderboard()
+    {
+        var topUsers = await _context.Users
+            .OrderByDescending(u => u.GuessRating)
+            .Take(10)
+            .Select(u => new
+            {
+                u.Id,
+                u.UserName,
+                u.GuessRating
+            })
+            .ToListAsync();
+
+        return Ok(topUsers);
+    }
+    [HttpGet("ClueLeaderboard")]
+    public async Task<IActionResult> GetClueLeaderboard()
+    {
+        var topUsers = await _context.Users
+            .OrderByDescending(u => u.CachedClueRating)
+            .Take(10)
+            .Select(u => new
+            {
+                u.Id,
+                u.UserName,
+                ClueRating = u.CachedClueRating
+            })
+            .ToListAsync();
+
+        return Ok(topUsers);
+    }
     [HttpGet("me"), Authorize]
     public async Task<ActionResult<UserProfileDto>> GetMe()
     {

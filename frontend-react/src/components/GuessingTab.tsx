@@ -2,10 +2,6 @@ import { useContext, useEffect, useState } from "react";
 import { api } from "../services/api";
 import { UserStatsContext } from "../App";
 
-interface Props {
-  onLoginSuccess: () => void;
-}
-
 export default function GuessingTab({ userId }: { userId: string }) {
   const [currentCard, setCurrentCard] = useState<string>("");
   const [currentClue, setCurrentClue] = useState<string | null>(null);

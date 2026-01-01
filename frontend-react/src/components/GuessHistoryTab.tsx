@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../services/api";
 
-interface Props {
-  onLoginSuccess: () => void;
-}
 export default function GuessHistoryTab({ userId }: { userId: string }) {
   const [guessHistory, setGuessHistory] = useState<
     {

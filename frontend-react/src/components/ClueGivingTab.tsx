@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../services/api";
 
-interface Props {
-  onLoginSuccess: () => void;
-}
 export default function ClueGivingTab({ userId }: { userId: string }) {
   const [currentCards, setCurrentCards] = useState<string[] | null>(null);
   const [wordSetId, setWordSetId] = useState<string | null>(null);
