@@ -12,13 +12,12 @@ RUN npm run build
 # Use the .NET SDK image to build the backend
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS backend-build
 WORKDIR /src
-COPY ["OddOneOut.csproj", "./"]
-RUN dotnet restore "OddOneOut.csproj"
+COPY ["backend/OddOneOut.csproj", "./"]
+RUN dotnet restore "backend/OddOneOut.csproj"
 COPY . .
 # Build the .NET app
-RUN dotnet build "OddOneOut.csproj" -c Release -o /app/build
-RUN dotnet publish "OddOneOut.csproj" -c Release -o /app/publish /p:UseAppHost=false
-
+RUN dotnet build "backend/OddOneOut.csproj" -c Release -o /app/build
+RUN dotnet publish "backend/OddOneOut.csproj" -c Release -o /app/publish /p:UseAppHost=false
 # STAGE 3: Final Production Image
 # Use the lightweight ASP.NET runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
@@ -33,4 +32,4 @@ COPY --from=backend-build /app/publish .
 # Adjust 'build' to 'dist' if you use Vite instead of Create-React-App
 COPY --from=frontend-build /app-frontend/build ./wwwroot
 
-ENTRYPOINT ["dotnet", "MyProject.dll"]
+ENTRYPOINT ["dotnet", "OddOneOut.dll"]
