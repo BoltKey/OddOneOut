@@ -31,7 +31,7 @@ jobs:
           push: true
           tags: ${{ env.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
-#  DEPLOY JOB (Uncomment this AFTER you run the 'az containerapp create' command successfully once)
+  #  DEPLOY JOB (Uncomment this AFTER you run the 'az containerapp create' command successfully once)
   deploy:
     runs-on: ubuntu-latest
     needs: build
@@ -40,7 +40,7 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-          - name: Deploy to Container App
+      - name: Deploy to Container App
         uses: azure/container-apps-deploy-action@v1
         with:
           imageToDeploy: ${{ env.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
