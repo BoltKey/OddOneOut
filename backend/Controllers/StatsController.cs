@@ -78,6 +78,17 @@ public class StatsController : ControllerBase
         .Skip((page - 1) * pageSize)
         .Take(pageSize)
         .ToListAsync();
+      if (guesses.Count == 0)
+      {
+        return Ok(new
+        {
+          Data = new List<object>(),
+          Page = page,
+          PageSize = pageSize,
+          TotalCount = totalCount,
+          TotalPages = totalPages
+        });
+      }
 
       var history = guesses.Select(g => new
       {
@@ -96,8 +107,13 @@ public class StatsController : ControllerBase
         OddOneOut = g.Game.OddOneOut.Word,
         Clue = g.Game.Clue,
         g.GuessedAt,
-        g.GuessIsInSet
+        g.GuessIsInSet,
+        SuccessCoef = g.Game.SuccessCoef(),
+        GameScore = g.Game.CachedGameScore,
+        otherGamesAmt = g.Game.CardSet.Games.Count - 1,
+        g.RatingChange
       }).ToList();
+      _context.SaveChanges();
 
       return Ok(new
       {
@@ -152,16 +168,25 @@ public class StatsController : ControllerBase
         }).ToList(),
         g.Clue,
         OddOneOut = g.OddOneOut.Word,
-        g.CreatedAt
+        g.CreatedAt,
+        SuccessCoef = g.SuccessCoef(),
+        gameScore = g.CachedGameScore,
+        otherGamesAmt = g.CardSet.Games.Count - 1,
       }).ToList();
+      var clueScore = _context.Users
+        .Where(u => u.Id == userIdString)
+        .Select(u => u.CachedClueRating)
+        .FirstOrDefault();
+      _context.SaveChanges();
 
       return Ok(new
       {
         Data = history,
+        ClueRating = clueScore,
         Page = page,
         PageSize = pageSize,
         TotalCount = totalCount,
-        TotalPages = totalPages
+        TotalPages = totalPages,
       });
     }
     [HttpGet("me"), Authorize]
@@ -191,6 +216,7 @@ public class StatsController : ControllerBase
             Id = user.Id,
             UserName = user.UserName,
             Email = user.Email,
+            GuessRating = user.GuessRating
         };
 
         return Ok(response);
@@ -203,4 +229,5 @@ public class UserProfileDto
     public string Id { get; set; }
     public string UserName { get; set; }
     public string Email { get; set; }
+    public int GuessRating { get; set; }
 }

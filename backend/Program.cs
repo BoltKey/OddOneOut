@@ -134,14 +134,6 @@ authGroup.MapPost("/signup", async (UserManager<User> userManager, SignInManager
     return Results.Ok();
 });
 
-// 5. Get "Me" Endpoint
-authGroup.MapGet("/me", (ClaimsPrincipal user) =>
-{
-    // This works automatically because the Cookie is read by UseAuthentication()
-    if (user.Identity?.IsAuthenticated != true) return Results.Unauthorized();
-    return Results.Ok(new { Username = user.Identity.Name });
-});
-
 app.MapControllers();
 
 app.Run();

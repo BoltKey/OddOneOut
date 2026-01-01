@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OddOneOut.Data;
@@ -11,9 +12,11 @@ using OddOneOut.Data;
 namespace OddOneOut.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260101190442_guesses15")]
+    partial class guesses15
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -207,8 +210,8 @@ namespace OddOneOut.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<float>("CachedGameScore")
-                        .HasColumnType("real");
+                    b.Property<int>("CachedGameScore")
+                        .HasColumnType("integer");
 
                     b.Property<Guid?>("CardSetId")
                         .HasColumnType("uuid");
@@ -282,8 +285,8 @@ namespace OddOneOut.Migrations
                     b.Property<Guid?>("AssignedCardSetId")
                         .HasColumnType("uuid");
 
-                    b.Property<float>("CachedClueRating")
-                        .HasColumnType("real");
+                    b.Property<int>("CachedClueRating")
+                        .HasColumnType("integer");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()

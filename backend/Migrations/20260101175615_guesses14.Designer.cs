@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OddOneOut.Data;
@@ -11,9 +12,11 @@ using OddOneOut.Data;
 namespace OddOneOut.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260101175615_guesses14")]
+    partial class guesses14
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -207,8 +210,8 @@ namespace OddOneOut.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<float>("CachedGameScore")
-                        .HasColumnType("real");
+                    b.Property<int>("CachedGameScore")
+                        .HasColumnType("integer");
 
                     b.Property<Guid?>("CardSetId")
                         .HasColumnType("uuid");
@@ -226,8 +229,6 @@ namespace OddOneOut.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CachedGameScore");
 
                     b.HasIndex("CardSetId");
 
@@ -281,9 +282,6 @@ namespace OddOneOut.Migrations
 
                     b.Property<Guid?>("AssignedCardSetId")
                         .HasColumnType("uuid");
-
-                    b.Property<float>("CachedClueRating")
-                        .HasColumnType("real");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
@@ -342,13 +340,9 @@ namespace OddOneOut.Migrations
 
                     b.HasIndex("AssignedCardSetId");
 
-                    b.HasIndex("CachedClueRating");
-
                     b.HasIndex("CurrentCardId");
 
                     b.HasIndex("CurrentGameId");
-
-                    b.HasIndex("GuessRating");
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");

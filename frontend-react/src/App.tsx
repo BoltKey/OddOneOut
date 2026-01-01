@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, createContext } from "react";
 import LoginPage from "./components/LoginPage";
 import GuessingTab from "./components/GuessingTab"; // Make sure this exists
 import { api } from "./services/api";
@@ -8,8 +8,24 @@ import ClueGivingTab from "./components/ClueGivingTab";
 import GuessHistoryTab from "./components/GuessHistoryTab";
 import ClueHistoryTab from "./components/ClueHistoryTab";
 
+export const UserStatsContext = createContext<{
+  guessRating: number | null;
+  setGuessRating: (rating: number) => void;
+  guessRatingChange: number | null;
+  setGuessRatingChange: (change: number) => void;
+}>({
+  guessRating: null,
+  setGuessRating: () => {},
+  guessRatingChange: null,
+  setGuessRatingChange: () => {},
+});
+
 function App() {
   const [user, setUser] = useState<User | null>(null);
+  const [guessRating, setGuessRating] = useState<number | null>(null);
+  const [guessRatingChange, setGuessRatingChange] = useState<number | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [loggedOut, setLoggedOut] = useState(false);
   const [selectedTab, setSelectedTab] = useState<
@@ -21,6 +37,7 @@ function App() {
     try {
       const userData = await api.getMe();
       setUser(userData);
+      setGuessRating(userData.guessRating);
       setLoggedOut(false);
     } catch (error) {
       console.log("User not logged in");
@@ -60,7 +77,23 @@ function App() {
           justifyContent: "space-between",
         }}
       >
-        <span>User: {user.userName || user.id}</span>
+        <span>
+          User: {user.userName || user.id}, Guess Rating: {guessRating}{" "}
+          {guessRatingChange !== null && (
+            <span
+              className={
+                "rating-change " +
+                (guessRatingChange > 0
+                  ? "positive"
+                  : guessRatingChange < 0
+                  ? "negative"
+                  : "")
+              }
+            >
+              {`(${guessRatingChange >= 0 ? "+" : ""}${guessRatingChange})`}
+            </span>
+          )}
+        </span>
         <button
           onClick={() => {
             setLoggedOut(true);
@@ -98,10 +131,21 @@ function App() {
             Clue History
           </button>
         </div>
-        {selectedTab === "guessing" && <GuessingTab userId={user.id} />}
-        {selectedTab === "clueGiving" && <ClueGivingTab userId={user.id} />}
-        {selectedTab === "guessHistory" && <GuessHistoryTab userId={user.id} />}
-        {selectedTab === "clueHistory" && <ClueHistoryTab userId={user.id} />}
+        <UserStatsContext.Provider
+          value={{
+            guessRating,
+            setGuessRating,
+            guessRatingChange,
+            setGuessRatingChange,
+          }}
+        >
+          {selectedTab === "guessing" && <GuessingTab userId={user.id} />}
+          {selectedTab === "clueGiving" && <ClueGivingTab userId={user.id} />}
+          {selectedTab === "guessHistory" && (
+            <GuessHistoryTab userId={user.id} />
+          )}
+          {selectedTab === "clueHistory" && <ClueHistoryTab userId={user.id} />}
+        </UserStatsContext.Provider>
       </main>
     </div>
   );

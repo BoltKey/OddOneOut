@@ -62,15 +62,27 @@ public class GamesController : ControllerBase
 
         if (game == null)
         {
-            return BadRequest("No available Games found for the user.");
+            return BadRequest("There are no more available games for you, try again later!");
         }
         var currentCard = user.CurrentCard;
         if (user.CurrentCard == null)
         {
-            // randomly select a card from the set
-            var randomCard = game.CardSet.WordCards
-                .OrderBy(c => Guid.NewGuid())
-                .FirstOrDefault();
+            // select a card with bias to be the odd one out
+            var oddOneOutChance = 0.5; // 50% chance to get the odd one out
+
+            WordCard? randomCard;
+            if (new Random().NextDouble() < oddOneOutChance)
+            {
+                randomCard = game.OddOneOut;
+            }
+            else
+            {
+                // get random card from set that is not the odd one out
+                randomCard = game.CardSet.WordCards
+                    .Where(wc => wc.Id != game.OddOneOut.Id)
+                    .OrderBy(c => Guid.NewGuid())
+                    .FirstOrDefault();
+            }
             if (randomCard != null)
             {
                 currentCard = user.CurrentCard = randomCard;
@@ -120,7 +132,7 @@ public class GamesController : ControllerBase
                   (g.ClueGivers.Contains(user) || // Check if user is in that game
                   g.Guesses.Any(gu => gu.Guesser == user)) && // Check if user has guessed in that game
                   g != user.CurrentGame              // Exclude current game
-              ))
+              ) && cs.Games.Sum(g => g.ClueGivers.Count) < 20) // Limit to card sets with less than 20 games
               .OrderBy(c => Guid.NewGuid())
               .Include(cs => cs.WordCards)   // 2. Load the Cards inside the Set
               .FirstOrDefaultAsync();
@@ -128,19 +140,7 @@ public class GamesController : ControllerBase
 
         if (cardSet == null)
         {
-            // create new card set of 5 random words for user and assign to user
-            Console.WriteLine("Creating new CardSet for user");
-            var randomWords = await _context.WordCard
-                .OrderBy(c => Guid.NewGuid())
-                .Take(5)
-                .ToListAsync();
-            cardSet = new CardSet
-            {
-                Id = Guid.NewGuid(),
-                WordCards = randomWords
-            };
-            _context.CardSet.Add(cardSet);
-            await _context.SaveChangesAsync();
+            cardSet = await CardSet.CreateRandomAsync(_context);
         }
         if (cardSet == null)
         {
@@ -163,60 +163,91 @@ public class GamesController : ControllerBase
 
         return Ok(response);
     }
-    [HttpPost("MakeGuess"), Authorize]
-    public async Task<IActionResult> MakeGuess(MakeGuessDto request)
+[HttpPost("MakeGuess"), Authorize]
+public async Task<IActionResult> MakeGuess(MakeGuessDto request)
+{
+    // 1. Data Fetching (Keep this here or in a Repository)
+    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+    var user = await _context.Users
+        .Include(u => u.CurrentCard)
+        .FirstOrDefaultAsync(u => u.Id == userId);
+
+    if (user?.CurrentCard == null) return BadRequest("No active card found.");
+
+// 1. Get the ID of the CardSet first (Fast lookup)
+// You might already have this from the user object, if not, fetch it lightly.
+var cardSetId = await _context.Games
+   .Where(g => g.Id == user.CurrentGameId)
+   .Select(g => g.CardSet.Id)
+   .FirstOrDefaultAsync();
+
+// 2. QUERY A: Load ALL games in this set (including siblings) with their details
+// We fetch the entire batch in one flat query.
+var allGamesInSet = await _context.Games
+    .Where(g => g.CardSet.Id == cardSetId)
+    .Include(g => g.ClueGivers)
+    .Include(g => g.Guesses)
+    .Include(g => g.CardSet) // Load the parent CardSet here
+        .ThenInclude(cs => cs.WordCards)
+    .AsSplitQuery() // Optional, but good practice
+    .ToListAsync();
+
+// 3. Find your current game in the list we just loaded
+// EF Core has already wired up all the relationships in memory!
+var game = allGamesInSet.First(g => g.Id == user.CurrentGameId);
+
+    if (game == null) return BadRequest("Game not found.");
+
+    // 2. Determine Context (Prepare data for the Domain)
+    var isOddOneOutTarget = user.CurrentCard.Id == game.OddOneOut.Id;
+
+    // Logic: If user guesses TRUE, they think it IS in the set (NOT the odd one)
+    // So if the card IS the OddOneOut, and they guess TRUE (In Set), they are WRONG.
+    // InSet means "Not Odd One Out"
+    bool actualIsInSet = !isOddOneOutTarget;
+    bool isCorrect = actualIsInSet == request.GuessIsInSet;
+
+    // 3. EXECUTE BUSINESS LOGIC (The new clean line!)
+    // The User entity now handles its own stats and cleanup.
+    // 4. Persistence (Save the Log and the User updates)
+    var guessRecord = new Guess
     {
-        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var user = await _context.Users.Include(u => u.CurrentCard).FirstOrDefaultAsync(u => u.Id == userIdString);
-        if (user == null)
-        {
-            _logger.LogWarning("user not found");
-            return Unauthorized("User not found.");
-        }
-        var game = await _context.Games
-            .Include(g => g.OddOneOut)
-            .Include(g => g.CardSet)
-                .ThenInclude(cs => cs.WordCards)
-            .FirstOrDefaultAsync(g => g.Id == user.CurrentGameId);
-        if (game == null)
-        {
-            _logger.LogWarning("game not found");
-            return NotFound("Game not found.");
-        }
-        var allWords = game.CardSet.WordCards;
-        var currentCard = user.CurrentCard;
-        if (currentCard == null)
-        {
-            _logger.LogWarning("current card not found");
-            return NotFound("Current card not found for the user.");
-        }
-        var isInSet = currentCard.Id != game.OddOneOut.Id;
-        var isCorrect = isInSet == request.GuessIsInSet;
-        _context.Guesses.Add(new Guess
-        {
-            Id = Guid.NewGuid(),
-            Game = game,
-            Guesser = user,
-            GuessIsInSet = request.GuessIsInSet,
-            SelectedCard = currentCard,
-            GuessedAt = DateTime.UtcNow
-        });
-        // clear assigned guess
-        user.CurrentCard = null;
-        user.CurrentGame = null;
-        // construct response with all other words and success rate on them
+        Id = Guid.NewGuid(),
+        Game = game,       // Use ID references if possible to save DB roundtrips, but entity is fine
+        Guesser = user,
+        GuessedAt = DateTime.UtcNow,
+        GuessIsInSet = request.GuessIsInSet,
+        SelectedCard = user.CurrentCard,
+        RatingChange = 0
+    };
+    game.Guesses.Add(guessRecord);
+    game.RecalculateScore();
+    foreach (var otherGame in game.CardSet.Games)
+    {
+      otherGame.RecalculateScore();
+    }
+    int oldRating = user.GuessRating;
+    user.ProcessGuessResult(isCorrect, isOddOneOutTarget);
+    int ratingChange = user.GuessRating - oldRating;
+    guessRecord.RatingChange = ratingChange;
 
+    game.Guesses.Add(guessRecord);
+    _context.Guesses.Add(guessRecord);
+    await _context.SaveChangesAsync();
 
-        await _context.SaveChangesAsync();
-        return Ok(new {
-          isCorrect,
-          clue = game.Clue,
-          allWords = allWords.Select(w => new {
+    // 5. Response
+    return Ok(new {
+        isCorrect,
+        newRating = user.GuessRating, // Return the new rating!
+        ratingChange,
+        clue = game.Clue,
+        allWords = game.CardSet.WordCards.Select(w => new {
             Word = w.Word,
             IsOddOneOut = w.Id == game.OddOneOut.Id
-          })
+        })
     });
-    }
+}
     [HttpPost("CreateGame"), Authorize]
     public async Task<IActionResult> CreateGame(CreateGameDto request)
     {

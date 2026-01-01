@@ -16,13 +16,17 @@ export default function ClueHistoryTab({ userId }: { userId: string }) {
       }[];
       createdAt: string;
       clue: string;
+      gameScore: number | null;
+      successCoef: number | null;
     }[]
   >([]);
   const [message, setMessage] = useState<string | null>(null);
+  const [clueRating, setClueRating] = useState<number | null>(null);
   const fetchClueHistory = async () => {
     try {
       const history = await api.getClueHistory(1);
       setClueHistory(history.data);
+      setClueRating(history.clueRating);
       setMessage(null);
     } catch (err: any) {
       setMessage(err.message);
@@ -37,11 +41,19 @@ export default function ClueHistoryTab({ userId }: { userId: string }) {
       {clueHistory.length > 0 && (
         <div>
           <h3>Your Clue History:</h3>
+          Your Clue rating is:{" "}
+          <span>{clueRating !== null ? clueRating : "N/A"}</span>
           <div className="clue-history-container">
             {clueHistory.map((entry, index) => (
               <div key={index} className={"clue-history-entry"}>
                 {entry.createdAt}
                 {entry.clue && <div>Clue: "{entry.clue}"</div>}
+                {entry.gameScore !== null && (
+                  <div>
+                    Game Score: {entry.gameScore} | Success Coef:{" "}
+                    {entry.successCoef !== null ? entry.successCoef : "N/A"}
+                  </div>
+                )}
                 {entry.cardSetWords.map((card) => (
                   <div
                     key={card.word}

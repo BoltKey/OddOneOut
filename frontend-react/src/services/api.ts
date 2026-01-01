@@ -45,7 +45,8 @@ export const api = {
       method: "POST",
     });
     if (!res.ok) {
-      throw new Error("Failed to fetch assigned guess.");
+      const errorText = await res.text();
+      throw new Error(errorText || "Failed to fetch assigned guess.");
     }
     return res.json();
   },

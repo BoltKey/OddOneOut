@@ -18,6 +18,9 @@ export default function GuessHistoryTab({ userId }: { userId: string }) {
       guessIsInSet: boolean;
       selectedCard: string;
       clue: string;
+      gameScore: number | null;
+      successCoef: number | null;
+      ratingChange: number;
     }[]
   >([]);
   const [message, setMessage] = useState<string | null>(null);
@@ -53,6 +56,19 @@ export default function GuessHistoryTab({ userId }: { userId: string }) {
               >
                 {entry.guessedAt}
                 {entry.clue && <div>Clue: "{entry.clue}"</div>}
+                {entry.ratingChange !== 0 && (
+                  <div>
+                    {entry.ratingChange < 0
+                      ? "-" + entry.ratingChange
+                      : `+${entry.ratingChange}`}
+                  </div>
+                )}
+                {entry.gameScore !== null && (
+                  <div>
+                    Game Score: {entry.gameScore} | Success Coef:{" "}
+                    {entry.successCoef !== null ? entry.successCoef : "N/A"}
+                  </div>
+                )}
                 {entry.cardSetWords.map((card) => (
                   <div
                     key={card.word}

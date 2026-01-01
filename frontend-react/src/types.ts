@@ -42,5 +42,6 @@ export interface User {
   currentGame?: Game;
   currentGameId?: string;
   guesses: Guess[];
+  guessRating: number;
   createdGames: Game[];
 }
