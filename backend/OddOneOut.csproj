@@ -20,12 +20,12 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
 </ItemGroup>
 <ItemGroup>
-    <None Update="possibleCards.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="possibleClues.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
+  <None Update="Data\possibleCards.txt">
+    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+  </None>
+  <None Update="Data\possibleClues.txt">
+    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+  </None>
+</ItemGroup>
 
 </Project>
