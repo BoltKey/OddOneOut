@@ -248,7 +248,12 @@ public class StatsController : ControllerBase
             Id = user.Id,
             UserName = user.UserName,
             Email = user.Email,
-            GuessRating = user.GuessRating
+            GuessRating = user.GuessRating,
+            ClueRating = user.CachedClueRating,
+            GuessEnergy = user.GuessEnergy,
+            ClueEnergy = user.ClueEnergy,
+            NextGuessRegenTime = user.NextGuessRegenTime,
+            NextClueRegenTime = user.NextClueRegenTime
         };
 
         return Ok(response);
@@ -262,4 +267,9 @@ public class UserProfileDto
     public string UserName { get; set; }
     public string Email { get; set; }
     public int GuessRating { get; set; }
+    public float ClueRating { get; set; }
+    public int GuessEnergy { get; set; }
+    public int ClueEnergy { get; set; }
+    public DateTime? NextGuessRegenTime { get; set; }
+    public DateTime? NextClueRegenTime { get; set; }
 }

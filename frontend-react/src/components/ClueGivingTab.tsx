@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { api } from "../services/api";
+import { UserStatsContext } from "../App";
 
 export default function ClueGivingTab({ userId }: { userId: string }) {
   const [currentCards, setCurrentCards] = useState<string[] | null>(null);
@@ -9,6 +10,7 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(
     null
   );
+  const { loadUser } = useContext(UserStatsContext);
   const fetchAssignedGame = async () => {
     try {
       const assigned = await api.assignedClueGiving();
@@ -59,6 +61,7 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
           setClue("");
           setSelectedCardIndex(null);
           fetchAssignedGame();
+          await loadUser();
         }}
       >
         Submit Clue

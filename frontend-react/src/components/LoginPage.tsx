@@ -49,6 +49,7 @@ export default function LoginPage({ onLoginSuccess }: Props) {
         borderRadius: 8,
       }}
     >
+      <div className="logo"></div>
       <h2>{isRegistering ? "Create Account" : "Sign In"}</h2>
 
       <form

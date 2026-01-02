@@ -67,8 +67,12 @@ public class GamesController : ControllerBase
         var currentCard = user.CurrentCard;
         if (user.CurrentCard == null)
         {
+            if (!user.TrySpendGuessEnergy())
+            {
+                return BadRequest($"You are out of guesses for now. Please wait {user.NextGuessRegenTime} before guessing again.");
+            }
             // select a card with bias to be the odd one out
-            var oddOneOutChance = 0.5; // 50% chance to get the odd one out
+            var oddOneOutChance = Constants.OddOneOutChance;
 
             WordCard? randomCard;
             if (new Random().NextDouble() < oddOneOutChance)
@@ -126,6 +130,10 @@ public class GamesController : ControllerBase
         .FirstOrDefaultAsync();
         if (cardSet == null)
         {
+          if (!user.TrySpendClueEnergy())
+          {
+              return BadRequest($"You are out of clues for now. Please wait {user.NextClueRegenTime} before guessing again.");
+          }
             cardSet = await _context.CardSet
               .Where(cs => !_context.Games.Any(g =>
                   g.CardSet.Id == cs.Id &&           // Match the game to the card set
@@ -175,27 +183,28 @@ public async Task<IActionResult> MakeGuess(MakeGuessDto request)
 
     if (user?.CurrentCard == null) return BadRequest("No active card found.");
 
-// 1. Get the ID of the CardSet first (Fast lookup)
-// You might already have this from the user object, if not, fetch it lightly.
-var cardSetId = await _context.Games
-   .Where(g => g.Id == user.CurrentGameId)
-   .Select(g => g.CardSet.Id)
-   .FirstOrDefaultAsync();
 
-// 2. QUERY A: Load ALL games in this set (including siblings) with their details
-// We fetch the entire batch in one flat query.
-var allGamesInSet = await _context.Games
-    .Where(g => g.CardSet.Id == cardSetId)
-    .Include(g => g.ClueGivers)
-    .Include(g => g.Guesses)
-    .Include(g => g.CardSet) // Load the parent CardSet here
-        .ThenInclude(cs => cs.WordCards)
-    .AsSplitQuery() // Optional, but good practice
-    .ToListAsync();
+    // 1. Get the ID of the CardSet first (Fast lookup)
+    // You might already have this from the user object, if not, fetch it lightly.
+    var cardSetId = await _context.Games
+      .Where(g => g.Id == user.CurrentGameId)
+      .Select(g => g.CardSet.Id)
+      .FirstOrDefaultAsync();
 
-// 3. Find your current game in the list we just loaded
-// EF Core has already wired up all the relationships in memory!
-var game = allGamesInSet.First(g => g.Id == user.CurrentGameId);
+    // 2. QUERY A: Load ALL games in this set (including siblings) with their details
+    // We fetch the entire batch in one flat query.
+    var allGamesInSet = await _context.Games
+        .Where(g => g.CardSet.Id == cardSetId)
+        .Include(g => g.ClueGivers)
+        .Include(g => g.Guesses)
+        .Include(g => g.CardSet) // Load the parent CardSet here
+            .ThenInclude(cs => cs.WordCards)
+        .AsSplitQuery() // Optional, but good practice
+        .ToListAsync();
+
+    // 3. Find your current game in the list we just loaded
+    // EF Core has already wired up all the relationships in memory!
+    var game = allGamesInSet.First(g => g.Id == user.CurrentGameId);
 
     if (game == null) return BadRequest("Game not found.");
 
@@ -228,6 +237,7 @@ var game = allGamesInSet.First(g => g.Id == user.CurrentGameId);
       otherGame.RecalculateScore();
     }
     int oldRating = user.GuessRating;
+
     user.ProcessGuessResult(isCorrect, isOddOneOutTarget);
     int ratingChange = user.GuessRating - oldRating;
     guessRecord.RatingChange = ratingChange;
@@ -256,11 +266,11 @@ var game = allGamesInSet.First(g => g.Id == user.CurrentGameId);
             return BadRequest("Invalid ID format.");
           }
 
-          var oddOneOut = request.OddOneOut;
-          if (string.IsNullOrWhiteSpace(oddOneOut))
-          {
-            return BadRequest("Clue cannot be empty.");
-          }
+        var oddOneOut = request.OddOneOut;
+        if (string.IsNullOrWhiteSpace(oddOneOut))
+        {
+          return BadRequest("Clue cannot be empty.");
+        }
         bool result = _wordCheckerService.IsValidPlay(request.clue);
         if (!result)
         {
@@ -275,6 +285,8 @@ var game = allGamesInSet.First(g => g.Id == user.CurrentGameId);
         {
             return BadRequest("User is not assigned to this CardSet.");
         }
+
+
         var cardSet = await _context.CardSet.FindAsync(wordSetId);
         // 3. Check if they actually exist
         if (cardSet == null || oddOneOut == null)

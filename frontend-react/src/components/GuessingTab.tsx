@@ -14,6 +14,7 @@ export default function GuessingTab({ userId }: { userId: string }) {
     setGuessRating,
     guessRatingChange,
     setGuessRatingChange,
+    loadUser,
   } = useContext(UserStatsContext);
   const [solutionWords, setSolutionWords] = useState<
     { word: string; type: "oddOneOut" | "inSet" | "dontknow" | "othercard" }[]
@@ -28,6 +29,7 @@ export default function GuessingTab({ userId }: { userId: string }) {
       setSolutionWords([]);
       setIsCorrect(null);
       setMessage(null);
+      await loadUser();
     } catch (err: any) {
       setMessage(err.message);
     }
@@ -89,13 +91,14 @@ export default function GuessingTab({ userId }: { userId: string }) {
               setIsCorrect(result.isCorrect);
               setGuessRating(result.newRating);
               setGuessRatingChange(result.ratingChange);
+              await loadUser();
             } catch (err: any) {
               setMessage(err.message);
             }
           }}
           className={isIn ? "button-related" : "button-odd-one-out"}
         >
-          {isIn ? "Related" : "Odd One Out"}
+          {isIn ? "Match" : "Misfit"}
         </button>
       );
     }
@@ -104,7 +107,8 @@ export default function GuessingTab({ userId }: { userId: string }) {
     buttons.push(
       <button
         onClick={async () => {
-          fetchAssignedGame();
+          await fetchAssignedGame();
+          await loadUser();
         }}
       >
         Next game

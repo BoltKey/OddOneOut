@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization; // Add this
 
 namespace OddOneOut.Data; // Ensure this namespace matches your project name
@@ -137,8 +138,18 @@ public class Game
         CachedGameScore = result;
         return result;
       }
-      // average success coef of other games
-      float otherAvg = (float)otherGames.Average(g => g.SuccessCoef() ?? 100);
+      // weighed average by number of cluegivers of success coef of other games
+      float totalWeight = 0;
+      foreach (var g in otherGames)
+      {
+        totalWeight += g.ClueGivers.Count;
+      }
+      float weightedSum = 0;
+      foreach (var g in otherGames)
+      {
+        weightedSum += (g.SuccessCoef() ?? 100) * g.ClueGivers.Count;
+      }
+      float otherAvg = totalWeight == 0 ? 0 : weightedSum / totalWeight;
       result = (float)(successCoef - otherAvg);
       CachedGameScore = result;
       return result;
@@ -166,74 +177,198 @@ public class Guess
     public int RatingChange { get; set; } = 0;
     public bool IsCorrect() => GuessIsInSet == (SelectedCard != Game?.OddOneOut);
 }
+public static class Constants {
+    public const int InitialGuessRating = 1000;
+    public const int MaxGuessEnergy = 50;
+    public const int MaxClueEnergy = 5;
+    public const int BaseRewardInset = 10;
+    public const int BasePenaltyInset = 20;
+    public const int BaseRewardOddOne = 20;
+    public const int BasePenaltyOddOne = 50;
+    public const float OddOneOutChance = 0.4f;
+    public const float GuessEnergyRegenIntervalMinutes = 0.3f;
+    public const float ClueEnergyRegenIntervalMinutes = 4f;
+}
 [Index(nameof(GuessRating))]
 [Index(nameof(CachedClueRating))]
+
 public class User : IdentityUser
 {
-  public CardSet? AssignedCardSet { get; set; }
-  public Game? CurrentGame { get; set; }
-  public Guid? CurrentGameId { get; set; }
-  public WordCard? CurrentCard { get; set; }
-  public List<Game> CreatedGames { get; set; } = new();
-  public List<Guess> Guesses { get; set; } = new();
-  // correct guess on inset: +10
-  // incorrect guess on inset: -30
-  // correct guess on odd one out: +20
-  // incorrect guess on odd one out: -60
-  public int GuessRating { get; set; } = 1000;
-  public float CachedClueRating { get; set; } = 0;
-  private const float PivotRating = 1000f;
-  private const int minRating = 100;
-  private const int BaseRewardInset = 10;
-  private const int BasePenaltyInset = 20;
-  private const int BaseRewardOddOne = 20;
-  private const int BasePenaltyOddOne = 50;
-  public void AdjustGuessRating(int delta)
-  {
-    float multiplier;
-    float safeRating = Math.Max(GuessRating, minRating);
-    if (delta > 0)
+
+    // --- Backing Fields (The actual storage) ---
+    // We explicitly define these so we can manipulate them in the Getters
+    private int _guessEnergy = Constants.MaxGuessEnergy;
+    private int _clueEnergy = Constants.MaxClueEnergy;
+    private DateTime _lastGuessEnergyRegen = DateTime.UtcNow;
+    private DateTime _lastClueEnergyRegen = DateTime.UtcNow;
+
+    // --- Smart Properties ---
+
+    public int GuessEnergy
     {
-      multiplier = PivotRating / safeRating;
+        get => GetRegeneratedEnergy(ref _guessEnergy, ref _lastGuessEnergyRegen, Constants.GuessEnergyRegenIntervalMinutes, Constants.MaxGuessEnergy);
+        set => SetEnergy(ref _guessEnergy, ref _lastGuessEnergyRegen, value);
     }
-    else
+
+    public int ClueEnergy
     {
-      multiplier = safeRating / PivotRating;
+        get => GetRegeneratedEnergy(ref _clueEnergy, ref _lastClueEnergyRegen, Constants.ClueEnergyRegenIntervalMinutes, Constants.MaxClueEnergy);
+        set => SetEnergy(ref _clueEnergy, ref _lastClueEnergyRegen, value);
     }
-    if (delta > 0 && (int)(delta * multiplier) == 0) delta = 1;
-    int finalDelta = (int)(delta * multiplier);
 
-    GuessRating += finalDelta;
-    if (GuessRating < minRating) GuessRating = minRating; // Prevent ratings below minimum
-  }
-  public void ProcessGuessResult(bool isCorrect, bool isOddOneOutTarget)
+    public DateTime LastGuessEnergyRegen
     {
-      // 1. Calculate Base Points based on your specific rules
-      int baseDelta = 0;
-
-      if (isOddOneOutTarget)
-      {
-        baseDelta = isCorrect ? BaseRewardOddOne : -BasePenaltyOddOne;
-      }
-      else // It was an Inset card
-      {
-        baseDelta = isCorrect ? BaseRewardInset : -BasePenaltyInset;
-      }
-
-      // 2. Apply the "Elo-like" Scaling (The logic we discussed earlier)
-      AdjustGuessRating(baseDelta);
-
-      // 3. Clear the user's state (The cleanup logic)
-      CurrentCard = null;
-      CurrentGame = null;
+        get => GetRegeneratedDate(ref _guessEnergy, ref _lastGuessEnergyRegen, Constants.GuessEnergyRegenIntervalMinutes, Constants.MaxGuessEnergy);
+        set => _lastGuessEnergyRegen = value;
     }
-  public float ClueRating()
-  {
-      var result = 1000f;
-      foreach (var g in CreatedGames)
-      {
-          result += g.GameScore();
-      }
-      return result;
-  }
+
+    public DateTime LastClueEnergyRegen
+    {
+        get => GetRegeneratedDate(ref _clueEnergy, ref _lastClueEnergyRegen, Constants.ClueEnergyRegenIntervalMinutes, Constants.MaxClueEnergy);
+        set => _lastClueEnergyRegen = value;
+    }
+
+    // --- Computed UI Properties ---
+
+    [NotMapped]
+    public DateTime? NextGuessRegenTime => GetNextRegenTime(GuessEnergy, LastGuessEnergyRegen, Constants.GuessEnergyRegenIntervalMinutes, Constants.MaxGuessEnergy);
+
+    [NotMapped]
+    public DateTime? NextClueRegenTime => GetNextRegenTime(ClueEnergy, LastClueEnergyRegen, Constants.ClueEnergyRegenIntervalMinutes, Constants.MaxClueEnergy);
+
+    // --- Functional Helpers (The Logic Core) ---
+
+    // Helper 1: Handles the Getter for Energy
+    private int GetRegeneratedEnergy(ref int current, ref DateTime last, float interval, int max)
+    {
+        RegenerateEnergy(ref current, ref last, interval, max);
+        return current;
+    }
+
+    // Helper 2: Handles the Getter for Dates
+    private DateTime GetRegeneratedDate(ref int current, ref DateTime last, float interval, int max)
+    {
+        RegenerateEnergy(ref current, ref last, interval, max);
+        return last;
+    }
+
+    // Helper 3: Handles the Setter
+    private void SetEnergy(ref int current, ref DateTime last, int value)
+    {
+        current = value;
+        // Reset the timer whenever energy is manually set (refilled/consumed)
+        last = DateTime.UtcNow;
+    }
+
+    // Helper 4: Handles Next Regen Calculation
+    private DateTime? GetNextRegenTime(int current, DateTime last, float interval, int max)
+    {
+        if (current >= max) return null;
+        return last.AddMinutes(interval);
+    }
+
+    // Helper 5: The Actual Math (Your existing logic)
+    private void RegenerateEnergy(ref int currentEnergy, ref DateTime lastRegen, float intervalMinutes, int max)
+    {
+        if (currentEnergy >= max)
+        {
+            lastRegen = DateTime.UtcNow;
+            return;
+        }
+
+        var timePassed = DateTime.UtcNow - lastRegen;
+        if (timePassed.TotalMinutes >= intervalMinutes)
+        {
+            int pointsGained = (int)(timePassed.TotalMinutes / intervalMinutes);
+            if (pointsGained > 0)
+            {
+                currentEnergy += pointsGained;
+                lastRegen = lastRegen.AddMinutes(pointsGained * intervalMinutes);
+
+                if (currentEnergy >= max)
+                {
+                    currentEnergy = max;
+                    lastRegen = DateTime.UtcNow;
+                }
+            }
+        }
+    }
+
+    // --- Existing Navigation Properties ---
+    public CardSet? AssignedCardSet { get; set; }
+    public Game? CurrentGame { get; set; }
+    public Guid? CurrentGameId { get; set; }
+    public WordCard? CurrentCard { get; set; }
+    public List<Game> CreatedGames { get; set; } = new();
+    public List<Guess> Guesses { get; set; } = new();
+
+    // --- Existing Rating Logic ---
+    public int GuessRating { get; set; } = Constants.InitialGuessRating;
+    public float CachedClueRating { get; set; } = 0;
+
+    private const float PivotRating = 1000f;
+    private const int minRating = 100;
+
+    public void AdjustGuessRating(int delta)
+    {
+        float multiplier;
+        float safeRating = Math.Max(GuessRating, minRating);
+
+        if (delta > 0) multiplier = PivotRating / safeRating;
+        else multiplier = safeRating / PivotRating;
+
+        if (delta > 0 && (int)(delta * multiplier) == 0) delta = 1;
+        int finalDelta = (int)(delta * multiplier);
+
+        GuessRating += finalDelta;
+        if (GuessRating < minRating) GuessRating = minRating;
+    }
+
+    public void ProcessGuessResult(bool isCorrect, bool isOddOneOutTarget)
+    {
+        int baseDelta = 0;
+        if (isOddOneOutTarget)
+            baseDelta = isCorrect ? Constants.BaseRewardOddOne : -Constants.BasePenaltyOddOne;
+        else
+            baseDelta = isCorrect ? Constants.BaseRewardInset : -Constants.BasePenaltyInset;
+
+        AdjustGuessRating(baseDelta);
+
+        CurrentCard = null;
+        CurrentGame = null;
+    }
+    public bool TrySpendGuessEnergy(int amount = 1)
+    {
+        // Access the property (GuessEnergy) to ensure regen triggers first!
+        if (GuessEnergy >= amount)
+        {
+            // We modify the backing field directly to avoid triggering the setter logic (which resets the timer)
+            _guessEnergy -= amount;
+            return true;
+        }
+        return false;
+    }
+    public bool TrySpendClueEnergy(int amount = 1)
+    {
+        if (ClueEnergy >= amount)
+        {
+            _clueEnergy -= amount;
+            return true;
+        }
+        return false;
+    }
+
+    public float ClueRating()
+    {
+        var result = 1000f;
+        // Added null check '?' just in case EF didn't load the collection
+        if (CreatedGames != null)
+        {
+            foreach (var g in CreatedGames)
+            {
+                result += g.GameScore();
+            }
+        }
+        return result;
+    }
 }

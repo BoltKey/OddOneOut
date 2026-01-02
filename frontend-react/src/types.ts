@@ -44,4 +44,9 @@ export interface User {
   guesses: Guess[];
   guessRating: number;
   createdGames: Game[];
+  clueRating: number;
+  guessEnergy: number;
+  clueEnergy: number;
+  nextGuessRegenTime: string | null;
+  nextClueRegenTime: string | null;
 }

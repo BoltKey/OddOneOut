@@ -14,24 +14,15 @@ input {
 }
 
 .button-related {
-  background-color: #4caf50;
+  background-color: var(--insetcolor);
   color: white;
   border: none;
   padding: 10px 20px;
   margin: 5px 0;
   border-radius: 5px;
 }
-
-.button-related {
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  margin: 5px;
-  cursor: pointer;
-}
 .button-odd-one-out {
-  background-color: #f44336;
+  background-color: var(--misfitcolor);
   color: white;
   border: none;
   padding: 10px 20px;
@@ -44,7 +35,7 @@ input {
 }
 .solution-word.odd-one-out {
   font-weight: bold;
-  color: #f44336;
+  color: var(--misfitcolor);
 }
 
 #root {
@@ -53,6 +44,11 @@ input {
   min-height: 100vh;
   width: 100%;
   margin: auto;
+  display: flex;
+  flex-direction: column;
+
+  --insetcolor: #138800;
+  --misfitcolor: #e54400;
 }
 .app-container {
   max-width: 600px;
@@ -63,21 +59,21 @@ input {
 }
 .correct {
   background-color: #d4edda;
-  color: #155724;
+  color: var(--insetcolor);
   padding: 15px;
   border-radius: 5px;
 }
 .incorrect {
   background-color: #f8d7da;
-  color: #721c24;
+  color: var(--misfitcolor);
   padding: 15px;
   border-radius: 5px;
 }
 
 .clue-card {
   cursor: pointer;
-  background-color: #4caf50;
-  color: black;
+  background-color: var(--insetcolor);
+  color: white;
   padding: 5px;
   border-radius: 5px;
   margin: 2px 0;
@@ -88,8 +84,8 @@ input {
 }
 
 .clue-card.selected {
-  background-color: #721c24;
-  color: white;
+  background-color: var(--misfitcolor);
+  color: black;
 }
 
 .history-word-container {
@@ -100,7 +96,7 @@ input {
 }
 .history-word-container.odd-one-out {
   font-weight: bold;
-  color: #f44336;
+  color: var(--misfitcolor);
 }
 .history-word-container.selected-card {
   outline: solid black 2px;
@@ -122,10 +118,10 @@ input {
   font-weight: bold;
 }
 .rating-change.positive {
-  color: green;
+  color: var(--insetcolor);
 }
 .rating-change.negative {
-  color: red;
+  color: var(--misfitcolor);
 }
 
 .current-clue {
@@ -169,10 +165,10 @@ input {
   opacity: 0.5;
 }
 .guessing-card.inSet {
-  background-color: #4caf50;
+  background-color: var(--insetcolor);
 }
 .guessing-card.oddOneOut {
-  background-color: #f44336;
+  background-color: var(--misfitcolor);
 }
 .current-card {
 }
@@ -195,4 +191,13 @@ input {
 }
 .leaderboard-table th {
   background-color: #f2f2f2;
+}
+
+.logo {
+  width: 135px;
+  height: 60px;
+  background-image: url("./misfitlogo.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+  margin: 20px auto;
 }
