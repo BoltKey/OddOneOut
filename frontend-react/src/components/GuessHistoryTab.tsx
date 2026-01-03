@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../services/api";
 
 export default function GuessHistoryTab({ userId }: { userId: string }) {
@@ -20,19 +20,38 @@ export default function GuessHistoryTab({ userId }: { userId: string }) {
       ratingChange: number;
     }[]
   >([]);
+  const page = useRef<number>(1);
   const [message, setMessage] = useState<string | null>(null);
-  const fetchGuessHistory = async () => {
+  const fetchGuessHistory = async (pageNumber: number) => {
     try {
-      const history = await api.getGuessHistory(1);
-      setGuessHistory(history.data);
+      const history = await api.getGuessHistory(pageNumber);
+      setGuessHistory((guessHistory) => [...guessHistory, ...history.data]);
       setMessage(null);
     } catch (err: any) {
       setMessage(err.message);
     }
   };
   useEffect(() => {
-    fetchGuessHistory();
+    fetchGuessHistory(1);
+    let intervalId = setInterval(() => {
+      checkScrollAtBottom();
+    }, 1000);
+    return () => clearInterval(intervalId);
   }, []);
+  // check if scroll is at bottom to load more on interval
+
+  const checkScrollAtBottom = useCallback(() => {
+    const container = document.querySelector(".app-container");
+    if (container) {
+      if (
+        container.scrollHeight - document.querySelector("html")!.scrollTop <=
+        window.innerHeight + 100
+      ) {
+        fetchGuessHistory(page.current + 1);
+        page.current = page.current + 1;
+      }
+    }
+  }, [page]);
   return (
     <div>
       {message && <div>{message}</div>}

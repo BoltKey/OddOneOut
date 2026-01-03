@@ -43,6 +43,10 @@ public class GamesController : ControllerBase
         if (game == null)
         {
             // assign new game to user
+            if (!user.TrySpendGuessEnergy())
+            {
+                return BadRequest($"You are out of guesses for now. Please wait {user.NextGuessRegenTime} before guessing again.");
+            }
             game = await _context.Games
               .Where(g => !g.ClueGivers.Any(u => u.Id == userIdString)) // Ensure user is not a ClueGiver in the game
               // ensure user hasn't guessed in any game with same word set yet
@@ -67,10 +71,7 @@ public class GamesController : ControllerBase
         var currentCard = user.CurrentCard;
         if (user.CurrentCard == null)
         {
-            if (!user.TrySpendGuessEnergy())
-            {
-                return BadRequest($"You are out of guesses for now. Please wait {user.NextGuessRegenTime} before guessing again.");
-            }
+
             // select a card with bias to be the odd one out
             var oddOneOutChance = Constants.OddOneOutChance;
 
