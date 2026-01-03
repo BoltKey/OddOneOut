@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OddOneOut.Data;
 using System.Security.Claims;
+using Microsoft.Extensions.Configuration;
 
 [ApiController]
 [Route("api/[controller]")] // Routes will be /api/user/login, /api/user/me, etc.
@@ -14,15 +15,18 @@ public class UserController : ControllerBase
     private readonly AppDbContext _context;
     private readonly UserManager<User> _userManager;
     private readonly SignInManager<User> _signInManager;
+    private readonly IConfiguration _configuration;
 
     public UserController(
         AppDbContext context,
         UserManager<User> userManager,
-        SignInManager<User> signInManager)
+        SignInManager<User> signInManager,
+        IConfiguration configuration)
     {
         _context = context;
         _userManager = userManager;
         _signInManager = signInManager;
+        _configuration = configuration;
     }
 
     // ==========================================
@@ -183,7 +187,8 @@ public class UserController : ControllerBase
     public async Task<IActionResult> GoogleCallback()
     {
         var info = await _signInManager.GetExternalLoginInfoAsync();
-        if (info == null) return Redirect("http://localhost:5173/login?error=auth_failed");
+        var clientUrl = _configuration["ClientUrl"] ?? "http://localhost:5173";
+        if (info == null) return Redirect($"{clientUrl}/login?error=auth_failed");
 
         // Grab the Google Name (e.g., "John Doe") and Email
         var googleName = info.Principal.FindFirstValue(ClaimTypes.Name);
@@ -218,10 +223,10 @@ public class UserController : ControllerBase
 
                         // Refresh cookie
                         await _signInManager.SignInAsync(currentUser, isPersistent: true);
-                        return Redirect("http://localhost:5173/");
+                        return Redirect($"{clientUrl}/");
                     }
                 }
-                return Redirect("http://localhost:5173/");
+                return Redirect($"{clientUrl}/");
             }
         }
 
@@ -229,7 +234,7 @@ public class UserController : ControllerBase
         var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: true);
         if (result.Succeeded)
         {
-            return Redirect("http://localhost:5173/");
+            return Redirect($"{clientUrl}/");
         }
 
         // 3. New User Registration
@@ -243,10 +248,10 @@ public class UserController : ControllerBase
         {
             await _userManager.AddLoginAsync(newUser, info);
             await _signInManager.SignInAsync(newUser, isPersistent: true);
-            return Redirect("http://localhost:5173/");
+            return Redirect($"{clientUrl}/");
         }
 
-        return Redirect("http://localhost:5173/login?error=unknown");
+        return Redirect($"{clientUrl}/login?error=unknown");
     }
 
     // ==========================================
