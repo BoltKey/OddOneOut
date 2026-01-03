@@ -4,7 +4,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
-using System.Security.Claims; // Needed for the "me" endpoint
+using System.Security.Claims;
+using Microsoft.AspNetCore.HttpOverrides; // Needed for the "me" endpoint
 // using Microsoft.AspNetCore.OpenApi; // Uncomment if needed for .WithOpenApi()
 
 var builder = WebApplication.CreateBuilder(args);
@@ -138,6 +139,11 @@ else
 app.UseStaticFiles();
 app.MapFallbackToFile("index.html");
 app.UseRouting();
+// CRITICAL for Container Apps / Docker
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
 app.UseAuthentication();
 app.UseAuthorization();
 
