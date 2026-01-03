@@ -198,7 +198,7 @@ public class StatsController : ControllerBase
             .Select(u => new
             {
                 u.Id,
-                u.UserName,
+                UserName = u.DisplayName,
                 u.GuessRating
             })
             .ToListAsync();
@@ -214,66 +214,13 @@ public class StatsController : ControllerBase
             .Select(u => new
             {
                 u.Id,
-                u.UserName,
+                UserName = u.DisplayName,
                 ClueRating = u.CachedClueRating
             })
             .ToListAsync();
 
         return Ok(topUsers);
     }
-    [HttpGet("me"), Authorize]
-    public async Task<ActionResult<UserProfileDto>> GetMe()
-    {
-        // 2. Get the User ID from the ClaimsPrincipal (the token)
-        // This doesn't hit the DB, it just reads the "sub" or "nameid" claim
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        if (string.IsNullOrEmpty(userId))
-        {
-            return Unauthorized();
-        }
-
-        // 3. Query the DB including necessary relationships
-        var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.Id == userId);
-
-        if (user == null)
-        {
-            return NotFound("User profile not found.");
-        }
-
-        // 4. Map to DTO to avoid circular reference loops
-        var response = new UserProfileDto
-        {
-            Id = user.Id,
-            UserName = user.UserName,
-            Email = user.Email,
-            GuessRating = user.GuessRating,
-            ClueRating = user.CachedClueRating,
-            GuessEnergy = user.GuessEnergy,
-            ClueEnergy = user.ClueEnergy,
-            NextGuessRegenTime = user.NextGuessRegenTime,
-            NextClueRegenTime = user.NextClueRegenTime,
-            GuessRank = await _context.Users.CountAsync(u => u.GuessRating > user.GuessRating) + 1,
-            ClueRank = await _context.Users.CountAsync(u => u.CachedClueRating > user.CachedClueRating) + 1
-        };
-
-        return Ok(response);
-    }
 }
 
 
-public class UserProfileDto
-{
-    public string Id { get; set; }
-    public string UserName { get; set; }
-    public string Email { get; set; }
-    public int GuessRating { get; set; }
-    public int GuessRank { get; set; }
-    public float ClueRating { get; set; }
-    public int ClueRank { get; set; }
-    public int GuessEnergy { get; set; }
-    public int ClueEnergy { get; set; }
-    public DateTime? NextGuessRegenTime { get; set; }
-    public DateTime? NextClueRegenTime { get; set; }
-}

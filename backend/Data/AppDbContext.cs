@@ -194,15 +194,14 @@ public static class Constants {
 
 public class User : IdentityUser
 {
-
+    public bool IsGuest { get; set; } = false;
     // --- Backing Fields (The actual storage) ---
     // We explicitly define these so we can manipulate them in the Getters
     private int _guessEnergy = Constants.MaxGuessEnergy;
     private int _clueEnergy = Constants.MaxClueEnergy;
     private DateTime _lastGuessEnergyRegen = DateTime.UtcNow;
     private DateTime _lastClueEnergyRegen = DateTime.UtcNow;
-
-    // --- Smart Properties ---
+    public string? DisplayName { get; set; }
 
     public int GuessEnergy
     {

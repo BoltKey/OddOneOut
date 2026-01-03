@@ -28,7 +28,7 @@ export default function ClueLeaderboardTab({ userId }: { userId: string }) {
             <thead>
               <tr>
                 <th>Rank</th>
-                <th>User</th>
+                <th>Player</th>
                 <th>Rating</th>
               </tr>
             </thead>

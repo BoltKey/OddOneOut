@@ -5,7 +5,7 @@ const BASE_URL = "/api";
 export const api = {
   // 1. REGISTER (Create new user)
   register: async (username: string, password: string, email?: string) => {
-    const res = await fetch(`${BASE_URL}/auth/signup`, {
+    const res = await fetch(`${BASE_URL}/user/signup`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password, email }),
@@ -27,7 +27,7 @@ export const api = {
     // useCookies: true tells .NET to set a secure HttpOnly cookie
     // useSessionCookies: true tells it to delete cookie when browser closes
     const res = await fetch(
-      `${BASE_URL}/auth/login?useCookies=true&useSessionCookies=true`,
+      `${BASE_URL}/user/login?useCookies=true&useSessionCookies=true`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -37,6 +37,53 @@ export const api = {
 
     if (!res.ok) throw new Error("Invalid login attempt.");
     // We don't need to return JSON here. The Cookie is set automatically by the browser.
+    return;
+  },
+  logout: async () => {
+    const res = await fetch(`${BASE_URL}/user/logout`, {
+      method: "POST",
+    });
+    if (!res.ok) {
+      throw new Error("Logout failed.");
+    }
+    return;
+  },
+  loginGoogle: async () => {
+    const res = await fetch(
+      `${BASE_URL}/user/login-google?useCookies=true&useSessionCookies=true`,
+      {
+        method: "GET",
+      }
+    );
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || "Google login failed.");
+    }
+    return;
+  },
+  createGuest: async () => {
+    const res = await fetch(
+      `${BASE_URL}/user/create-guest?useCookies=true&useSessionCookies=true`,
+      {
+        method: "POST",
+      }
+    );
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || "Guest login failed.");
+    }
+    return;
+  },
+  changeDisplayName: async (NewDisplayName: string) => {
+    const res = await fetch(`${BASE_URL}/User/ChangeDisplayName`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ NewDisplayName }),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || "Failed to change display name.");
+    }
     return;
   },
 
@@ -114,12 +161,10 @@ export const api = {
     return res.json();
   },
   getMe: async (): Promise<User> => {
-    const res = await fetch(`${BASE_URL}/Stats/me`);
+    const res = await fetch(`${BASE_URL}/User/me`);
     if (!res.ok) {
       throw new Error("Not authenticated");
     }
     return res.json();
   },
-
-  // ... keep your submitGuess and other methods here
 };

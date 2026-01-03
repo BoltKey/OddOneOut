@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { api } from "../services/api";
+import GoogleLoginButton from "./GoogleLoginButton";
 
 interface Props {
   onLoginSuccess: () => void;
+  isGuest?: boolean;
 }
 
-export default function LoginPage({ onLoginSuccess }: Props) {
-  const [isRegistering, setIsRegistering] = useState(false);
+export default function LoginPage({ onLoginSuccess, isGuest }: Props) {
+  const [isRegistering, setIsRegistering] = useState(isGuest || false);
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -43,15 +45,31 @@ export default function LoginPage({ onLoginSuccess }: Props) {
       className="login-container"
       style={{
         maxWidth: 400,
+        minWidth: 300,
         margin: "50px auto",
         padding: 20,
         border: "1px solid #ccc",
         borderRadius: 8,
       }}
     >
-      <div className="logo"></div>
+      {!isGuest && <div className="logo splashscreen"></div>}
+      {isGuest && (
+        <>
+          You are currently playing as a Guest. Creating an account allows you
+          to:
+          <ul>
+            <li>Save and track your stats over time</li>
+            <li>Play from multiple devices</li>
+            <li>Compete on leaderboards</li>
+            <li>Access your guess history</li>
+          </ul>
+        </>
+      )}
       <h2>{isRegistering ? "Create Account" : "Sign In"}</h2>
-
+      <p>
+        <GoogleLoginButton />
+      </p>
+      Or:
       <form
         onSubmit={handleSubmit}
         style={{ display: "flex", flexDirection: "column", gap: 15 }}
@@ -63,7 +81,7 @@ export default function LoginPage({ onLoginSuccess }: Props) {
             required
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            style={{ width: "100%", padding: 8, marginTop: 5 }}
+            style={{ width: "90%", padding: 8, marginTop: 5 }}
           />
         </div>
 
@@ -74,7 +92,7 @@ export default function LoginPage({ onLoginSuccess }: Props) {
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            style={{ width: "100%", padding: 8, marginTop: 5 }}
+            style={{ width: "90%", padding: 8, marginTop: 5 }}
           />
         </div>
         {isRegistering && (
@@ -84,7 +102,7 @@ export default function LoginPage({ onLoginSuccess }: Props) {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              style={{ width: "100%", padding: 8, marginTop: 5 }}
+              style={{ width: "90%", padding: 8, marginTop: 5 }}
             />
           </div>
         )}
@@ -94,28 +112,37 @@ export default function LoginPage({ onLoginSuccess }: Props) {
 
         <button
           type="submit"
+          className="button-highlight"
           disabled={loading}
           style={{ padding: 10, cursor: "pointer" }}
         >
           {loading ? "Processing..." : isRegistering ? "Register" : "Login"}
         </button>
       </form>
-
-      <p style={{ marginTop: 20, fontSize: "0.9em", textAlign: "center" }}>
-        {isRegistering ? "Already have an account?" : "Need an account?"}{" "}
-        <button
-          onClick={() => setIsRegistering(!isRegistering)}
-          style={{
-            background: "none",
-            border: "none",
-            color: "blue",
-            textDecoration: "underline",
-            cursor: "pointer",
-          }}
-        >
-          {isRegistering ? "Login here" : "Register here"}
-        </button>
-      </p>
+      {!isGuest && (
+        <>
+          <p style={{ marginTop: 20 }}>
+            {isRegistering
+              ? "Already have an account?"
+              : "Don't have an account?"}{" "}
+            <button onClick={() => setIsRegistering(!isRegistering)}>
+              {isRegistering ? "Login" : "Create new account"}
+            </button>
+          </p>
+          <p>
+            Don't want to create an account?{" "}
+            <button
+              onClick={() => {
+                api.createGuest().then(() => {
+                  onLoginSuccess();
+                });
+              }}
+            >
+              Play as Guest
+            </button>
+          </p>
+        </>
+      )}
     </div>
   );
 }

@@ -28,7 +28,7 @@ export default function GuessLeaderboardTab({ userId }: { userId: string }) {
             <thead>
               <tr>
                 <th>Rank</th>
-                <th>Username</th>
+                <th>Player</th>
                 <th>Rating</th>
               </tr>
             </thead>

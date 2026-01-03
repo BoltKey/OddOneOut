@@ -1,11 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "s45v22Gtzn4=",
+  "dgSpecHash": "r2WwKDAxPQU=",
   "success": true,
   "projectFilePath": "C:\\rando-webdev\\OddOneOut\\backend\\OddOneOut.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\adams\\.nuget\\packages\\dotnetbadworddetector\\2.0.0\\dotnetbadworddetector.2.0.0.nupkg.sha512",
     "C:\\Users\\adams\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
+    "C:\\Users\\adams\\.nuget\\packages\\microsoft.aspnetcore.authentication.google\\10.0.1\\microsoft.aspnetcore.authentication.google.10.0.1.nupkg.sha512",
     "C:\\Users\\adams\\.nuget\\packages\\microsoft.aspnetcore.identity.entityframeworkcore\\10.0.1\\microsoft.aspnetcore.identity.entityframeworkcore.10.0.1.nupkg.sha512",
     "C:\\Users\\adams\\.nuget\\packages\\microsoft.build\\17.7.2\\microsoft.build.17.7.2.nupkg.sha512",
     "C:\\Users\\adams\\.nuget\\packages\\microsoft.build.framework\\17.14.28\\microsoft.build.framework.17.14.28.nupkg.sha512",

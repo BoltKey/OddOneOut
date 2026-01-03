@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext } from "react";
+import { useState, useEffect, createContext, useContext, use } from "react";
 import LoginPage from "./components/LoginPage";
 import GuessingTab from "./components/GuessingTab"; // Make sure this exists
 import { api } from "./services/api";
@@ -9,8 +9,20 @@ import GuessHistoryTab from "./components/GuessHistoryTab";
 import ClueHistoryTab from "./components/ClueHistoryTab";
 import GuessLeaderboardTab from "./components/GuessLeaderboardTab";
 import ClueLeaderboardTab from "./components/ClueLeaderboardTab";
+import SettingsTab from "./components/SettingsTab";
+import { FaHistory, FaSearch, FaTrophy } from "react-icons/fa";
+import { FaGear } from "react-icons/fa6";
+import { RiUserSettingsFill } from "react-icons/ri";
+import { Tooltip } from "@mui/material";
+import { PiCardsThree } from "react-icons/pi";
+import { TbReportSearch } from "react-icons/tb";
+import {
+  BiSolidMessageRounded,
+  BiSolidMessageRoundedDetail,
+} from "react-icons/bi";
 
 export const UserStatsContext = createContext<{
+  user: User | null;
   guessRating: number | null;
   setGuessRating: (rating: number) => void;
   guessRatingChange: number | null;
@@ -24,7 +36,12 @@ export const UserStatsContext = createContext<{
   nextClueRegenTime: Date | null;
   setNextClueRegenTime: (time: Date | null) => void;
   loadUser: () => Promise<void>;
+  onDisplayNameChange: (newName: string) => Promise<boolean>;
+  darkMode: boolean;
+  setDarkMode: (darkMode: boolean) => void;
+  setLoggedOut: (loggedOut: boolean) => void;
 }>({
+  user: null,
   guessRating: null,
   setGuessRating: () => {},
   guessRatingChange: null,
@@ -38,6 +55,10 @@ export const UserStatsContext = createContext<{
   nextClueRegenTime: null,
   setNextClueRegenTime: () => {},
   loadUser: async () => {},
+  onDisplayNameChange: async (newName: string) => false,
+  darkMode: false,
+  setDarkMode: () => {},
+  setLoggedOut: () => {},
 });
 
 function App() {
@@ -54,14 +75,24 @@ function App() {
     null
   );
   const [nextClueRegenTime, setNextClueRegenTime] = useState<Date | null>(null);
-  const [selectedTab, setSelectedTab] = useState<
-    | "guessing"
-    | "clueGiving"
-    | "guessHistory"
-    | "clueHistory"
-    | "guessLeaderboard"
-    | "clueLeaderboard"
-  >("guessing");
+  const [darkMode, setDarkMode] = useState<boolean>(() => {
+    const savedMode = localStorage.getItem("darkMode");
+    if (savedMode !== null) {
+      return savedMode === "true";
+    }
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
+  const [openModal, setOpenModal] = useState<
+    null | "guessHistory" | "clueHistory" | "leaderboard" | "settings"
+  >(null);
+  useEffect(() => {
+    localStorage.setItem("darkMode", darkMode ? "true" : "false");
+    document.body.className = darkMode ? "dark-mode" : "";
+  }, [darkMode]);
+
+  const [selectedTab, setSelectedTab] = useState<"guessing" | "clueGiving">(
+    "guessing"
+  );
 
   // Function to load user data (called on mount AND after login)
   const loadUser = async () => {
@@ -91,6 +122,17 @@ function App() {
       setLoading(false);
     }
   };
+  const onDisplayNameChange = async (newName: string) => {
+    // Handle display name change here
+    console.log("New display name:", newName);
+    try {
+      await api.changeDisplayName(newName);
+      await loadUser();
+    } catch (error) {
+      console.error("Failed to change display name:", error);
+    }
+    return true;
+  };
 
   // Check login status on page load
   useEffect(() => {
@@ -113,17 +155,10 @@ function App() {
 
   // If logged in, show Game
   return (
-    <div className="app-container">
-      <header
-        style={{
-          padding: 10,
-          background: "#eee",
-          display: "flex",
-          justifyContent: "space-between",
-        }}
-      >
+    <div className={`app-container ${darkMode ? "dark-mode" : ""}`}>
+      <header className="header">
+        <div className="logo"></div>
         <span>
-          User: {user.userName || user.id}, Guess Rating: {guessRating}{" "}
           {guessRatingChange !== null && (
             <span
               className={
@@ -139,25 +174,59 @@ function App() {
             </span>
           )}
         </span>
-        <div className="logo"></div>
-        <button
-          onClick={() => {
-            setLoggedOut(true);
-          }}
-        >
-          Logout
-        </button>
-        {/* Simple logout: Reload page -> API returns 401 -> shows Login */}
+        <div className="tab-buttons">
+          {[
+            {
+              key: "guessHistory",
+              tooltip: "Guessing History",
+              content: <TbReportSearch />,
+            },
+            {
+              key: "clueHistory",
+              tooltip: "Clue History",
+              content: <BiSolidMessageRoundedDetail />,
+            },
+            {
+              key: "leaderboard",
+              tooltip: "Leaderboards",
+              content: (
+                <>
+                  <FaTrophy />
+                </>
+              ),
+            },
+            {
+              key: "settings",
+              tooltip: "Settings",
+              content: <RiUserSettingsFill />,
+            },
+          ].map(({ key, content, tooltip }) => (
+            <Tooltip title={tooltip} id={tooltip}>
+              <button
+                key={key}
+                className={(openModal === key ? "active" : "") + " nav-button"}
+                onClick={() => setOpenModal(key as typeof openModal)}
+                data-tooltip-content={tooltip}
+                data-tooltip-id={tooltip}
+              >
+                {content}
+              </button>
+            </Tooltip>
+          ))}
+        </div>
       </header>
 
       <main>
-        <div className="tab-buttons">
+        <div className="main-nav-wrapper">
           {[
             {
               key: "guessing",
               content: (
                 <>
-                  <span>{"Guess (" + (guessEnergy ?? "0") + ") "}</span>
+                  <span>
+                    <FaSearch />
+                    {" Guess (" + (guessEnergy ?? "0") + ") "}
+                  </span>
                   <RegenTimer
                     targetDate={nextGuessRegenTime}
                     onExpire={() => {
@@ -171,7 +240,10 @@ function App() {
               key: "clueGiving",
               content: (
                 <>
-                  <span>{"Give Clues (" + (clueEnergy ?? "0") + ") "}</span>
+                  <span>
+                    <BiSolidMessageRounded />
+                    {" Give Clues (" + (clueEnergy ?? "0") + ") "}
+                  </span>
                   <RegenTimer
                     targetDate={nextClueRegenTime}
                     onExpire={() => {
@@ -181,15 +253,11 @@ function App() {
                 </>
               ),
             },
-            { key: "guessHistory", content: "Guess History" },
-            { key: "clueHistory", content: "Clue History" },
-            { key: "guessLeaderboard", content: "Guess Leaderboard" },
-            { key: "clueLeaderboard", content: "Clue Leaderboard" },
           ].map(({ key, content }) => (
             <button
               key={key}
               className={selectedTab === key ? "active" : ""}
-              onClick={() => setSelectedTab(key as typeof selectedTab)}
+              onClick={() => setSelectedTab(key as "guessing" | "clueGiving")}
             >
               {content}
             </button>
@@ -197,6 +265,7 @@ function App() {
         </div>
         <UserStatsContext.Provider
           value={{
+            user,
             guessRating,
             setGuessRating,
             guessRatingChange,
@@ -210,19 +279,90 @@ function App() {
             nextClueRegenTime,
             setNextClueRegenTime,
             loadUser,
+            onDisplayNameChange,
+            darkMode,
+            setDarkMode,
+            setLoggedOut,
           }}
         >
-          {selectedTab === "guessing" && <GuessingTab userId={user.id} />}
-          {selectedTab === "clueGiving" && <ClueGivingTab userId={user.id} />}
-          {selectedTab === "guessHistory" && (
-            <GuessHistoryTab userId={user.id} />
+          {selectedTab === "guessing" ? (
+            <GuessingTab userId={user.id} />
+          ) : (
+            <ClueGivingTab userId={user.id} />
           )}
-          {selectedTab === "clueHistory" && <ClueHistoryTab userId={user.id} />}
-          {selectedTab === "guessLeaderboard" && (
-            <GuessLeaderboardTab userId={user.id} />
-          )}
-          {selectedTab === "clueLeaderboard" && (
-            <ClueLeaderboardTab userId={user.id} />
+          {openModal && (
+            <div
+              className="modal-overlay"
+              onClick={() => setOpenModal(null)}
+              style={{
+                position: "fixed",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: "rgba(0,0,0,0.7)",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                zIndex: 1000,
+              }}
+            >
+              <div
+                className={`modal-content ${darkMode ? "dark-mode" : ""}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}
+                style={{
+                  backgroundColor: darkMode ? "#1a1a1a" : "white",
+                  color: darkMode ? "white" : "black",
+                  padding: "20px",
+                  borderRadius: "8px",
+                  position: "relative",
+                  maxWidth: "98%",
+                  maxHeight: "90%",
+                  overflow: "auto",
+                  minWidth: "300px",
+                  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+                }}
+              >
+                <button
+                  className="close-modal"
+                  onClick={() => setOpenModal(null)}
+                  style={{
+                    position: "absolute",
+                    top: "10px",
+                    right: "10px",
+                    background: "none",
+                    border: "none",
+                    fontSize: "1.5rem",
+                    cursor: "pointer",
+                    color: "inherit",
+                    padding: "0 5px",
+                  }}
+                >
+                  ×
+                </button>
+                {openModal === "guessHistory" && (
+                  <GuessHistoryTab userId={user.id} />
+                )}
+                {openModal === "clueHistory" && (
+                  <ClueHistoryTab userId={user.id} />
+                )}
+                {openModal === "leaderboard" && (
+                  <GuessLeaderboardTab userId={user.id} />
+                )}
+                {openModal === "leaderboard" && (
+                  <ClueLeaderboardTab userId={user.id} />
+                )}
+                {openModal === "settings" && (
+                  <SettingsTab
+                    currentDisplayName={
+                      user.displayName || user.userName || "User"
+                    }
+                  />
+                )}
+              </div>
+            </div>
           )}
         </UserStatsContext.Provider>
       </main>

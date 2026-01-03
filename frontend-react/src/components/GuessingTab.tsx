@@ -123,6 +123,15 @@ export default function GuessingTab({ userId }: { userId: string }) {
       }
     >
       {message && <div>{message}</div>}
+      <div className="guess-rating-display">
+        Your Guess Rating: {guessRating}{" "}
+        {guessRatingChange && (
+          <span className={guessRatingChange > 0 ? "rating-up" : "rating-down"}>
+            ({guessRatingChange > 0 ? "+" : ""}
+            {guessRatingChange})
+          </span>
+        )}
+      </div>
       {currentClue && (
         <>
           <div className="clue-wrapper">Clue: </div>
@@ -135,7 +144,7 @@ export default function GuessingTab({ userId }: { userId: string }) {
         </div>
       )}
       {cardDisplay}
-      {buttons}
+      <div className="guess-buttons-wrapper">{buttons}</div>
     </div>
   );
 }

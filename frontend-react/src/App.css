@@ -1,16 +1,67 @@
-* {
-  color: #333;
-  box-sizing: border-box;
+.dark-mode {
+  color: #ddd;
 }
 
-button {
-  font-size: 16px;
-  border-radius: 5px;
-  background-color: #008cba;
+button,
+.button {
+  background-color: #ffffffcc;
+  color: #333333 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 16px 2px 2px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  text-decoration: none;
+  font-family: "Roboto", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, background-color 0.2s ease;
+  padding: 10px;
+  width: fit-content;
+}
+
+.dark-mode button,
+.dark-mode .button {
+  background-color: #2c2c2ccc;
+  color: #ddd !important;
+  border: 1px solid #555;
+}
+
+:is(button, .button):hover {
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+  background-color: #fcfcfc;
+  border-color: transparent;
+}
+:is(button, .button):active {
+  background-color: #f8f8f8;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+.dark-mode :is(button, .button):hover {
+  background-color: #3a3a3a;
+  border-color: transparent;
+}
+
+button.active {
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+  background-color: #e0e0e0;
+}
+.dark-mode button.active {
+  background-color: #4a4a4a;
+}
+
+.button-highlight {
+  font-weight: bold;
 }
 
 input {
-  background-color: #008cba;
+  background-color: transparent;
+  color: black;
+}
+.dark-mode input {
+  color: white;
 }
 
 .button-related {
@@ -21,6 +72,21 @@ input {
   margin: 5px 0;
   border-radius: 5px;
 }
+.button-related:hover {
+  background-color: #0f6c00;
+}
+.dark-mode .button-related {
+  background-color: #0f6c00;
+}
+.dark-mode .button-related:hover {
+  background-color: var(--insetcolor);
+}
+.dark-mode .button-odd-one-out {
+  background-color: #c43e00;
+}
+.dark-mode .button-odd-one-out:hover {
+  background-color: var(--misfitcolor);
+}
 .button-odd-one-out {
   background-color: var(--misfitcolor);
   color: white;
@@ -28,6 +94,9 @@ input {
   padding: 10px 20px;
   margin: 5px;
   cursor: pointer;
+}
+.button-odd-one-out:hover {
+  background-color: #c43e00;
 }
 .solution-word {
   font-size: 18px;
@@ -50,24 +119,35 @@ input {
   --insetcolor: #138800;
   --misfitcolor: #e54400;
 }
+.header {
+  padding: 10px;
+  height: 60px;
+  background: #eee;
+  display: flex;
+  justify-content: space-between;
+}
+.dark-mode .header {
+  background: #464646;
+}
+.dark-mode #root {
+  background-color: #121212;
+}
 .app-container {
-  max-width: 600px;
+  max-width: 100%;
+  width: 600px;
   margin: 0 auto;
   background-color: white;
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
+.dark-mode .app-container {
+  background-color: #1e1e1e;
+}
 .correct {
-  background-color: #d4edda;
-  color: var(--insetcolor);
-  padding: 15px;
-  border-radius: 5px;
+  background-color: #d4edda99;
 }
 .incorrect {
-  background-color: #f8d7da;
-  color: var(--misfitcolor);
-  padding: 15px;
-  border-radius: 5px;
+  background-color: #f8d7da99;
 }
 
 .clue-card {
@@ -105,6 +185,7 @@ input {
 .guess-history-entry {
   border-bottom: 1px solid #ccc;
   padding: 10px 0;
+  color: black;
 }
 .guess-history-entry.correct-guess {
   background-color: #d4edda;
@@ -112,6 +193,20 @@ input {
 
 .guess-history-entry.incorrect-guess {
   background-color: #f8d7da;
+}
+.guess-buttons-wrapper {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+}
+.guess-buttons-wrapper button {
+  font-size: large;
+  font-weight: bold;
+  padding: 15px 25px;
+  margin: 20px 30px;
 }
 
 .rating-change {
@@ -126,14 +221,16 @@ input {
 
 .current-clue {
   background-color: #d5e4e9;
+  color: black;
   border: solid black 2px;
   border-radius: 40px;
   font-size: 200%;
-  width: 200px;
-  height: 100px;
   display: flex;
   align-items: center;
   justify-content: center;
+  text-transform: uppercase;
+  font-weight: bold;
+  padding: 20px 40px;
 }
 
 .solution-words-container {
@@ -145,9 +242,12 @@ input {
 
 .guessing-card {
   background-color: #ffffff;
+  color: black;
   border: solid black 2px;
   border-radius: 10px;
   font-size: 80%;
+  text-transform: uppercase;
+  font-weight: bold;
   width: 19%;
   height: 50px;
   display: flex;
@@ -166,9 +266,11 @@ input {
 }
 .guessing-card.inSet {
   background-color: var(--insetcolor);
+  border: none;
 }
 .guessing-card.oddOneOut {
   background-color: var(--misfitcolor);
+  border: none;
 }
 .current-card {
 }
@@ -190,7 +292,7 @@ input {
   text-align: center;
 }
 .leaderboard-table th {
-  background-color: #f2f2f2;
+  background-color: #f2f2f288;
 }
 
 .logo {
@@ -199,5 +301,36 @@ input {
   background-image: url("./misfitlogo.png");
   background-size: contain;
   background-repeat: no-repeat;
-  margin: 20px auto;
+}
+.logo.splashscreen {
+  width: 200px;
+  height: 100px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  margin: auto;
+}
+
+.tab-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.nav-button {
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  cursor: pointer;
+  font-size: 30px;
+}
+
+table td {
+  font-size: small;
+}
+
+.main-nav-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  justify-content: space-around;
 }

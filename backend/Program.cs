@@ -72,6 +72,24 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 });
+builder.Services.AddAuthentication()
+    .AddGoogle(options =>
+    {
+        options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+        options.CallbackPath = "/signin-google"; // Keep this standard!
+        options.SignInScheme = Microsoft.AspNetCore.Identity.IdentityConstants.ExternalScheme;
+    });
+builder.Services.ConfigureApplicationCookie(options => {
+    // Optional: Settings for the main login cookie
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+});
+builder.Services.ConfigureExternalCookie(options => {
+    // CRITICAL: This is the cookie causing your "null" error
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // Allow HTTP
+});
 
 var app = builder.Build();
 
@@ -112,56 +130,10 @@ else
 app.UseStaticFiles();
 app.MapFallbackToFile("index.html");
 app.UseRouting();
+app.UseAuthentication();
 app.UseAuthorization();
 
-// --- 6. Endpoints ---
-
-
-var authGroup = app.MapGroup("/api/auth");
-
-// 2. Login Endpoint (Native Username Support)
-authGroup.MapPost("/login", async (SignInManager<User> signInManager, LoginRequest request) =>
-{
-    // The "false" means "Don't lock the account out on failure"
-    // The "true" means "Remember Me" (Persist cookie across restarts)
-    var result = await signInManager.PasswordSignInAsync(request.Username, request.Password, isPersistent: true, lockoutOnFailure: false);
-
-    if (result.Succeeded) return Results.Ok();
-    return Results.Unauthorized();
-});
-
-// 3. Logout Endpoint (Clears the cookie)
-authGroup.MapPost("/logout", async (SignInManager<User> signInManager) =>
-{
-    await signInManager.SignOutAsync();
-    return Results.Ok();
-});
-
-// 4. Signup Endpoint (Your Custom Logic)
-authGroup.MapPost("/signup", async (UserManager<User> userManager, SignInManager<User> signInManager, SignupRequest request) =>
-{
-    var user = new User
-    {
-        UserName = request.Username,
-        Email = null
-    };
-    var result = await userManager.CreateAsync(user, request.Password);
-
-    if (!result.Succeeded)
-    {
-        return Results.ValidationProblem(result.Errors.ToDictionary(e => e.Code, e => new[] { e.Description }));
-    }
-
-    // Optional: Auto-login after register
-    await signInManager.SignInAsync(user, isPersistent: true);
-
-    return Results.Ok();
-});
 
 app.MapControllers();
 
 app.Run();
-
-// 1. DTOs (Clean Contracts)
-class LoginRequest { public required string Username { get; set; } public required string Password { get; set; } }
-class SignupRequest { public required string Username { get; set; } public required string Password { get; set; } public string? Email { get; set; } }

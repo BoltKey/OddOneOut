@@ -37,7 +37,9 @@ export interface Guess {
 // The User (Player)
 export interface User {
   id: string; // Identity GUID
+  isGuest: boolean;
   userName?: string;
+  displayName?: string;
   email?: string;
   currentGame?: Game;
   currentGameId?: string;
