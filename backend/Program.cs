@@ -93,6 +93,14 @@ builder.Services.ConfigureExternalCookie(options => {
 
 var app = builder.Build();
 
+var clientUrl = builder.Configuration["ClientUrl"]; // Read from config
+
+app.UseCors(policy => policy
+    .WithOrigins(clientUrl) // "https://your-app-name.azurewebsites.net"
+    .AllowAnyMethod()
+    .AllowAnyHeader()
+    .AllowCredentials());
+
 // --- 5. Pipeline Configuration ---
 if (app.Environment.IsDevelopment())
 {

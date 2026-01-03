@@ -1,6 +1,7 @@
 import type { User } from "../types";
 
-const BASE_URL = "/api";
+const BASE_URL = import.meta.env.VITE_API_URL;
+// VITE_API_URL will automatically be swapped when you run 'npm run build';
 
 export const api = {
   // 1. REGISTER (Create new user)
