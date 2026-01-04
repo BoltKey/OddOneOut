@@ -104,13 +104,14 @@ builder.Services.ConfigureExternalCookie(options =>
 
 var app = builder.Build();
 
-var clientUrl = builder.Configuration["ClientUrl"]; // Read from config
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+                     ?? new[] { "http://localhost:5173" }; // Fallback
 
 app.UseCors(policy => policy
-    .WithOrigins(clientUrl ?? "http://localhost:5173") // "https://your-app-name.azurewebsites.net"
+    .WithOrigins(allowedOrigins) // <--- Accepts the array
     .AllowAnyMethod()
     .AllowAnyHeader()
-    .AllowCredentials());
+    .AllowCredentials()); // Required for YOUR app's cookies
 
 // --- 5. Pipeline Configuration ---
 if (app.Environment.IsDevelopment())
