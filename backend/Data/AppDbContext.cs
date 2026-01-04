@@ -31,9 +31,26 @@ protected override void OnModelCreating(ModelBuilder builder)
         .Navigation(g => g.CardSet)
         .AutoInclude();
     builder.Entity<Game>()
-        .HasMany(g => g.ClueGivers)
-        .WithMany(u => u.CreatedGames)
-        .UsingEntity(j => j.ToTable("GameClueGivers")); // Creates a cleaner join table name
+    .HasMany(g => g.ClueGivers)
+    .WithMany(u => u.CreatedGames)
+    .UsingEntity<GameClueGiver>(
+        j => j
+            .HasOne(gc => gc.User)
+            .WithMany()
+            .HasForeignKey(gc => gc.UserId), // <--- CHANGE: Use UserId, not User
+        j => j
+            .HasOne(gc => gc.Game)
+            .WithMany()
+            .HasForeignKey(gc => gc.GameId), // <--- CHANGE: Use GameId, not Game
+        j =>
+        {
+            j.Property(pt => pt.ClueGivenAt).HasDefaultValueSql("now()");
+
+            // CHANGE: Use IDs for the composite key
+            j.HasKey(t => new { t.GameId, t.UserId });
+
+            j.ToTable("GameClueGivers");
+        });
     // --- 2. Configure the One-to-Many (CurrentGame <-> Users playing it) ---
     // A user has one CurrentGame. A Game has (implicitly) many users playing it.
     builder.Entity<User>()
@@ -92,6 +109,18 @@ public class CardSet
 
         return cardSet;
     }
+}
+[Index(nameof(ClueGivenAt))]
+public class GameClueGiver
+{
+    public Game Game { get; set; }
+    public Guid GameId { get; set; }
+
+    public User User { get; set; }
+    public string UserId { get; set; }
+
+    // This is the property you want
+    public DateTime ClueGivenAt { get; set; }
 }
 [Index(nameof(CachedGameScore))]
 public class Game
@@ -168,6 +197,7 @@ public class Game
     // priority based on difference between difficulty of this and easiest game
     public int? Priority { get; set; }
 }
+[Index(nameof(GuessedAt))]
 public class Guess
 {
     public Guid Id { get; set; }
@@ -385,4 +415,11 @@ public class User : IdentityUser
         }
         return result;
     }
+    public void decayRating()
+      {
+        DateTime lastGuessTime = Guesses.OrderByDescending(g => g.GuessedAt).FirstOrDefault()?.GuessedAt ?? DateTime.UtcNow;
+        var daysInactive = (DateTime.UtcNow - lastGuessTime).TotalDays;
+        GuessRating -= (int)daysInactive;
+      }
 }
+

@@ -59,7 +59,8 @@ public class UserController : ControllerBase
             GuessRank = await _context.Users.CountAsync(u => u.GuessRating > user.GuessRating) + 1,
             ClueRank = await _context.Users.CountAsync(u => u.CachedClueRating > user.CachedClueRating) + 1,
             IsGuest = isGuest,
-            canGiveClues = user.Guesses.Count >= GameConfig.Current.MinGuessesToGiveClues
+            canGiveClues = user.Guesses.Count >= GameConfig.Current.MinGuessesToGiveClues,
+            guessesToGiveClues = GameConfig.Current.MinGuessesToGiveClues
         };
 
         return Ok(response);
@@ -341,6 +342,7 @@ public class UserProfileDto
     public DateTime? NextGuessRegenTime { get; set; }
     public DateTime? NextClueRegenTime { get; set; }
     public bool canGiveClues { get; set; }
+    public int guessesToGiveClues { get; set; }
 }
 public class ChangeDisplayNameRequest
 {

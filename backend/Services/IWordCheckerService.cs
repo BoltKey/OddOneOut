@@ -4,6 +4,6 @@ namespace OddOneOut.Services
 {
     public interface IWordCheckerService
     {
-        bool IsValidPlay(string word);
+        string WordInvalidReason(string word);
     }
 }

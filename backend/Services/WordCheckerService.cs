@@ -24,26 +24,26 @@ public class WordCheckerService : IWordCheckerService
         _profanityDetector = new ProfanityDetector();
     }
 
-    public bool IsValidPlay(string input)
+    public string WordInvalidReason(string input)
     {
-        if (string.IsNullOrWhiteSpace(input)) return false;
+        if (string.IsNullOrWhiteSpace(input)) return "Word is empty.";
 
         var word = input.ToUpperInvariant();
 
         // Step 1: Dictionary Check (Instant)
         if (!_validWords.Contains(word))
         {
-            return false; // Not a real word
+            return "Word is not in the dictionary (negative words like anti- un- non- are not allowed)."; // Not a real word
         }
 
         // Step 2: Safety Check (Local ML)
         // Returns true if it looks like profanity (e.g. "sh!t")
         if (_profanityDetector.IsProfane(input))
         {
-            return false; // Valid Scrabble word, but blocked by safety filter
+            return "No profanities please."; // Valid Scrabble word, but blocked by safety filter
         }
 
-        return true;
+        return null;
     }
 }
 }

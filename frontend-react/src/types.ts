@@ -52,4 +52,6 @@ export interface User {
   nextGuessRegenTime: string | null;
   nextClueRegenTime: string | null;
   canGiveClues: boolean;
+  guessRank?: number;
+  clueRank?: number;
 }

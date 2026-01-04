@@ -157,8 +157,8 @@ input {
 
 .clue-card {
   cursor: pointer;
-  background-color: var(--insetcolor);
-  color: white;
+  background-color: rgb(207, 207, 207);
+  color: black;
   padding: 5px;
   border-radius: 5px;
   margin: 2px 0;
@@ -170,6 +170,10 @@ input {
 
 .clue-card.selected {
   background-color: var(--misfitcolor);
+  color: black;
+}
+.clue-card.matching {
+  background-color: var(--insetcolor);
   color: black;
 }
 
@@ -243,6 +247,10 @@ input {
 }
 .leaderboard-table th {
   background-color: #f2f2f288;
+}
+.leaderboard-table .current-user {
+  font-weight: bold;
+  background-color: #ffff99aa;
 }
 .logo {
   width: 135px;

@@ -158,22 +158,6 @@ function App() {
     <div className={`app-container ${darkMode ? "dark-mode" : ""}`}>
       <header className="header">
         <div className="logo"></div>
-        <span>
-          {guessRatingChange !== null && (
-            <span
-              className={
-                "rating-change " +
-                (guessRatingChange > 0
-                  ? "positive"
-                  : guessRatingChange < 0
-                  ? "negative"
-                  : "")
-              }
-            >
-              {`(${guessRatingChange >= 0 ? "+" : ""}${guessRatingChange})`}
-            </span>
-          )}
-        </span>
         <div className="tab-buttons">
           {[
             {

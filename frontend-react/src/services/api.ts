@@ -129,6 +129,7 @@ export const api = {
     if (!res.ok) {
       throw new Error("Failed to submit clue.");
     }
+    return res.json();
   },
   getGuessHistory: async (page: number) => {
     const res = await fetch(`${BASE_URL}/Stats/GuessHistory?page=${page}`);

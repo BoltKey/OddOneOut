@@ -35,7 +35,7 @@ export default function GuessLeaderboardTab({ userId }: { userId: string }) {
             <tbody>
               {leaderboard.map((entry, index) => (
                 <tr key={index} className="guess-leaderboard-entry">
-                  <td>{index + 1}</td>
+                  <td>{entry.rank}</td>
                   <td>{entry.userName}</td>
                   <td>{entry.guessRating}</td>
                 </tr>

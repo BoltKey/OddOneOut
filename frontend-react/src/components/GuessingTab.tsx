@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { api } from "../services/api";
 import { UserStatsContext } from "../App";
 import "./GuessingTab.css";
@@ -43,7 +43,7 @@ export default function GuessingTab({ userId }: { userId: string }) {
   }, []);
   useEffect(() => {
     let storageKey = "seenGuessingTutorial-" + userId;
-    let forceTutorial = true;
+    let forceTutorial = false;
     if (localStorage.getItem(storageKey) && !forceTutorial) {
       setTutorialStep(8);
     } else {
@@ -83,19 +83,17 @@ export default function GuessingTab({ userId }: { userId: string }) {
       ),
       5: "All 5 words are then shuffled and you see one of those cards. Your job is to guess whether this card is part of the group that matches the clue, or the misfit.",
       6: "After guessing, you will see the original set of 5 words. You gain or lose Guess Rating based on whether your guess is correct. Try to get as high a Guess Rating as possible! Good Luck!",
-      7: "",
+      7: null,
     };
-    if (tutorialMessages[tutorialStep]) {
-      setTutorialMessage(tutorialMessages[tutorialStep]);
-    }
+    setTutorialMessage(tutorialMessages[tutorialStep]);
   }, [tutorialStep]);
-  function advanceTutorial() {
+  const advanceTutorial = useCallback(() => {
     setTutorialStep(tutorialStep + 1);
-    if (tutorialStep > 6) {
+    if (tutorialStep === 6) {
       let storageKey = "seenGuessingTutorial-" + userId;
       localStorage.setItem(storageKey, "true");
     }
-  }
+  }, [tutorialStep]);
   let buttons = [];
   let cardDisplay = null;
   let wordsToDisplay = solutionWords;
@@ -219,16 +217,25 @@ export default function GuessingTab({ userId }: { userId: string }) {
           {tutorialStep >= 4 && (
             <div className="guess-rating-display">
               Your Guess Rating: {guessRating}{" "}
-              {guessRatingChange && (
-                <span
-                  className={
-                    guessRatingChange > 0 ? "rating-up" : "rating-down"
-                  }
-                >
-                  ({guessRatingChange > 0 ? "+" : ""}
-                  {guessRatingChange})
-                </span>
-              )}
+              <span>
+                {guessRatingChange !== null && (
+                  <span
+                    className={
+                      "rating-change " +
+                      (guessRatingChange > 0
+                        ? "positive"
+                        : guessRatingChange < 0
+                        ? "negative"
+                        : "")
+                    }
+                  >
+                    {`(${
+                      guessRatingChange >= 0 ? "+" : ""
+                    }${guessRatingChange})`}
+                  </span>
+                )}
+              </span>
+              )
             </div>
           )}
           {currentClue && tutorialStep >= 4 && (

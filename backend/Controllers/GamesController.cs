@@ -272,10 +272,10 @@ public async Task<IActionResult> MakeGuess(MakeGuessDto request)
         {
           return BadRequest("Clue cannot be empty.");
         }
-        bool result = _wordCheckerService.IsValidPlay(request.clue);
-        if (!result)
+        string result = _wordCheckerService.WordInvalidReason(request.clue);
+        if (result != null)
         {
-            return BadRequest("Clue word is not valid.");
+            return BadRequest(result);
         }
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var user = await _context.Users
@@ -304,12 +304,18 @@ public async Task<IActionResult> MakeGuess(MakeGuessDto request)
         var existingGame = await _context.Games
             .Include(g => g.CardSet)
             .FirstOrDefaultAsync(g => g.CardSet.Id == cardSet.Id && g.Clue == request.clue);
+        CreateGameResponseDto response;
         if (existingGame != null)
         {
             // add to ClueGiver list
             existingGame.ClueGivers.Add(user);
             await _context.SaveChangesAsync();
-            return Ok(existingGame);
+            response = new CreateGameResponseDto
+            {
+                GameId = existingGame.Id,
+                ClueGiverAmt = existingGame.ClueGivers.Count
+            };
+            return Ok(response);
         }
         var newGame = new Game
             {
@@ -331,8 +337,12 @@ public async Task<IActionResult> MakeGuess(MakeGuessDto request)
 
         _context.Games.Add(newGame);
         await _context.SaveChangesAsync(); // Saves to Postgres!
-
-        return Ok(newGame);
+        response = new CreateGameResponseDto
+        {
+            GameId = newGame.Id,
+            ClueGiverAmt = newGame.ClueGivers.Count
+        };
+        return Ok(response);
     }
 }
 
@@ -363,4 +373,9 @@ public class GameGuessResponseDto
 public class MakeGuessDto
 {
     public bool GuessIsInSet { get; set; }
+}
+public class CreateGameResponseDto
+{
+    public Guid GameId { get; set; }
+    public int ClueGiverAmt { get; set; }
 }

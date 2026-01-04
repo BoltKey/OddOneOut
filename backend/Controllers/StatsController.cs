@@ -193,13 +193,15 @@ public class StatsController : ControllerBase
     public async Task<IActionResult> GetAllTimeLeaderboard()
     {
         var topUsers = await _context.Users
+            .Where(u => !u.IsGuest)
             .OrderByDescending(u => u.GuessRating)
             .Take(10)
             .Select(u => new
             {
                 u.Id,
                 UserName = u.DisplayName,
-                u.GuessRating
+                u.GuessRating,
+                rank = _context.Users.Count(other => !other.IsGuest && other.GuessRating > u.GuessRating) + 1
             })
             .ToListAsync();
 
@@ -209,13 +211,15 @@ public class StatsController : ControllerBase
     public async Task<IActionResult> GetClueLeaderboard()
     {
         var topUsers = await _context.Users
+            .Where(u => !u.IsGuest)
             .OrderByDescending(u => u.CachedClueRating)
-            .Take(10)
+            .Take(1)
             .Select(u => new
             {
                 u.Id,
                 UserName = u.DisplayName,
-                ClueRating = u.CachedClueRating
+                ClueRating = u.CachedClueRating,
+                rank = _context.Users.Count(other => !other.IsGuest && other.CachedClueRating > u.CachedClueRating) + 1
             })
             .ToListAsync();
 
