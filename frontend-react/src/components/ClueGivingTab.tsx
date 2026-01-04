@@ -7,7 +7,7 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
   const [wordSetId, setWordSetId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [clue, setClue] = useState<string>("");
-  const [submitted, setSubmitted] = useState<boolean>(false);
+  const [submitStatus, setSubmitStatus] = useState<string | null>(null);
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(
     null
   );
@@ -29,7 +29,6 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
   let buttons = [];
   return (
     <div>
-      {message && <div>{message}</div>}
       {currentCards && (
         <div>
           Select the Misfit and a clue connecting the Matches:{" "}
@@ -60,18 +59,45 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
             value={clue}
             onChange={(e) => setClue(e.target.value)}
           />
-          {submitted ? (
-            <div>Clue submitted! Waiting for guessers...</div>
+          {submitStatus ? (
+            <>
+              <div>{submitStatus}</div>
+              <button
+                onClick={async () => {
+                  setClue("");
+                  setSelectedCardIndex(null);
+                  setSubmitStatus(null);
+                  await fetchAssignedGame();
+                }}
+              >
+                Go next
+              </button>
+            </>
           ) : (
             <>
               <button
                 onClick={async () => {
-                  let result = await api.submitClue(
-                    clue,
-                    wordSetId!,
-                    currentCards![selectedCardIndex!]
-                  );
-                  setSubmitted(true);
+                  setMessage(null);
+                  let result;
+                  try {
+                    result = await api.submitClue(
+                      clue,
+                      wordSetId!,
+                      currentCards![selectedCardIndex!]
+                    );
+                  } catch (err: any) {
+                    setMessage(err.message);
+                    return;
+                  }
+                  if (result.clueGiverAmt === 1) {
+                    setSubmitStatus(
+                      "Clue submitted! You were the first to give it for this word set."
+                    );
+                  } else {
+                    setSubmitStatus(
+                      `Clue submitted! It was the same clue given by ${result.clueGiverAmt} clue givers so far for this word set.`
+                    );
+                  }
                   await loadUser();
                 }}
                 style={{
@@ -85,6 +111,7 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
           )}
         </>
       )}
+      {message && <div>{message}</div>}
     </div>
   );
 }

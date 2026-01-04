@@ -127,7 +127,7 @@ export const api = {
       body: JSON.stringify({ clue, wordSetId: gameId, oddOneOut }),
     });
     if (!res.ok) {
-      throw new Error("Failed to submit clue.");
+      throw new Error(await res.text());
     }
     return res.json();
   },
