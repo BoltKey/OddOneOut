@@ -298,7 +298,7 @@ input {
 .logo {
   width: 135px;
   height: 60px;
-  background-image: url("./misfitlogo.png");
+  background-image: url("/misfitlogo.png");
   background-size: contain;
   background-repeat: no-repeat;
 }
