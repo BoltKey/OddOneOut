@@ -240,10 +240,19 @@ function App() {
               key: "clueGiving",
               content: (
                 <>
-                  <span>
-                    <BiSolidMessageRounded />
-                    {" Give Clues (" + (clueEnergy ?? "0") + ") "}
-                  </span>
+                  <Tooltip
+                    title={
+                      user?.canGiveClues
+                        ? null
+                        : `You need at least ${10} guesses to unlock clue giving.`
+                    }
+                    id="give-clues-tooltip"
+                  >
+                    <span>
+                      <BiSolidMessageRounded />
+                      {" Give Clues (" + (clueEnergy ?? "0") + ") "}
+                    </span>
+                  </Tooltip>
                   <RegenTimer
                     targetDate={nextClueRegenTime}
                     onExpire={() => {
@@ -258,6 +267,7 @@ function App() {
               key={key}
               className={selectedTab === key ? "active" : ""}
               onClick={() => setSelectedTab(key as "guessing" | "clueGiving")}
+              disabled={key === "clueGiving" && !user?.canGiveClues}
             >
               {content}
             </button>

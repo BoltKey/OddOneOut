@@ -5,7 +5,8 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
 using System.Security.Claims;
-using Microsoft.AspNetCore.HttpOverrides; // Needed for the "me" endpoint
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.Options; // Needed for the "me" endpoint
 // using Microsoft.AspNetCore.OpenApi; // Uncomment if needed for .WithOpenApi()
 
 var builder = WebApplication.CreateBuilder(args);
@@ -38,6 +39,9 @@ builder.Services.Configure<AuthenticationOptions>(options =>
     options.DefaultScheme = IdentityConstants.ApplicationScheme; // Cookies by default
     options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
 });
+builder.Services.Configure<GameSettings>(
+    builder.Configuration.GetSection("GameSettings")
+);
 
 // --- 3. Other Services ---
 builder.Services.AddSingleton<OddOneOut.Services.IWordCheckerService, OddOneOut.Services.WordCheckerService>();
@@ -152,6 +156,8 @@ else
     }
 }
 }
+var settings = app.Services.GetRequiredService<IOptions<GameSettings>>().Value;
+GameConfig.Initialize(settings);
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

@@ -51,4 +51,5 @@ export interface User {
   clueEnergy: number;
   nextGuessRegenTime: string | null;
   nextClueRegenTime: string | null;
+  canGiveClues: boolean;
 }

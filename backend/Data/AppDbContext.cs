@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization; // Add this
 
@@ -96,6 +97,7 @@ public class CardSet
 public class Game
 {
     public Guid Id { get; set; }
+    public int? PresetId { get; set; }
     public List<User> ClueGivers { get; set; } = new();
     public CardSet? CardSet { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -177,17 +179,31 @@ public class Guess
     public int RatingChange { get; set; } = 0;
     public bool IsCorrect() => GuessIsInSet == (SelectedCard != Game?.OddOneOut);
 }
-public static class Constants {
-    public const int InitialGuessRating = 1000;
-    public const int MaxGuessEnergy = 50;
-    public const int MaxClueEnergy = 5;
-    public const int BaseRewardInset = 10;
-    public const int BasePenaltyInset = 20;
-    public const int BaseRewardOddOne = 20;
-    public const int BasePenaltyOddOne = 50;
-    public const float OddOneOutChance = 0.4f;
-    public const float GuessEnergyRegenIntervalMinutes = 0.3f;
-    public const float ClueEnergyRegenIntervalMinutes = 4f;
+public class GameSettings
+{
+    // These defaults act as a fallback if config is missing
+    public int InitialGuessRating { get; set; } = 1000;
+    public int MaxGuessEnergy { get; set; } = 50;
+    public int MaxClueEnergy { get; set; } = 5;
+    public int BaseRewardInset { get; set; } = 10;
+    public int BasePenaltyInset { get; set; } = 20;
+    public int BaseRewardOddOne { get; set; } = 20;
+    public int BasePenaltyOddOne { get; set; } = 50;
+    public float OddOneOutChance { get; set; } = 0.4f;
+    public float GuessEnergyRegenIntervalMinutes { get; set; } = 0.3f;
+    public float ClueEnergyRegenIntervalMinutes { get; set; } = 4f;
+    public int MinGuessesToGiveClues { get; set; } = 2;
+}
+public static class GameConfig
+{
+    // This will hold the actual loaded settings
+    public static GameSettings Current { get; private set; } = new GameSettings();
+
+    // We call this once in Program.cs to "inject" the values
+    public static void Initialize(GameSettings settings)
+    {
+        Current = settings;
+    }
 }
 [Index(nameof(GuessRating))]
 [Index(nameof(CachedClueRating))]
@@ -197,43 +213,42 @@ public class User : IdentityUser
     public bool IsGuest { get; set; } = false;
     // --- Backing Fields (The actual storage) ---
     // We explicitly define these so we can manipulate them in the Getters
-    private int _guessEnergy = Constants.MaxGuessEnergy;
-    private int _clueEnergy = Constants.MaxClueEnergy;
+    private int _guessEnergy;
+    private int _clueEnergy;
     private DateTime _lastGuessEnergyRegen = DateTime.UtcNow;
     private DateTime _lastClueEnergyRegen = DateTime.UtcNow;
     public string? DisplayName { get; set; }
-
     public int GuessEnergy
     {
-        get => GetRegeneratedEnergy(ref _guessEnergy, ref _lastGuessEnergyRegen, Constants.GuessEnergyRegenIntervalMinutes, Constants.MaxGuessEnergy);
+        get => GetRegeneratedEnergy(ref _guessEnergy, ref _lastGuessEnergyRegen, GameConfig.Current.GuessEnergyRegenIntervalMinutes, GameConfig.Current.MaxGuessEnergy);
         set => SetEnergy(ref _guessEnergy, ref _lastGuessEnergyRegen, value);
     }
 
     public int ClueEnergy
     {
-        get => GetRegeneratedEnergy(ref _clueEnergy, ref _lastClueEnergyRegen, Constants.ClueEnergyRegenIntervalMinutes, Constants.MaxClueEnergy);
+        get => GetRegeneratedEnergy(ref _clueEnergy, ref _lastClueEnergyRegen, GameConfig.Current.ClueEnergyRegenIntervalMinutes, GameConfig.Current.MaxClueEnergy);
         set => SetEnergy(ref _clueEnergy, ref _lastClueEnergyRegen, value);
     }
 
     public DateTime LastGuessEnergyRegen
     {
-        get => GetRegeneratedDate(ref _guessEnergy, ref _lastGuessEnergyRegen, Constants.GuessEnergyRegenIntervalMinutes, Constants.MaxGuessEnergy);
+        get => GetRegeneratedDate(ref _guessEnergy, ref _lastGuessEnergyRegen, GameConfig.Current.GuessEnergyRegenIntervalMinutes, GameConfig.Current.MaxGuessEnergy);
         set => _lastGuessEnergyRegen = value;
     }
 
     public DateTime LastClueEnergyRegen
     {
-        get => GetRegeneratedDate(ref _clueEnergy, ref _lastClueEnergyRegen, Constants.ClueEnergyRegenIntervalMinutes, Constants.MaxClueEnergy);
+        get => GetRegeneratedDate(ref _clueEnergy, ref _lastClueEnergyRegen, GameConfig.Current.ClueEnergyRegenIntervalMinutes, GameConfig.Current.MaxClueEnergy);
         set => _lastClueEnergyRegen = value;
     }
 
     // --- Computed UI Properties ---
 
     [NotMapped]
-    public DateTime? NextGuessRegenTime => GetNextRegenTime(GuessEnergy, LastGuessEnergyRegen, Constants.GuessEnergyRegenIntervalMinutes, Constants.MaxGuessEnergy);
+    public DateTime? NextGuessRegenTime => GetNextRegenTime(GuessEnergy, LastGuessEnergyRegen, GameConfig.Current.GuessEnergyRegenIntervalMinutes, GameConfig.Current.MaxGuessEnergy);
 
     [NotMapped]
-    public DateTime? NextClueRegenTime => GetNextRegenTime(ClueEnergy, LastClueEnergyRegen, Constants.ClueEnergyRegenIntervalMinutes, Constants.MaxClueEnergy);
+    public DateTime? NextClueRegenTime => GetNextRegenTime(ClueEnergy, LastClueEnergyRegen, GameConfig.Current.ClueEnergyRegenIntervalMinutes, GameConfig.Current.MaxClueEnergy);
 
     // --- Functional Helpers (The Logic Core) ---
 
@@ -302,7 +317,7 @@ public class User : IdentityUser
     public List<Guess> Guesses { get; set; } = new();
 
     // --- Existing Rating Logic ---
-    public int GuessRating { get; set; } = Constants.InitialGuessRating;
+    public int GuessRating { get; set; } = 1000;
     public float CachedClueRating { get; set; } = 0;
 
     private const float PivotRating = 1000f;
@@ -327,9 +342,9 @@ public class User : IdentityUser
     {
         int baseDelta = 0;
         if (isOddOneOutTarget)
-            baseDelta = isCorrect ? Constants.BaseRewardOddOne : -Constants.BasePenaltyOddOne;
+            baseDelta = isCorrect ? GameConfig.Current.BaseRewardOddOne : -GameConfig.Current.BasePenaltyOddOne;
         else
-            baseDelta = isCorrect ? Constants.BaseRewardInset : -Constants.BasePenaltyInset;
+            baseDelta = isCorrect ? GameConfig.Current.BaseRewardInset : -GameConfig.Current.BasePenaltyInset;
 
         AdjustGuessRating(baseDelta);
 

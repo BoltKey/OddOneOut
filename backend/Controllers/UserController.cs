@@ -38,7 +38,7 @@ public class UserController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        var user = await _context.Users.Include(u => u.Guesses).FirstOrDefaultAsync(u => u.Id == userId);
         if (user == null) return NotFound("User profile not found.");
 
         // Check if they are a guest
@@ -58,7 +58,8 @@ public class UserController : ControllerBase
             NextClueRegenTime = user.NextClueRegenTime,
             GuessRank = await _context.Users.CountAsync(u => u.GuessRating > user.GuessRating) + 1,
             ClueRank = await _context.Users.CountAsync(u => u.CachedClueRating > user.CachedClueRating) + 1,
-            IsGuest = isGuest
+            IsGuest = isGuest,
+            canGiveClues = user.Guesses.Count >= GameConfig.Current.MinGuessesToGiveClues
         };
 
         return Ok(response);
@@ -109,6 +110,9 @@ public class UserController : ControllerBase
         // Otherwise, create a new User
         var user = new User { UserName = request.Username, Email = null };
         user.DisplayName = request.Username;
+        user.GuessEnergy = GameConfig.Current.MaxGuessEnergy;
+        user.ClueEnergy = GameConfig.Current.MaxClueEnergy;
+        user.GuessRating = GameConfig.Current.InitialGuessRating;
         var result = await _userManager.CreateAsync(user, request.Password);
 
         if (!result.Succeeded)
@@ -132,6 +136,10 @@ public class UserController : ControllerBase
         };
         guestUser.DisplayName = $"Guest_{guestId}";
         guestUser.IsGuest = true;
+
+        guestUser.GuessEnergy = GameConfig.Current.MaxGuessEnergy;
+        guestUser.ClueEnergy = GameConfig.Current.MaxClueEnergy;
+        guestUser.GuessRating = GameConfig.Current.InitialGuessRating;
 
         var result = await _userManager.CreateAsync(guestUser);
 
@@ -241,6 +249,9 @@ public class UserController : ControllerBase
         // UPDATE: Generate friendly username here too
         var newUserName = await GetUniqueUsernameAsync(googleName, googleEmail);
         var newUser = new User { UserName = newUserName, Email = googleEmail };
+        newUser.GuessEnergy = GameConfig.Current.MaxGuessEnergy;
+        newUser.ClueEnergy = GameConfig.Current.MaxClueEnergy;
+        newUser.GuessRating = GameConfig.Current.InitialGuessRating;
 
         var createResult = await _userManager.CreateAsync(newUser);
 
@@ -329,6 +340,7 @@ public class UserProfileDto
     public bool IsGuest { get; set; }
     public DateTime? NextGuessRegenTime { get; set; }
     public DateTime? NextClueRegenTime { get; set; }
+    public bool canGiveClues { get; set; }
 }
 public class ChangeDisplayNameRequest
 {

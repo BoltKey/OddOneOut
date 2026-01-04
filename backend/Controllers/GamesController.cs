@@ -54,7 +54,7 @@ public class GamesController : ControllerBase
                   gu.Game.CardSet.Id == g.CardSet.Id &&
                   gu.Guesser == user
               ))
-              .Where(g => g != user.CurrentGame)
+              .Where(g => g != user.CurrentGame && g.CardSet != user.AssignedCardSet)
               .OrderBy(c => Guid.NewGuid())
               .Include(g => g.CardSet)   // 2. Load the Cards inside the Set
                   .ThenInclude(cs => cs.WordCards) // 3. Load the WordCards inside the CardSet
@@ -73,7 +73,7 @@ public class GamesController : ControllerBase
         {
 
             // select a card with bias to be the odd one out
-            var oddOneOutChance = Constants.OddOneOutChance;
+            var oddOneOutChance = GameConfig.Current.OddOneOutChance;
 
             WordCard? randomCard;
             if (new Random().NextDouble() < oddOneOutChance)
