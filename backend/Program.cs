@@ -92,12 +92,25 @@ builder.Services.ConfigureExternalCookie(options => {
     options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // Allow HTTP
 });
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    // "Unspecified" is the magic setting that lets cookies work on HTTP localhost
+    // across different ports without HTTPS.
+    options.Cookie.SameSite = SameSiteMode.Unspecified;
+
+    // Allow the cookie to be sent over non-HTTPS (since you are on port 5017)
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+
+    // Optional: Keep the cookie alive for a long time
+    options.ExpireTimeSpan = TimeSpan.FromDays(365);
+});
+
 var app = builder.Build();
 
 var clientUrl = builder.Configuration["ClientUrl"]; // Read from config
 
 app.UseCors(policy => policy
-    .WithOrigins(clientUrl) // "https://your-app-name.azurewebsites.net"
+    .WithOrigins(clientUrl ?? "http://localhost:5173") // "https://your-app-name.azurewebsites.net"
     .AllowAnyMethod()
     .AllowAnyHeader()
     .AllowCredentials());

@@ -67,6 +67,7 @@ export const api = {
       `${BASE_URL}/user/create-guest?useCookies=true&useSessionCookies=true`,
       {
         method: "POST",
+        credentials: "include",
       }
     );
     if (!res.ok) {
