@@ -75,34 +75,31 @@ builder.Services.AddSwaggerGen(options =>
 });
 builder.Services.AddAuthentication()
     .AddGoogle(options =>
-    {
-        options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
-        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
-        options.CallbackPath = "/signin-google"; // Keep this standard!
-        options.SignInScheme = Microsoft.AspNetCore.Identity.IdentityConstants.ExternalScheme;
-    });
-builder.Services.ConfigureApplicationCookie(options => {
-    // Optional: Settings for the main login cookie
-    options.Cookie.SameSite = SameSiteMode.Lax;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-});
-builder.Services.ConfigureExternalCookie(options => {
-    // CRITICAL: This is the cookie causing your "null" error
-    options.Cookie.SameSite = SameSiteMode.Lax;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // Allow HTTP
-});
+{
+    options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
 
+    // 1. CHANGE THE CALLBACK PATH
+    // This aligns the cookie path with the proxy path
+    options.CallbackPath = "/api/signin-google";
+
+    // 2. FIX THE CORRELATION COOKIE (Crucial for localhost)
+    options.CorrelationCookie.SameSite = SameSiteMode.Unspecified;
+    options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.SignInScheme = IdentityConstants.ExternalScheme;
+});
+// 1. Relax the "Application" cookie (Guest & Local logins)
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    // "Unspecified" is the magic setting that lets cookies work on HTTP localhost
-    // across different ports without HTTPS.
     options.Cookie.SameSite = SameSiteMode.Unspecified;
-
-    // Allow the cookie to be sent over non-HTTPS (since you are on port 5017)
     options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+});
 
-    // Optional: Keep the cookie alive for a long time
-    options.ExpireTimeSpan = TimeSpan.FromDays(365);
+// 2. Relax the "External" cookie (The one getting lost right now!)
+builder.Services.ConfigureExternalCookie(options =>
+{
+    options.Cookie.SameSite = SameSiteMode.Unspecified;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
 });
 
 var app = builder.Build();

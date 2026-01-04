@@ -7,7 +7,7 @@ const GoogleLoginButton = () => {
     // Note: If you used my camelCase CSS from the previous step, use .googleBtn
     // If you used kebab-case (.google-btn) in the CSS file, use styles['google-btn']
     <a
-      href={`${import.meta.env.VITE_API_URL}/api/user/login-google`}
+      href={`${import.meta.env.VITE_API_URL}/user/login-google`}
       className={
         styles.googleBtn + " button" + " button-highlight button-white"
       }
