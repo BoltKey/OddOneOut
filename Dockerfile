@@ -1,5 +1,5 @@
 # STAGE 1: Build React (Vite)
-FROM node:18 AS frontend-build
+FROM node:20-alpine AS frontend-build
 WORKDIR /app-frontend
 COPY ./frontend-react/package*.json ./
 RUN npm install
