@@ -47,7 +47,7 @@ public class GamesController : ControllerBase
             {
                 return BadRequest($"You are out of guesses for now. Please wait {user.NextGuessRegenTime} before guessing again.");
             }
-            game = await _context.Games
+            var avalGames = await _context.Games
               .Where(g => !g.ClueGivers.Any(u => u.Id == userIdString)) // Ensure user is not a ClueGiver in the game
               // ensure user hasn't guessed in any game with same word set yet
               .Where(g => !_context.Guesses.Any(gu =>
@@ -58,9 +58,49 @@ public class GamesController : ControllerBase
               .OrderBy(c => Guid.NewGuid())
               .Include(g => g.CardSet)   // 2. Load the Cards inside the Set
                   .ThenInclude(cs => cs.WordCards) // 3. Load the WordCards inside the CardSet
-              .FirstOrDefaultAsync();
-            user.CurrentGame = game;
+              .Take(GameConfig.Current.GuessAssignGamesAmt)
+              .ToListAsync();
+            var experience = await _context.Guesses
+              .Where(gu => gu.Guesser.Id == userIdString)
+              .CountAsync();
+            experience = Math.Min(300, experience);
+            // each game: number of other guessers, score
+            // new users: prioritize games with more guesses and higher score
+            // experienced users: prioritize games with fewer guesses, primarily, or higher score and more guesses secondarily
+            var gameWeights = avalGames.ToDictionary(g => g, g =>
+            {
+              /*
+              z=e^{-\frac{\left(x-200\cdot e^{-0.008a}\right)^{2}}{5000}}\cdot\frac{y+20}{120}+0.002\cdot a-\left(30-y\right)\cdot x\cdot\left(20\ +\ a\right)\cdot0.0000003-a\cdot x\cdot0.00001-\left(200-a\right)\cdot0.001
+              */
+                int guesses = g.Guesses.Count;
+                double score = g.GameScore();
+                double targetGuesses = 200 * Math.Exp(-0.008 * experience);
+                double guessComponent = Math.Exp(-Math.Pow(guesses - targetGuesses, 2) / 5000.0);
+                double weight = guessComponent * (score + 20) / 120.0;
+                double correction = 0.002 * experience
+                 - (30 - score)*guesses * (20 - experience)
+                 - experience * guesses * 0.00001
+                 - (200 - experience) * 0.001;
+                double result = weight + correction;
+                result = Math.Max(0.001, result);
+                return result;
+            });
 
+            var totalWeight = gameWeights.Values.Sum();
+            var rand = new Random();
+            var pick = rand.NextDouble() * totalWeight;
+            Console.WriteLine($"Total Weight: {totalWeight}, Game weights: {string.Join(", ", gameWeights.Values)} Pick: {pick}");
+            double cumulative = 0.0;
+            foreach (var kvp in gameWeights)
+            {
+                cumulative += kvp.Value;
+                if (pick <= cumulative)
+                {
+                    game = kvp.Key;
+                    break;
+                }
+            }
+            user.CurrentGame = game;
         }
 
 

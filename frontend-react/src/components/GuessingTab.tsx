@@ -235,7 +235,6 @@ export default function GuessingTab({ userId }: { userId: string }) {
                   </span>
                 )}
               </span>
-              )
             </div>
           )}
           {currentClue && tutorialStep >= 4 && (

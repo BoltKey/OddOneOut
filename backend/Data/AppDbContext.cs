@@ -181,7 +181,7 @@ public class Game
         weightedSum += (g.SuccessCoef() ?? 100) * g.ClueGivers.Count;
       }
       float otherAvg = totalWeight == 0 ? 0 : weightedSum / totalWeight;
-      result = (float)(successCoef - otherAvg);
+      result = 100 + (float)(successCoef - otherAvg);
       CachedGameScore = result;
       return result;
   }
@@ -223,6 +223,7 @@ public class GameSettings
     public float GuessEnergyRegenIntervalMinutes { get; set; } = 0.3f;
     public float ClueEnergyRegenIntervalMinutes { get; set; } = 4f;
     public int MinGuessesToGiveClues { get; set; } = 2;
+    public int GuessAssignGamesAmt { get; set; } = 100;
 }
 public static class GameConfig
 {
