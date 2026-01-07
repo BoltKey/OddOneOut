@@ -74,14 +74,14 @@ public class GamesController : ControllerBase
               */
                 int guesses = g.Guesses.Count;
                 double score = g.GameScore();
-                double targetGuesses = 200 * Math.Exp(-0.008 * experience);
-                double guessComponent = Math.Exp(-Math.Pow(guesses - targetGuesses, 2) / 5000.0);
-                double weight = guessComponent * (score + 20) / 120.0;
-                double correction = 0.002 * experience
-                 - (30 - score)*guesses * (20 - experience)
-                 - experience * guesses * 0.00001
-                 - (200 - experience) * 0.001;
-                double result = weight + correction;
+
+                double weight = score * 3
+                + (200-experience * 3) * 0.0003*score * guesses
+                + Math.Pow(experience, 2) * guesses * score * 0.000003
+                + experience * (100 - guesses) * 0.05
+                - (50 - score) * Math.Pow(guesses, 3) * 0.000009;
+
+                double result = weight;
                 result = Math.Max(0.001, result);
                 return result;
             });

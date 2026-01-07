@@ -4,3 +4,24 @@ containerAuth.json
 deployKey.json
 containerapp.json
 principal.json
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+
+# Core build folders
+bin/
+obj/
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# IDE - VS Code
+.vscode/
