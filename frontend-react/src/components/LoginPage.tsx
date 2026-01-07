@@ -132,10 +132,13 @@ export default function LoginPage({ onLoginSuccess, isGuest }: Props) {
           <p>
             Don't want to create an account?{" "}
             <button
-              onClick={() => {
-                api.createGuest().then(() => {
+              onClick={async () => {
+                try {
+                  await api.createGuest();
                   onLoginSuccess();
-                });
+                } catch (err: any) {
+                  setError(err.message || "An error occurred");
+                }
               }}
             >
               Play as Guest

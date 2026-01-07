@@ -296,8 +296,11 @@ public async Task<IActionResult> MakeGuess(MakeGuessDto request)
         allWords = game.CardSet.WordCards.Select(w => new {
             Word = w.Word,
             IsOddOneOut = w.Id == game.OddOneOut.Id,
-            correctGuesses = game.Guesses.Count(gg => gg.SelectedCard.Id == w.Id && gg.GuessIsInSet != (gg.SelectedCard == game.OddOneOut)),
-            totalGuesses = game.Guesses.Count(gg => gg.SelectedCard.Id == w.Id)
+            correctGuesses = _context.Guesses.Count(
+              gg => gg.SelectedCard.Id == w.Id &&
+              gg.GuessIsInSet != (gg.SelectedCard == game.OddOneOut) && gg.Game.Id == game.Id),
+            totalGuesses = _context.Guesses.Count(
+              gg => gg.SelectedCard.Id == w.Id && gg.Game.Id == game.Id)
         })
     });
 }
@@ -343,14 +346,20 @@ public async Task<IActionResult> MakeGuess(MakeGuessDto request)
             return NotFound("The specified OddOneOut card could not be found.");
         }
         // check if game with same word set and clue already exists
-        var existingGame = await _context.Games
-            .Include(g => g.CardSet)
-            .FirstOrDefaultAsync(g => g.CardSet.Id == cardSet.Id && g.Clue == request.clue);
+var existingGame = await _context.Games
+    .FirstOrDefaultAsync(g => g.CardSetId == cardSet.Id && g.Clue == request.clue);
         CreateGameResponseDto response;
         if (existingGame != null)
         {
             // add to ClueGiver list
+            await _context.Entry(existingGame)
+                .Collection(g => g.ClueGivers)
+                .LoadAsync();
+
             existingGame.ClueGivers.Add(user);
+            user.AssignedCardSet = null;
+            await _context.SaveChangesAsync();
+            existingGame.RecalculateScore();
             await _context.SaveChangesAsync();
             response = new CreateGameResponseDto
             {

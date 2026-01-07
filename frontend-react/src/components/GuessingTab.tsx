@@ -21,7 +21,12 @@ export default function GuessingTab({ userId }: { userId: string }) {
     loadUser,
   } = useContext(UserStatsContext);
   const [solutionWords, setSolutionWords] = useState<
-    { word: string; type: "oddOneOut" | "inSet" | "dontknow" | "othercard" }[]
+    {
+      word: string;
+      type: "oddOneOut" | "inSet" | "dontknow" | "othercard";
+      totalGuesses?: number;
+      correctGuesses?: number;
+    }[]
   >([]);
   const fetchAssignedGame = async () => {
     try {
@@ -147,6 +152,13 @@ export default function GuessingTab({ userId }: { userId: string }) {
       >
         {wordsToDisplay.map((word, index) => (
           <div className={"guessing-card-wrap " + word.type} key={index}>
+            {word.totalGuesses !== undefined &&
+              word.correctGuesses !== undefined && (
+                <div className="success-rate">
+                  <span className="amt-correct">{word.correctGuesses}</span> /{" "}
+                  {word.totalGuesses}
+                </div>
+              )}
             <div className={"guessing-card " + word.type} key={index}>
               {word.word}
             </div>
@@ -167,6 +179,8 @@ export default function GuessingTab({ userId }: { userId: string }) {
                 result.allWords.map((w: any) => ({
                   word: w.word,
                   type: w.isOddOneOut ? "oddOneOut" : "inSet",
+                  totalGuesses: w.totalGuesses,
+                  correctGuesses: w.correctGuesses,
                 }))
               );
               if (tutorialStep === 5) {

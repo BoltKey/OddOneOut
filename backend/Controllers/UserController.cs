@@ -107,10 +107,20 @@ public class UserController : ControllerBase
         {
             return await UpgradeGuestToRegistered(request);
         }
+        var usersWithSameIp = await _context.Users
+            .Where(u => u.SourceIp == HttpContext.Connection.RemoteIpAddress.ToString())
+            .ToListAsync();
+        // check if last account was created less than 20 minutes ago
+        Console.WriteLine($"Accounts from this IP: {usersWithSameIp.Count}");
+        if (usersWithSameIp.Any(u => u.CreatedAt > DateTime.UtcNow.AddMinutes(-GameConfig.Current.RegisterTimeoutMinutes)))
+        {
+            return BadRequest("You cannot create so many accounts from the same IP. Wait a while please.");
+        }
 
         // Otherwise, create a new User
         var user = new User { UserName = request.Username, Email = null };
         user.DisplayName = request.Username;
+        user.SourceIp = HttpContext.Connection.RemoteIpAddress?.ToString();
         user.GuessEnergy = GameConfig.Current.MaxGuessEnergy;
         user.ClueEnergy = GameConfig.Current.MaxClueEnergy;
         user.GuessRating = GameConfig.Current.InitialGuessRating;
@@ -135,8 +145,18 @@ public class UserController : ControllerBase
         {
             UserName = $"guest_{guestId}"
         };
+        var usersWithSameIp = await _context.Users
+            .Where(u => u.SourceIp == HttpContext.Connection.RemoteIpAddress.ToString())
+            .ToListAsync();
+        // check if last account was created less than 20 minutes ago
+        Console.WriteLine($"Accounts from this IP: {usersWithSameIp.Count}");
+        if (usersWithSameIp.Any(u => u.CreatedAt > DateTime.UtcNow.AddMinutes(-GameConfig.Current.RegisterTimeoutMinutes)))
+        {
+            return BadRequest("You cannot create so many accounts from the same IP. Wait a while please.");
+        }
         guestUser.DisplayName = $"Guest_{guestId}";
         guestUser.IsGuest = true;
+        guestUser.SourceIp = HttpContext.Connection.RemoteIpAddress?.ToString();
 
         guestUser.GuessEnergy = GameConfig.Current.MaxGuessEnergy;
         guestUser.ClueEnergy = GameConfig.Current.MaxClueEnergy;

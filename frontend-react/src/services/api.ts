@@ -12,13 +12,9 @@ export const api = {
       body: JSON.stringify({ username, password, email }),
     });
     if (!res.ok) {
-      const err = await res.json();
+      const err = await res.text();
       // Identity API returns errors in a specific 'errors' array format
-      throw new Error(
-        err.errors
-          ? Object.values(err.errors).flat().join(", ")
-          : "Registration failed"
-      );
+      throw new Error(err || "Registration failed.");
     }
     return res;
   },
@@ -71,8 +67,7 @@ export const api = {
       }
     );
     if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message || "Guest login failed.");
+      throw new Error((await res.text()) || "Guest login failed.");
     }
     return;
   },
@@ -104,7 +99,9 @@ export const api = {
       method: "POST",
     });
     if (!res.ok) {
-      throw new Error("Failed to fetch assigned clue giving.");
+      throw new Error(
+        (await res.text()) || "Failed to fetch assigned clue giving."
+      );
     }
     return res.json();
   },

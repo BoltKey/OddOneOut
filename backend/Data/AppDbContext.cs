@@ -129,6 +129,7 @@ public class Game
     public int? PresetId { get; set; }
     public List<User> ClueGivers { get; set; } = new();
     public CardSet? CardSet { get; set; }
+    public Guid? CardSetId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public string? Clue { get; set; }
     public WordCard? OddOneOut { get; set; }
@@ -142,16 +143,21 @@ public class Game
       var cardStats = new Dictionary<Guid, (int correct, int total)>();
       foreach (var wc in CardSet!.WordCards)
       {
-        cardStats[wc.Id] = (
-          Guesses.Count(g => g.IsCorrect() && g.SelectedCard == wc),
-          Guesses.Count(g => g.SelectedCard == wc)
-        );
+        var total = Guesses.Count(g => g.SelectedCard == wc);
+        var correct = Guesses.Count(g => g.IsCorrect() && g.SelectedCard == wc);
+        if (total > 0)
+        {
+          cardStats[wc.Id] = (
+            Guesses.Count(g => g.IsCorrect() && g.SelectedCard == wc),
+            Guesses.Count(g => g.SelectedCard == wc)
+          );
+        }
       }
       // geometric average of success rates
       double product = 1.0;
       foreach (var stats in cardStats.Values)
       {
-        double rate = stats.total == 0 ? 1.0 : (double)(0.1 + stats.correct) / (0.1 + stats.total);
+        double rate = (double)(stats.correct) / (stats.total);
         product *= rate;
       }
       double geoMean = Math.Pow(product, 1.0 / cardStats.Count);
@@ -224,6 +230,7 @@ public class GameSettings
     public float ClueEnergyRegenIntervalMinutes { get; set; } = 4f;
     public int MinGuessesToGiveClues { get; set; } = 2;
     public int GuessAssignGamesAmt { get; set; } = 100;
+    public float RegisterTimeoutMinutes { get; set; } = 20f;
 }
 public static class GameConfig
 {
@@ -238,6 +245,7 @@ public static class GameConfig
 }
 [Index(nameof(GuessRating))]
 [Index(nameof(CachedClueRating))]
+[Index(nameof(SourceIp))]
 
 public class User : IdentityUser
 {
@@ -246,6 +254,8 @@ public class User : IdentityUser
     // We explicitly define these so we can manipulate them in the Getters
     private int _guessEnergy;
     private int _clueEnergy;
+    public string? SourceIp { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     private DateTime _lastGuessEnergyRegen = DateTime.UtcNow;
     private DateTime _lastClueEnergyRegen = DateTime.UtcNow;
     public string? DisplayName { get; set; }
@@ -409,9 +419,13 @@ public class User : IdentityUser
         // Added null check '?' just in case EF didn't load the collection
         if (CreatedGames != null)
         {
-            foreach (var g in CreatedGames)
+            foreach (var g in CreatedGames.OrderByDescending(g => g.CreatedAt).Take(100))
             {
-                result += g.GameScore();
+                var score = g.GameScore();
+                // -1 for each day since game creation to encourage consistent clue giving
+                var daysSinceCreation = (DateTime.UtcNow - g.CreatedAt).TotalDays;
+                score = score < 0 ? 0 : score;
+                result += score - (int)daysSinceCreation;
             }
         }
         return result;
