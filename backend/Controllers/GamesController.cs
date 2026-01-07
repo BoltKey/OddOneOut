@@ -295,7 +295,9 @@ public async Task<IActionResult> MakeGuess(MakeGuessDto request)
         clue = game.Clue,
         allWords = game.CardSet.WordCards.Select(w => new {
             Word = w.Word,
-            IsOddOneOut = w.Id == game.OddOneOut.Id
+            IsOddOneOut = w.Id == game.OddOneOut.Id,
+            correctGuesses = game.Guesses.Count(gg => gg.SelectedCard.Id == w.Id && gg.GuessIsInSet != (gg.SelectedCard == game.OddOneOut)),
+            totalGuesses = game.Guesses.Count(gg => gg.SelectedCard.Id == w.Id)
         })
     });
 }
