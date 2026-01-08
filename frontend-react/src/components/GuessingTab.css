@@ -280,3 +280,182 @@
   color: var(--insetcolor);
   font-weight: bold;
 }
+
+/* Clue History Styles */
+.clue-history-wrapper {
+  padding: 5px;
+}
+
+.clue-history-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 5px 0;
+}
+
+.clue-history-card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 2px solid #e0e0e0;
+}
+
+.dark-mode .clue-history-card {
+  background-color: #2a2a2a;
+  border-color: #444;
+}
+
+.clue-history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.dark-mode .clue-history-header {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.clue-game-score {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.dark-mode .clue-game-score {
+  color: #aaa;
+}
+
+.clue-history-your-clue {
+  margin: 10px 0;
+  padding: 10px;
+  background-color: #d5e4e9;
+  border-radius: 6px;
+  border: 2px solid #333;
+}
+
+.dark-mode .clue-history-your-clue {
+  background-color: #2a3a3f;
+  border-color: #555;
+}
+
+.clue-history-your-clue-label {
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: #555;
+  margin-bottom: 6px;
+  letter-spacing: 1px;
+}
+
+.dark-mode .clue-history-your-clue-label {
+  color: #aaa;
+}
+
+.clue-odd-one-out {
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: #333;
+  text-align: center;
+}
+
+.dark-mode .clue-odd-one-out {
+  color: #ddd;
+}
+
+.clue-odd-one-out strong {
+  color: var(--misfitcolor);
+  font-weight: bold;
+}
+
+.clue-history-other-clues {
+  margin: 10px 0;
+  padding: 10px;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.dark-mode .clue-history-other-clues {
+  background-color: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.other-clues-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dark-mode .other-clues-label {
+  color: #aaa;
+}
+
+.other-clues-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.other-clue-item {
+  padding: 8px;
+  background-color: rgba(255, 255, 255, 0.5);
+  border-radius: 4px;
+  border-left: 3px solid #999;
+}
+
+.dark-mode .other-clue-item {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-left-color: #666;
+}
+
+.other-clue-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #000;
+  margin-bottom: 4px;
+}
+
+.dark-mode .other-clue-text {
+  color: #fff;
+}
+
+.other-clue-details {
+  display: flex;
+  gap: 12px;
+  font-size: 0.75rem;
+  color: #666;
+  flex-wrap: wrap;
+}
+
+.dark-mode .other-clue-details {
+  color: #aaa;
+}
+
+.other-clue-misfit {
+  color: var(--misfitcolor);
+  font-weight: 500;
+}
+
+.other-clue-score {
+  color: #666;
+}
+
+.dark-mode .other-clue-score {
+  color: #aaa;
+}
+
+.other-clue-time {
+  color: #999;
+  font-size: 0.7rem;
+}
+
+.dark-mode .other-clue-time {
+  color: #777;
+}

@@ -203,23 +203,60 @@ var historyData = await query
     .AsSplitQuery() // Recommended: prevents data explosion when including collections
     .ToListAsync();
 
-// 2. Perform final in-memory formatting (Client-Side Evaluation)
-// This is fast because no DB calls happen here.
-var history = historyData.Select(d => new
-{
-    Game = d.GameId,
-    d.CardSetId,
-    d.CardSetWords,
-    d.Clue,
-    OddOneOut = d.OddOneOutWord,
-    d.CreatedAt,
-    d.CachedGameScore,
-    otherGamesAmt = d.OtherGamesAmt,
+// 2. Fetch other clues for each card set (efficient batch query)
+var cardSetIds = historyData.Select(d => d.CardSetId).Distinct().ToList();
+var otherCluesByCardSet = await _context.Games
+    .Where(g => g.CardSetId.HasValue && cardSetIds.Contains(g.CardSetId.Value))
+    .Select(g => new
+    {
+        CardSetId = g.CardSetId!.Value,
+        GameId = g.Id,
+        Clue = g.Clue,
+        OddOneOutWord = g.OddOneOut.Word,
+        CreatedAt = g.CreatedAt,
+        CachedGameScore = g.CachedGameScore
+    })
+    .ToListAsync();
 
-    // Recalculate your coefficient here using the fetched data
-    // Example: SuccessCoef = CalculateCoef(d.CorrectGuesses, d.GuessCount)
-    SuccessCoef = 0.0 // Placeholder: Replace with your logic
+var otherCluesGrouped = otherCluesByCardSet
+    .GroupBy(c => c.CardSetId)
+    .ToDictionary(g => g.Key, g => g.ToList());
+
+// 3. Perform final in-memory formatting (Client-Side Evaluation)
+// This is fast because no DB calls happen here.
+var history = historyData.Select(d =>
+{
+    List<object> otherClues = new List<object>();
+    if (otherCluesGrouped.ContainsKey(d.CardSetId))
+    {
+        otherClues = otherCluesGrouped[d.CardSetId]
+            .Where(oc => oc.GameId != d.GameId)
+            .Select(oc => (object)new
+            {
+                Clue = oc.Clue,
+                OddOneOut = oc.OddOneOutWord,
+                CreatedAt = oc.CreatedAt,
+                GameScore = oc.CachedGameScore
+            })
+            .OrderByDescending(oc => ((dynamic)oc).CreatedAt)
+            .ToList();
+    }
+
+    return new
+    {
+        Game = d.GameId,
+        d.CardSetId,
+        d.CardSetWords,
+        d.Clue,
+        OddOneOut = d.OddOneOutWord,
+        d.CreatedAt,
+        d.CachedGameScore,
+        otherGamesAmt = d.OtherGamesAmt,
+        OtherClues = otherClues,
+        SuccessCoef = 0.0 // Placeholder: Replace with your logic
+    };
 }).ToList();
+
 
 // 3. Fetch user rating separately (this is fast, single query)
 var clueScore = await _context.Users
