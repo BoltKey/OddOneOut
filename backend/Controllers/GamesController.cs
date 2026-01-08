@@ -52,12 +52,13 @@ public class GamesController : ControllerBase
               // ensure user hasn't guessed in any game with same word set yet
               .Where(g => !_context.Guesses.Any(gu =>
                   gu.Game.CardSet.Id == g.CardSet.Id &&
-                  gu.Guesser == user
+                  gu.Guesser.Id == userIdString
               ))
-              .Where(g => g != user.CurrentGame && g.CardSet != user.AssignedCardSet)
-              .OrderBy(c => Guid.NewGuid())
+              .Where(g => g.Id != user.CurrentGameId && (user.AssignedCardSet == null || g.CardSetId != user.AssignedCardSet.Id))
               .Include(g => g.CardSet)   // 2. Load the Cards inside the Set
                   .ThenInclude(cs => cs.WordCards) // 3. Load the WordCards inside the CardSet
+              .Include(g => g.Guesses) // Include guesses for scoring
+              .OrderBy(c => Guid.NewGuid()) // Note: Can be optimized with PostgreSQL RANDOM() if needed
               .Take(GameConfig.Current.GuessAssignGamesAmt)
               .ToListAsync();
             var experience = await _context.Guesses
@@ -123,10 +124,11 @@ public class GamesController : ControllerBase
             else
             {
                 // get random card from set that is not the odd one out
-                randomCard = game.CardSet.WordCards
+                // Use in-memory shuffle since we already have the collection loaded
+                var availableCards = game.CardSet.WordCards
                     .Where(wc => wc.Id != game.OddOneOut.Id)
-                    .OrderBy(c => Guid.NewGuid())
-                    .FirstOrDefault();
+                    .ToList();
+                randomCard = availableCards.OrderBy(c => Guid.NewGuid()).FirstOrDefault();
             }
             if (randomCard != null)
             {
@@ -175,15 +177,17 @@ public class GamesController : ControllerBase
           {
               return BadRequest($"You are out of clues for now. Please wait {user.NextClueRegenTime} before guessing again.");
           }
+            // Optimize query: use IDs instead of object comparisons and filter in database
+            var currentGameId = user.CurrentGameId;
             cardSet = await _context.CardSet
               .Where(cs => !_context.Games.Any(g =>
-                  g.CardSet.Id == cs.Id &&           // Match the game to the card set
-                  (g.ClueGivers.Contains(user) || // Check if user is in that game
-                  g.Guesses.Any(gu => gu.Guesser == user)) && // Check if user has guessed in that game
-                  g != user.CurrentGame              // Exclude current game
-              ) && cs.Games.Sum(g => g.ClueGivers.Count) < 20) // Limit to card sets with less than 20 games
-              .OrderBy(c => Guid.NewGuid())
+                  g.CardSetId == cs.Id &&           // Match the game to the card set
+                  g.Id != currentGameId &&          // Exclude current game
+                  (_context.Set<GameClueGiver>().Any(gcg => gcg.GameId == g.Id && gcg.UserId == userIdString) || // Check if user is a clue giver in that game
+                  _context.Guesses.Any(gu => gu.GameId == g.Id && gu.Guesser.Id == userIdString)) // Check if user has guessed
+              ) && _context.Set<GameClueGiver>().Count(gcg => _context.Games.Any(game => game.CardSetId == cs.Id && game.Id == gcg.GameId)) < 20) // Limit to card sets with less than 20 clue givers total
               .Include(cs => cs.WordCards)   // 2. Load the Cards inside the Set
+              .OrderBy(c => Guid.NewGuid()) // Note: Can be optimized with PostgreSQL RANDOM() if needed
               .FirstOrDefaultAsync();
         }
 
@@ -196,12 +200,8 @@ public class GamesController : ControllerBase
             _logger.LogWarning("no cardset found");
             return Unauthorized("No available CardSets found for the user.");
         }
-      await _context.SaveChangesAsync();
-        _context.Users
-            .Where(u => u.Id == userIdString)
-            .ToList()
-            .ForEach(u => u.AssignedCardSet = cardSet);
-
+        // Batch SaveChangesAsync calls - update user and save once
+        user.AssignedCardSet = cardSet;
         await _context.SaveChangesAsync();
         var response = new CardSetResponseDto
 {
@@ -235,7 +235,7 @@ public async Task<IActionResult> MakeGuess(MakeGuessDto request)
     // 2. QUERY A: Load ALL games in this set (including siblings) with their details
     // We fetch the entire batch in one flat query.
     var allGamesInSet = await _context.Games
-    .Where(g => g.CardSet.Id == cardSetId)
+    .Where(g => g.CardSetId == cardSetId) // Use foreign key for better performance
     .Include(g => g.OddOneOut) // Required for IsCorrect checks
 
     // Load ClueGivers AND the Users behind them (prevents AspNetUsers queries)
@@ -245,14 +245,11 @@ public async Task<IActionResult> MakeGuess(MakeGuessDto request)
     .Include(g => g.Guesses)
         .ThenInclude(gg => gg.SelectedCard)
 
-    // Make sure we have the Game loaded on the guess for backward navigation
-    .Include(g => g.Guesses)
-
     // Load CardSet and Words
     .Include(g => g.CardSet)
         .ThenInclude(cs => cs.WordCards)
 
-    //.AsSplitQuery() // Highly recommended for this many includes
+    .AsSplitQuery() // Use split queries to prevent data explosion with multiple collections
     .ToListAsync();
 
     // 3. Find your current game in the list we just loaded
@@ -283,15 +280,12 @@ public async Task<IActionResult> MakeGuess(MakeGuessDto request)
         SelectedCard = user.CurrentCard,
         RatingChange = 0
     };
-    game.Guesses.Add(guessRecord);
-
     int oldRating = user.GuessRating;
     user.ProcessGuessResult(isCorrect, isOddOneOutTarget);
 
     int ratingChange = user.GuessRating - oldRating;
     guessRecord.RatingChange = ratingChange;
 
-    game.Guesses.Add(guessRecord);
     _context.Guesses.Add(guessRecord);
 
     game.RecalculateScore();
@@ -374,8 +368,8 @@ var existingGame = await _context.Games
 
             existingGame.ClueGivers.Add(user);
             user.AssignedCardSet = null;
-            await _context.SaveChangesAsync();
             existingGame.RecalculateScore();
+            // Batch SaveChangesAsync calls - save once after all updates
             await _context.SaveChangesAsync();
             response = new CreateGameResponseDto
             {

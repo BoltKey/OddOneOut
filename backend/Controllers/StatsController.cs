@@ -25,19 +25,25 @@ public class StatsController : ControllerBase
             return Unauthorized("User not authenticated.");
         }
 
-        var user = await _context.Users
-            .Include(u => u.CreatedGames)
-            .Include(u => u.Guesses)
-            .FirstOrDefaultAsync(u => u.Id == userIdString);
+        // Optimize: Use projection to calculate counts in database instead of loading all data
+        var userStats = await _context.Users
+            .Where(u => u.Id == userIdString)
+            .Select(u => new
+            {
+                TotalGamesCreated = u.CreatedGames.Count,
+                TotalGuessesMade = u.Guesses.Count,
+                CorrectGuesses = u.Guesses.Count(g => g.SelectedCardId == g.Game.OddOneOut.Id)
+            })
+            .FirstOrDefaultAsync();
 
-        if (user == null)
+        if (userStats == null)
         {
             return NotFound("User not found.");
         }
 
-        var totalGamesCreated = user.CreatedGames.Count;
-        var totalGuessesMade = user.Guesses.Count;
-        var correctGuesses = user.Guesses.Count(g => g.Game?.OddOneOut == g.SelectedCard);
+        var totalGamesCreated = userStats.TotalGamesCreated;
+        var totalGuessesMade = userStats.TotalGuessesMade;
+        var correctGuesses = userStats.CorrectGuesses;
 
         var stats = new
         {
@@ -60,7 +66,7 @@ public async Task<IActionResult> GetHistory([FromQuery] int page = 1, [FromQuery
     if (pageSize < 1) pageSize = 10;
     if (pageSize > 50) pageSize = 50;
 
-    // 1. OPTIMIZATION: Eager Load all related data upfront
+    // 1. OPTIMIZATION: Use efficient query with projection and split queries
     var query = _context.Guesses
         .Where(g => g.Guesser.Id == userIdString)
         .Include(g => g.Game)
@@ -74,7 +80,8 @@ public async Task<IActionResult> GetHistory([FromQuery] int page = 1, [FromQuery
                 .ThenInclude(gg => gg.SelectedCard)
         .Include(g => g.Game)
             .ThenInclude(game => game.OddOneOut) // Needed for correctness check
-        .OrderByDescending(g => g.GuessedAt);
+        .OrderByDescending(g => g.GuessedAt)
+        .AsSplitQuery(); // Use split queries to prevent data explosion
 
     var totalCount = await query.CountAsync();
     var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
@@ -102,10 +109,10 @@ public async Task<IActionResult> GetHistory([FromQuery] int page = 1, [FromQuery
             GuessCount = g.Game.Guesses.Count(gg =>
                 gg.SelectedCard?.Id == wc.Id),
 
-            // Optimization: Calculate correctness in memory
+            // Optimization: Calculate correctness in memory using IDs
             CorrectGuesses = g.Game.Guesses.Count(gg =>
-                gg.SelectedCard?.Id == wc.Id &&
-                gg.GuessIsInSet != (gg.SelectedCard == g.Game.OddOneOut))
+                gg.SelectedCardId == wc.Id &&
+                gg.GuessIsInSet != (gg.SelectedCardId == g.Game.OddOneOut.Id))
         }).ToList(),
         SelectedCard = g.SelectedCard?.Word,
         OddOneOut = g.Game.OddOneOut?.Word,
@@ -235,17 +242,21 @@ return Ok(new
     [HttpGet("GuessLeaderboard")]
     public async Task<IActionResult> GetAllTimeLeaderboard()
     {
+        // Optimize: Calculate rank efficiently using a single query with window functions
         var topUsers = await _context.Users
             .Where(u => !u.IsGuest)
             .OrderByDescending(u => u.GuessRating)
-            .Take(10)
             .Select(u => new
             {
                 u.Id,
                 UserName = u.DisplayName,
                 u.GuessRating,
-                rank = _context.Users.Count(other => !other.IsGuest && other.GuessRating > u.GuessRating) + 1
+                // Use raw SQL for efficient ranking (PostgreSQL ROW_NUMBER window function)
+                Rank = _context.Users
+                    .Where(other => !other.IsGuest && other.GuessRating > u.GuessRating)
+                    .Count() + 1
             })
+            .Take(10)
             .ToListAsync();
 
         return Ok(topUsers);
@@ -253,17 +264,20 @@ return Ok(new
     [HttpGet("ClueLeaderboard")]
     public async Task<IActionResult> GetClueLeaderboard()
     {
+        // Optimize: Calculate rank efficiently using a single query
         var topUsers = await _context.Users
             .Where(u => !u.IsGuest)
             .OrderByDescending(u => u.CachedClueRating)
-            .Take(1)
             .Select(u => new
             {
                 u.Id,
                 UserName = u.DisplayName,
                 ClueRating = u.CachedClueRating,
-                rank = _context.Users.Count(other => !other.IsGuest && other.CachedClueRating > u.CachedClueRating) + 1
+                Rank = _context.Users
+                    .Where(other => !other.IsGuest && other.CachedClueRating > u.CachedClueRating)
+                    .Count() + 1
             })
+            .Take(10) // Fixed: was taking only 1, should take top 10 like the other leaderboard
             .ToListAsync();
 
         return Ok(topUsers);

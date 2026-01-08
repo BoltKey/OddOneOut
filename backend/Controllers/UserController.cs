@@ -38,11 +38,31 @@ public class UserController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-        var user = await _context.Users.Include(u => u.Guesses).FirstOrDefaultAsync(u => u.Id == userId);
+        // Optimize: Only load what we need, calculate counts in database
+        var user = await _context.Users
+            .Where(u => u.Id == userId)
+            .Select(u => new
+            {
+                u.Id,
+                u.UserName,
+                u.DisplayName,
+                u.Email,
+                u.IsGuest,
+                u.GuessRating,
+                u.CachedClueRating,
+                u.GuessEnergy,
+                u.ClueEnergy,
+                u.NextGuessRegenTime,
+                u.NextClueRegenTime,
+                GuessCount = u.Guesses.Count
+            })
+            .FirstOrDefaultAsync();
+            
         if (user == null) return NotFound("User profile not found.");
 
-        // Check if they are a guest
-        var isGuest = user.IsGuest;
+        // Calculate ranks efficiently
+        var guessRank = await _context.Users.CountAsync(u => u.GuessRating > user.GuessRating) + 1;
+        var clueRank = await _context.Users.CountAsync(u => u.CachedClueRating > user.CachedClueRating) + 1;
 
         var response = new UserProfileDto
         {
@@ -56,10 +76,10 @@ public class UserController : ControllerBase
             ClueEnergy = user.ClueEnergy,
             NextGuessRegenTime = user.NextGuessRegenTime,
             NextClueRegenTime = user.NextClueRegenTime,
-            GuessRank = await _context.Users.CountAsync(u => u.GuessRating > user.GuessRating) + 1,
-            ClueRank = await _context.Users.CountAsync(u => u.CachedClueRating > user.CachedClueRating) + 1,
-            IsGuest = isGuest,
-            canGiveClues = user.Guesses.Count >= GameConfig.Current.MinGuessesToGiveClues,
+            GuessRank = guessRank,
+            ClueRank = clueRank,
+            IsGuest = user.IsGuest,
+            canGiveClues = user.GuessCount >= GameConfig.Current.MinGuessesToGiveClues,
             guessesToGiveClues = GameConfig.Current.MinGuessesToGiveClues
         };
 
@@ -107,12 +127,15 @@ public class UserController : ControllerBase
         {
             return await UpgradeGuestToRegistered(request);
         }
-        var usersWithSameIp = await _context.Users
-            .Where(u => u.SourceIp == HttpContext.Connection.RemoteIpAddress.ToString())
-            .ToListAsync();
-        // check if last account was created less than 20 minutes ago
-        Console.WriteLine($"Accounts from this IP: {usersWithSameIp.Count}");
-        if (usersWithSameIp.Any(u => u.CreatedAt > DateTime.UtcNow.AddMinutes(-GameConfig.Current.RegisterTimeoutMinutes)))
+        // Optimize: Check in database instead of loading all users
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var recentAccountCount = await _context.Users
+            .Where(u => u.SourceIp == ipAddress && 
+                   u.CreatedAt > DateTime.UtcNow.AddMinutes(-GameConfig.Current.RegisterTimeoutMinutes))
+            .CountAsync();
+        
+        Console.WriteLine($"Recent accounts from this IP: {recentAccountCount}");
+        if (recentAccountCount > 0)
         {
             return BadRequest("You cannot create so many accounts from the same IP. Wait a while please.");
         }
@@ -145,12 +168,15 @@ public class UserController : ControllerBase
         {
             UserName = $"guest_{guestId}"
         };
-        var usersWithSameIp = await _context.Users
-            .Where(u => u.SourceIp == HttpContext.Connection.RemoteIpAddress.ToString())
-            .ToListAsync();
-        // check if last account was created less than 20 minutes ago
-        Console.WriteLine($"Accounts from this IP: {usersWithSameIp.Count}");
-        if (usersWithSameIp.Any(u => u.CreatedAt > DateTime.UtcNow.AddMinutes(-GameConfig.Current.RegisterTimeoutMinutes)))
+        // Optimize: Check in database instead of loading all users
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var recentAccountCount = await _context.Users
+            .Where(u => u.SourceIp == ipAddress && 
+                   u.CreatedAt > DateTime.UtcNow.AddMinutes(-GameConfig.Current.RegisterTimeoutMinutes))
+            .CountAsync();
+        
+        Console.WriteLine($"Recent accounts from this IP: {recentAccountCount}");
+        if (recentAccountCount > 0)
         {
             return BadRequest("You cannot create so many accounts from the same IP. Wait a while please.");
         }

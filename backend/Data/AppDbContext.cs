@@ -19,17 +19,13 @@ public class AppDbContext : IdentityDbContext<User>
     public DbSet<CardSet> CardSet { get; set; }
     public DbSet<WordCard> WordCard { get; set; }
     public DbSet<Guess> Guesses { get; set; }
+    public DbSet<GameClueGiver> GameClueGivers { get; set; }
 protected override void OnModelCreating(ModelBuilder builder)
 {
     base.OnModelCreating(builder); // Required for Identity
 
     // --- 1. Configure the Many-to-Many (ClueGivers <-> CreatedGames) ---
-    builder.Entity<Game>()
-        .Navigation(g => g.Guesses)
-        .AutoInclude();
-    builder.Entity<Game>()
-        .Navigation(g => g.CardSet)
-        .AutoInclude();
+    // Removed AutoInclude for better query performance - include explicitly when needed
     builder.Entity<Game>()
     .HasMany(g => g.ClueGivers)
     .WithMany(u => u.CreatedGames)
@@ -58,15 +54,19 @@ protected override void OnModelCreating(ModelBuilder builder)
         .WithMany() // We leave this empty because Game doesn't have a "List<User> CurrentPlayers"
         .HasForeignKey(u => u.CurrentGameId);
 
+    // Removed AutoInclude for better query performance - include explicitly when needed
+    // Add indexes for frequently queried foreign keys
+    builder.Entity<Game>()
+        .HasIndex(g => g.CardSetId);
+    
+    builder.Entity<Guess>()
+        .HasIndex(g => g.GameId);
+    
+    builder.Entity<Guess>()
+        .HasIndex(g => g.SelectedCardId);
+    
     builder.Entity<User>()
-        .Navigation(c => c.CreatedGames)
-        .AutoInclude();
-    builder.Entity<CardSet>()
-        .Navigation(c => c.WordCards)
-        .AutoInclude();
-    builder.Entity<CardSet>()
-        .Navigation(c => c.Games)
-        .AutoInclude();
+        .HasIndex(u => u.CurrentGameId);
 }
 }
 
@@ -90,11 +90,20 @@ public class CardSet
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public static async Task<CardSet> CreateRandomAsync(AppDbContext context, int wordCount = 5)
     {
-        // 1. Fetch the logic (moved from controller)
+        // 1. Fetch random words using PostgreSQL's efficient ORDER BY RANDOM()
+        // This is much more efficient than Guid.NewGuid() for large datasets
+        // For PostgreSQL with Npgsql, we use FromSqlRaw with ORDER BY RANDOM()
+        var totalCount = await context.WordCard.CountAsync();
+        if (totalCount == 0)
+            throw new InvalidOperationException("No word cards available in database.");
+        
+        var countToTake = Math.Min(wordCount, totalCount);
         var randomWords = await context.WordCard
-            .OrderBy(c => Guid.NewGuid())
-            .Take(wordCount)
+            .FromSqlRaw("SELECT * FROM \"WordCard\" ORDER BY RANDOM() LIMIT {0}", countToTake)
             .ToListAsync();
+
+        if (randomWords.Count == 0)
+            throw new InvalidOperationException("No word cards available in database.");
 
         // 2. Instantiate the object
         var cardSet = new CardSet
