@@ -160,8 +160,22 @@ public class UserController : ControllerBase
     // 3. GUEST LOGIC
     // ==========================================
     [HttpPost("create-guest")]
-    public async Task<IActionResult> CreateGuest()
+    public async Task<IActionResult> CreateGuest([FromQuery] string? guestUserId = null)
     {
+        // If a guest user ID is provided, try to reuse that guest account
+        if (!string.IsNullOrEmpty(guestUserId))
+        {
+            var existingGuest = await _userManager.FindByIdAsync(guestUserId);
+            if (existingGuest != null && existingGuest.IsGuest)
+            {
+                // Found the guest user, sign them in
+                await _signInManager.SignInAsync(existingGuest, isPersistent: true);
+                return Ok(new { userId = existingGuest.Id });
+            }
+            // If guest user not found or not a guest, fall through to create new guest
+        }
+
+        // Create a new guest user
         var guestId = Guid.NewGuid().ToString().Substring(0, 8);
         // Use your custom 'User' class here
         var guestUser = new User
@@ -193,7 +207,7 @@ public class UserController : ControllerBase
         if (result.Succeeded)
         {
             await _signInManager.SignInAsync(guestUser, isPersistent: true);
-            return Ok();
+            return Ok(new { userId = guestUser.Id });
         }
         return BadRequest(result.Errors);
     }

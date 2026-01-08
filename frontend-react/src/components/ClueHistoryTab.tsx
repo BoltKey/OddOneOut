@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../services/api";
 import "./GuessingTab.css";
 
-export default function ClueHistoryTab({ userId }: { userId: string }) {
+export default function ClueHistoryTab({ userId: _userId }: { userId: string }) {
   const [clueHistory, setClueHistory] = useState<
     {
       game: string;
@@ -29,7 +29,7 @@ export default function ClueHistoryTab({ userId }: { userId: string }) {
   const [clueRating, setClueRating] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const [totalPages, setTotalPages] = useState(1);
+  const [totalPages, setTotalPages] = useState(1); // Used in fetchClueHistory
   const page = useRef<number>(1);
   const observerTarget = useRef<HTMLDivElement>(null);
   const isLoadingRef = useRef(false);

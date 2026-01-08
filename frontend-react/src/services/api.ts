@@ -16,6 +16,8 @@ export const api = {
       // Identity API returns errors in a specific 'errors' array format
       throw new Error(err || "Registration failed.");
     }
+    // Clear guest ID when a registered user signs up
+    localStorage.removeItem("guestUserId");
     return res;
   },
 
@@ -33,6 +35,8 @@ export const api = {
     );
 
     if (!res.ok) throw new Error("Invalid login attempt.");
+    // Clear guest ID when a registered user logs in
+    localStorage.removeItem("guestUserId");
     // We don't need to return JSON here. The Cookie is set automatically by the browser.
     return;
   },
@@ -58,9 +62,10 @@ export const api = {
     }
     return;
   },
-  createGuest: async () => {
+  createGuest: async (guestUserId?: string) => {
+    const guestParam = guestUserId ? `&guestUserId=${encodeURIComponent(guestUserId)}` : "";
     const res = await fetch(
-      `${BASE_URL}/user/create-guest?useCookies=true&useSessionCookies=true`,
+      `${BASE_URL}/user/create-guest?useCookies=true&useSessionCookies=true${guestParam}`,
       {
         method: "POST",
         credentials: "include",
@@ -69,7 +74,8 @@ export const api = {
     if (!res.ok) {
       throw new Error((await res.text()) || "Guest login failed.");
     }
-    return;
+    const data = await res.json();
+    return data;
   },
   changeDisplayName: async (NewDisplayName: string) => {
     const res = await fetch(`${BASE_URL}/User/ChangeDisplayName`, {

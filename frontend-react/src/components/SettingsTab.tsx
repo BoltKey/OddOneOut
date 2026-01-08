@@ -81,9 +81,21 @@ export default function SettingsTab({ currentDisplayName }: SettingsTabProps) {
         />
       )}
       <button
-        onClick={() => {
+        onClick={async () => {
+          // Preserve guest user ID on logout if it's a guest
+          const isGuest = user?.isGuest;
+          const guestUserId = isGuest ? user?.id : null;
+          
           setLoggedOut(true);
-          api.logout();
+          await api.logout();
+          
+          // Keep guest ID in localStorage for reuse
+          if (guestUserId) {
+            localStorage.setItem("guestUserId", guestUserId);
+          } else {
+            // Clear guest ID if logging out as a registered user
+            localStorage.removeItem("guestUserId");
+          }
         }}
       >
         Logout
