@@ -131,7 +131,8 @@ if (app.Environment.IsDevelopment())
     {
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var env = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
-        DataSeeder.SeedWordCards(db, env); // Uncomment when you have your seeder ready
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        DataSeeder.SeedWordCards(db, env, logger);
     }
     app.UseSwagger();
     app.UseSwaggerUI();
@@ -146,8 +147,9 @@ else
     {
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var env = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
         db.Database.Migrate();
-        DataSeeder.SeedWordCards(db, env); // Uncomment when you have your seeder ready
+        DataSeeder.SeedWordCards(db, env, logger);
     }
     catch (Exception ex)
     {
