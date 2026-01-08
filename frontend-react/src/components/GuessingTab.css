@@ -28,7 +28,7 @@
 }
 .guessing-card-wrap.othercard {
   transform: scale(0.6);
-  margin: 0 -20px;
+  margin: 0 -12px;
   opacity: 0.5;
 }
 .guessing-card.inSet {
@@ -39,19 +39,59 @@
   background-color: var(--misfitcolor);
   border: none;
 }
-.shuffling .guessing-card-wrap {
-  animation: shuffleAnimation 2s ease-in-out;
+/* Smooth card reveal animation for tutorial */
+.card-reveal .guessing-card-wrap {
+  animation: cardReveal 0.8s ease-out;
+  animation-fill-mode: forwards;
 }
-@keyframes shuffleAnimation {
+
+.card-reveal .guessing-card-wrap:nth-child(1) {
+  animation-delay: 0.1s;
+}
+.card-reveal .guessing-card-wrap:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.card-reveal .guessing-card-wrap:nth-child(3) {
+  animation-delay: 0.3s;
+}
+.card-reveal .guessing-card-wrap:nth-child(4) {
+  animation-delay: 0.4s;
+}
+.card-reveal .guessing-card-wrap:nth-child(5) {
+  animation-delay: 0.5s;
+}
+
+@keyframes cardReveal {
   0% {
-    transform: rotate(1080deg);
-  }
-  50% {
-    transform: rotate(540deg) scale(0);
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
   }
   100% {
-    transform: rotate(0deg);
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
+}
+
+/* Reset transforms after card reveal animation completes - prevent overlap */
+.solution-words-container:not(.card-reveal) .guessing-card-wrap {
+  animation: none;
+}
+
+.solution-words-container:not(.card-reveal) .guessing-card-wrap:not(.othercard) {
+  transform: none !important;
+}
+
+/* Ensure revealed cards (inSet, oddOneOut, dontknow) never overlap */
+.guessing-card-wrap.inSet,
+.guessing-card-wrap.oddOneOut,
+.guessing-card-wrap.dontknow {
+  transform: none !important;
+  margin: 0 !important;
+  width: 19% !important;
+}
+
+.guessing-card-wrap.dontknow {
+  width: 30% !important;
 }
 
 .guessing-wrapper {
@@ -60,14 +100,48 @@
   align-items: center;
 }
 .tutorial-message {
-  background-color: #fff3cd;
-  border: 1px solid #ffeeba;
-  padding: 15px;
-  margin-bottom: 10px;
-  margin-top: 10px;
-  border-radius: 5px;
-  font-weight: bold;
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
+  border: 2px solid #ffc107;
+  padding: 20px;
+  margin-bottom: 15px;
+  margin-top: 15px;
+  border-radius: 10px;
   color: #856404;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.dark-mode .tutorial-message {
+  background: linear-gradient(135deg, #3a2f00 0%, #4a3a00 100%);
+  border-color: #ffc107;
+  color: #ffc107;
+}
+
+.tutorial-message button {
+  margin-top: 15px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: bold;
+  background-color: #ffc107 !important;
+  color: #000 !important;
+  border: none !important;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tutorial-message button:hover {
+  background-color: #ffb300 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.dark-mode .tutorial-message button {
+  background-color: #ffc107 !important;
+  color: #000 !important;
+  border: none !important;
 }
 .guess-buttons-wrapper {
   display: flex;

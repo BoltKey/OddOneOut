@@ -60,34 +60,59 @@ export default function GuessingTab({ userId }: { userId: string }) {
     let tutorialMessages: { [key: number]: React.ReactNode } = {
       1: (
         <div>
-          Welcome to word game Misfit! This 1-minute tutorial will teach you how
-          to play. <button onClick={advanceTutorial}>Sounds good</button>
+          <div style={{ marginBottom: "10px" }}>
+            Welcome to <strong>Misfit</strong>! This quick tutorial will show you how to play.
+          </div>
+          <button onClick={advanceTutorial}>Let's go!</button>
         </div>
       ),
       2: (
         <>
-          <div>Another player has been given 5 secret random words.</div>
-          <button onClick={advanceTutorial}>Understood</button>
+          <div style={{ marginBottom: "10px" }}>
+            Another player was given <strong>5 secret words</strong>.
+          </div>
+          <button onClick={advanceTutorial}>Got it</button>
         </>
       ),
       3: (
         <>
-          <div>
-            They chose one of them to be the Misfit, the other 4 being Matches.
+          <div style={{ marginBottom: "10px" }}>
+            They picked one word as the <strong style={{ color: "var(--misfitcolor)" }}>Misfit</strong> and the other 4 as <strong style={{ color: "var(--insetcolor)" }}>Matches</strong>.
           </div>
-          <button onClick={advanceTutorial}>Ok</button>
+          <button onClick={advanceTutorial}>I see</button>
         </>
       ),
       4: (
         <>
-          <div>
-            They said clue "{currentClue}", connecting all words but the Misfit.
+          <div style={{ marginBottom: "10px" }}>
+            They created a clue: <strong>"{currentClue}"</strong>
+            <br />
+            <small style={{ fontSize: "0.9em", color: "#666" }}>
+              This clue connects the 4 Matches, but not the Misfit.
+            </small>
           </div>
           <button onClick={advanceTutorial}>Understood</button>
         </>
       ),
-      5: "All 5 words are then shuffled and you see one of those cards. Your job is to guess whether this card is part of the group that matches the clue, or the misfit.",
-      6: "After guessing, you will see the original set of 5 words. You gain or lose Guess Rating based on whether your guess is correct. You can also see success rates of all other players who were given other words. Try to get as high a Guess Rating as possible! Good Luck!",
+      5: (
+        <div style={{ marginBottom: "10px" }}>
+          The 5 words are shuffled, and you're shown <strong>one random card</strong>.
+          <br />
+          <br />
+          Your goal: Guess if this card is a <strong style={{ color: "var(--insetcolor)" }}>Match</strong> (fits the clue) or the <strong style={{ color: "var(--misfitcolor)" }}>Misfit</strong> (doesn't fit).
+        </div>
+      ),
+      6: (
+        <div style={{ marginBottom: "10px" }}>
+          After you guess, you'll see all 5 words revealed.
+          <br />
+          <br />
+          <strong>Your Guess Rating</strong> goes up or down based on whether you're correct. You'll also see how other players performed with each word.
+          <br />
+          <br />
+          Try to get the highest rating possible! Good luck!
+        </div>
+      ),
       7: null,
     };
     setTutorialMessage(tutorialMessages[tutorialStep]);
@@ -147,7 +172,7 @@ export default function GuessingTab({ userId }: { userId: string }) {
         tutorialStep >= 5 && <div className="your-card">Your word:</div>}
       <div
         className={
-          "solution-words-container" + (tutorialStep === 5 ? " shuffling" : "")
+          "solution-words-container" + (tutorialStep === 5 ? " card-reveal" : "")
         }
       >
         {wordsToDisplay.map((word, index) => (
