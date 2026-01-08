@@ -98,19 +98,12 @@ export default function GuessingTab({ userId }: { userId: string }) {
         <div style={{ marginBottom: "10px" }}>
           The 5 words are shuffled, and you're shown <strong>one random card</strong>.
           <br />
-          <br />
           Your goal: Guess if this card is a <strong style={{ color: "var(--insetcolor)" }}>Match</strong> (fits the clue) or the <strong style={{ color: "var(--misfitcolor)" }}>Misfit</strong> (doesn't fit).
         </div>
       ),
       6: (
         <div style={{ marginBottom: "10px" }}>
-          After you guess, you'll see all 5 words revealed.
-          <br />
-          <br />
-          <strong>Your Guess Rating</strong> goes up or down based on whether you're correct. You'll also see how other players performed with each word.
-          <br />
-          <br />
-          Try to get the highest rating possible! Good luck!
+          After you guess, you'll see all 5 words revealed. <strong>Your Guess Rating</strong> goes up or down based on whether you're correct. You'll also see how other players performed with each word. Try to get the highest rating possible! Good luck!
         </div>
       ),
       7: null,
