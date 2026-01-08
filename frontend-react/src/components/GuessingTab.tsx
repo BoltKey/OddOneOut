@@ -252,51 +252,55 @@ export default function GuessingTab({ userId }: { userId: string }) {
       )}
       {tutorialStep === 1 ? null : (
         <>
-          {message && <div>{message}</div>}
-          {tutorialStep >= 4 && (
-            <div className="guess-rating-display">
-              Your Guess Rating: {guessRating}{" "}
-              <span>
-                {guessRatingChange !== null && (
-                  <span
-                    className={
-                      "rating-change " +
-                      (guessRatingChange > 0
-                        ? "positive"
-                        : guessRatingChange < 0
-                        ? "negative"
-                        : "")
-                    }
-                  >
-                    {`(${
-                      guessRatingChange >= 0 ? "+" : ""
-                    }${guessRatingChange})`}
-                  </span>
-                )}
-              </span>
+          {message && <div className="error-message">{message}</div>}
+          <div className="guessing-content">
+            <div className="guessing-header">
+              {(tutorialStep >= 8 || solutionWords.length > 0) && (
+                <div className="guess-rating-display">
+                  <span className="rating-label">Rating</span>
+                  <span className="rating-value">{guessRating}</span>
+                  {guessRatingChange !== null && (
+                    <span
+                      className={
+                        "rating-change " +
+                        (guessRatingChange > 0
+                          ? "positive"
+                          : guessRatingChange < 0
+                          ? "negative"
+                          : "")
+                      }
+                    >
+                      {guessRatingChange >= 0 ? "+" : ""}
+                      {guessRatingChange}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
-          )}
-          {currentClue && tutorialStep >= 4 && (
-            <>
-              <div className="clue-wrapper">Clue: </div>
-              <div className="current-clue">{currentClue}</div>
-            </>
-          )}
-          <div
-            className={
-              "clue-word-separator " +
-              (tutorialStep === 4 ? "visible" : "hidden")
-            }
-          ></div>
-          {solutionWords.length > 0 && (
-            <div className="guess-result">
-              {isCorrect ? "Correct!" : "Incorrect"}
+            <div className="guessing-main">
+              {currentClue && tutorialStep >= 4 && (
+                <div className="clue-section">
+                  <div className="clue-label">Clue</div>
+                  <div className="current-clue">{currentClue}</div>
+                </div>
+              )}
+              <div
+                className={
+                  "clue-word-separator " +
+                  (tutorialStep === 4 ? "visible" : "hidden")
+                }
+              ></div>
+              {solutionWords.length > 0 && (
+                <div className="guess-result">
+                  {isCorrect ? "Correct!" : "Incorrect"}
+                </div>
+              )}
+              {cardDisplay}
+              {tutorialStep >= 5 && (
+                <div className="guess-buttons-wrapper">{buttons}</div>
+              )}
             </div>
-          )}
-          {cardDisplay}
-          {tutorialStep >= 5 && (
-            <div className="guess-buttons-wrapper">{buttons}</div>
-          )}
+          </div>
         </>
       )}
     </div>

@@ -7,8 +7,7 @@ import "./App.css";
 import ClueGivingTab from "./components/ClueGivingTab";
 import GuessHistoryTab from "./components/GuessHistoryTab";
 import ClueHistoryTab from "./components/ClueHistoryTab";
-import GuessLeaderboardTab from "./components/GuessLeaderboardTab";
-import ClueLeaderboardTab from "./components/ClueLeaderboardTab";
+import LeaderboardTab from "./components/LeaderboardTab";
 import SettingsTab from "./components/SettingsTab";
 import { FaHistory, FaSearch, FaTrophy, FaReddit } from "react-icons/fa";
 import { FaGear } from "react-icons/fa6";
@@ -362,10 +361,7 @@ function App() {
                   <ClueHistoryTab userId={user.id} />
                 )}
                 {openModal === "leaderboard" && (
-                  <GuessLeaderboardTab userId={user.id} />
-                )}
-                {openModal === "leaderboard" && (
-                  <ClueLeaderboardTab userId={user.id} />
+                  <LeaderboardTab userId={user.id} />
                 )}
                 {openModal === "settings" && (
                   <SettingsTab

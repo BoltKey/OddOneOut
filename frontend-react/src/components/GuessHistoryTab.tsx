@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { api } from "../services/api";
+import { UserStatsContext } from "../App";
 import "./GuessingTab.css";
 
 export default function GuessHistoryTab({ userId }: { userId: string }) {
@@ -29,6 +30,7 @@ export default function GuessHistoryTab({ userId }: { userId: string }) {
   const observerTarget = useRef<HTMLDivElement>(null);
   const isLoadingRef = useRef(false);
   const totalPagesRef = useRef(1);
+  const { guessRating, guessRatingChange } = useContext(UserStatsContext);
 
   const fetchGuessHistory = useCallback(async (pageNumber: number) => {
     if (isLoadingRef.current || pageNumber > totalPagesRef.current) return;
@@ -107,6 +109,28 @@ export default function GuessHistoryTab({ userId }: { userId: string }) {
   return (
     <div className="guess-history-wrapper">
       {message && <div className="history-message">{message}</div>}
+      {/* Rating display in history */}
+      <div className="guessing-header" style={{ marginBottom: "20px" }}>
+        <div className="guess-rating-display">
+          <span className="rating-label">Rating</span>
+          <span className="rating-value">{guessRating}</span>
+          {guessRatingChange !== null && (
+            <span
+              className={
+                "rating-change " +
+                (guessRatingChange > 0
+                  ? "positive"
+                  : guessRatingChange < 0
+                  ? "negative"
+                  : "")
+              }
+            >
+              {guessRatingChange >= 0 ? "+" : ""}
+              {guessRatingChange}
+            </span>
+          )}
+        </div>
+      </div>
       {guessHistory.length > 0 && (
         <div>
           <h3 style={{ marginBottom: "20px", textAlign: "center" }}>

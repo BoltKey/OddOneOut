@@ -72,6 +72,14 @@
   }
 }
 
+/* Ensure solution-words-container is always visible */
+.solution-words-container {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-around !important;
+  width: 100% !important;
+}
+
 /* Reset transforms after card reveal animation completes - prevent overlap */
 .solution-words-container:not(.card-reveal) .guessing-card-wrap {
   animation: none;
@@ -98,6 +106,234 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.guessing-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-sizing: border-box;
+}
+
+.guessing-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.guess-rating-display {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background-color: #f5f5f5;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.dark-mode .guess-rating-display {
+  background-color: #2a2a2a;
+  border-color: #555;
+}
+
+.rating-label {
+  color: #666;
+  font-weight: 500;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.dark-mode .rating-label {
+  color: #aaa;
+}
+
+.rating-value {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #333;
+  flex-shrink: 0;
+}
+
+.dark-mode .rating-value {
+  color: #ddd;
+}
+
+.rating-change {
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.rating-change.positive {
+  color: var(--insetcolor);
+  background-color: rgba(19, 136, 0, 0.1);
+}
+
+.rating-change.negative {
+  color: var(--misfitcolor);
+  background-color: rgba(229, 68, 0, 0.1);
+}
+
+.guessing-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.clue-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  padding: 0;
+}
+
+.clue-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.dark-mode .clue-label {
+  color: #aaa;
+}
+
+.current-clue {
+  width: 100%;
+  max-width: 500px;
+  box-sizing: border-box;
+  padding: 15px 20px !important;
+  font-size: 1.5rem !important;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+@media (max-width: 600px) {
+  .current-clue {
+    font-size: 1.1rem !important;
+    padding: 10px 14px !important;
+    border-radius: 25px !important;
+    max-width: 100% !important;
+    width: calc(100% - 20px) !important;
+    margin: 0 auto;
+  }
+  
+  .guessing-wrapper {
+    padding: 15px 10px;
+    max-width: 100%;
+  }
+  
+  .guessing-content {
+    gap: 15px;
+    width: 100%;
+    padding: 0;
+  }
+  
+  .clue-section {
+    width: 100%;
+    padding: 0 5px;
+    box-sizing: border-box;
+    max-width: 100%;
+  }
+  
+  .guessing-main {
+    width: 100%;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  .solution-words-container {
+    width: 100% !important;
+    padding: 0 !important;
+    box-sizing: border-box;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-around !important;
+    gap: 4px !important;
+  }
+  
+  .guess-buttons-wrapper {
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100%;
+    display: flex !important;
+  }
+}
+
+.your-card {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.dark-mode .your-card {
+  color: #aaa;
+}
+
+.guess-result {
+  font-size: 1.5rem;
+  font-weight: 700;
+  padding: 12px 24px;
+  border-radius: 8px;
+  text-align: center;
+  margin: 10px 0;
+}
+
+.guess-result:has-text("Correct") {
+  color: var(--insetcolor);
+  background-color: rgba(19, 136, 0, 0.1);
+}
+
+.guessing-wrapper.correct .guess-result {
+  color: var(--insetcolor);
+  background-color: rgba(19, 136, 0, 0.1);
+}
+
+.guessing-wrapper.incorrect .guess-result {
+  color: var(--misfitcolor);
+  background-color: rgba(229, 68, 0, 0.1);
+}
+
+.error-message {
+  padding: 12px 16px;
+  background-color: #fee;
+  color: #c33;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  text-align: center;
+  border: 1px solid #fcc;
+}
+
+.dark-mode .error-message {
+  background-color: #3a1a1a;
+  color: #ff6b6b;
+  border-color: #5a2a2a;
 }
 .tutorial-message {
   background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
@@ -144,12 +380,14 @@
   border: none !important;
 }
 .guess-buttons-wrapper {
-  display: flex;
+  display: flex !important;
   gap: 10px;
   margin-top: 20px;
   width: 100%;
   align-items: center;
-  justify-content: center;
+  justify-content: center !important;
+  flex-wrap: wrap;
+  box-sizing: border-box;
 }
 .guess-buttons-wrapper button {
   font-size: large;
