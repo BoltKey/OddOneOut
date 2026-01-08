@@ -102,6 +102,13 @@ function App() {
       setGuessRating(userData.guessRating);
       setGuessEnergy(userData.guessEnergy);
       setClueEnergy(userData.clueEnergy);
+      // Store guest user ID and display name in localStorage if it's a guest
+      if (userData.isGuest) {
+        localStorage.setItem("guestUserId", userData.id);
+        if (userData.displayName) {
+          localStorage.setItem("guestDisplayName", userData.displayName);
+        }
+      }
       // add 2 seconds to avoid timing issues
       setNextClueRegenTime(
         userData.nextClueRegenTime === null

@@ -14,6 +14,24 @@ export default function LoginPage({ onLoginSuccess, isGuest }: Props) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  
+  // Get guest display name for button text
+  const getGuestButtonText = () => {
+    const storedGuestId = localStorage.getItem("guestUserId");
+    if (storedGuestId) {
+      const guestDisplayName = localStorage.getItem("guestDisplayName");
+      if (guestDisplayName) {
+        // Display name format is "Guest_xxxx" - use it directly
+        return `Continue as ${guestDisplayName}`;
+      }
+      // Fallback: extract short ID from user ID (last 8 chars)
+      const shortId = storedGuestId.length > 8 
+        ? storedGuestId.substring(storedGuestId.length - 8) 
+        : storedGuestId.substring(0, 8);
+      return `Continue as Guest${shortId}`;
+    }
+    return "Play as Guest";
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,14 +152,20 @@ export default function LoginPage({ onLoginSuccess, isGuest }: Props) {
             <button
               onClick={async () => {
                 try {
-                  await api.createGuest();
+                  // Check for existing guest ID in localStorage
+                  const storedGuestId = localStorage.getItem("guestUserId");
+                  const result = await api.createGuest(storedGuestId || undefined);
+                  // Store the guest user ID for future sessions
+                  if (result?.userId) {
+                    localStorage.setItem("guestUserId", result.userId);
+                  }
                   onLoginSuccess();
                 } catch (err: any) {
                   setError(err.message || "An error occurred");
                 }
               }}
             >
-              Play as Guest
+              {getGuestButtonText()}
             </button>
           </p>
         </>
