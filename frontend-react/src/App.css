@@ -317,3 +317,109 @@ table td {
   gap: 20px;
   justify-content: space-around;
 }
+
+.main-nav-wrapper button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 18px;
+  min-width: 150px;
+  position: relative;
+}
+
+.nav-button-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  width: 100%;
+  justify-content: center;
+}
+
+.nav-button-label {
+  font-size: 1rem;
+}
+
+.energy-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 14px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
+}
+
+.energy-badge.has-energy {
+  background-color: #4caf50;
+  color: white;
+}
+
+.energy-badge.no-energy {
+  background-color: #9e9e9e;
+  color: white;
+}
+
+.dark-mode .energy-badge.has-energy {
+  background-color: #388e3c;
+  color: white;
+}
+
+.dark-mode .energy-badge.no-energy {
+  background-color: #616161;
+  color: white;
+}
+
+.regen-status {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #666;
+  margin-top: 0;
+  line-height: 1.2;
+}
+
+.regen-status.full {
+  color: #4caf50;
+  font-weight: 600;
+}
+
+.dark-mode .regen-status {
+  color: #aaa;
+}
+
+.dark-mode .regen-status.full {
+  color: #66bb6a;
+}
+
+@media (max-width: 600px) {
+  .main-nav-wrapper {
+    gap: 10px;
+  }
+
+  .main-nav-wrapper button {
+    min-width: 120px;
+    padding: 10px 12px;
+    gap: 4px;
+  }
+
+  .nav-button-label {
+    font-size: 0.9rem;
+  }
+
+  .energy-badge {
+    min-width: 26px;
+    height: 26px;
+    padding: 0 8px;
+    font-size: 0.85rem;
+  }
+
+  .regen-status {
+    font-size: 0.65rem;
+  }
+}

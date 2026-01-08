@@ -225,9 +225,12 @@ function App() {
               key: "guessing",
               content: (
                 <>
-                  <span>
+                  <span className="nav-button-main">
                     <FaSearch />
-                    {" Guess (" + (guessEnergy ?? "0") + ") "}
+                    <span className="nav-button-label">Guess</span>
+                    <span className={`energy-badge ${(guessEnergy ?? 0) > 0 ? 'has-energy' : 'no-energy'}`}>
+                      {guessEnergy ?? 0}{user?.maxGuessEnergy ? `/${user.maxGuessEnergy}` : ''}
+                    </span>
                   </span>
                   <RegenTimer
                     targetDate={nextGuessRegenTime}
@@ -250,9 +253,12 @@ function App() {
                     }
                     id="give-clues-tooltip"
                   >
-                    <span>
+                    <span className="nav-button-main">
                       <BiSolidMessageRounded />
-                      {" Give Clues (" + (clueEnergy ?? "0") + ") "}
+                      <span className="nav-button-label">Give Clues</span>
+                      <span className={`energy-badge ${(clueEnergy ?? 0) > 0 ? 'has-energy' : 'no-energy'}`}>
+                        {clueEnergy ?? 0}{user?.maxClueEnergy ? `/${user.maxClueEnergy}` : ''}
+                      </span>
                     </span>
                   </Tooltip>
                   <RegenTimer
@@ -387,10 +393,12 @@ const RegenTimer = ({
   onExpire: () => void;
 }) => {
   const timeLeft = useCountdown(targetDate, onExpire);
-  if (!targetDate) return <span className="text-green-500">Full!</span>;
+  if (!targetDate) {
+    return <span className="regen-status full">Full</span>;
+  }
   // This hook handles all the re-rendering logic internally
 
-  return <span className="text-gray-500 text-sm">Next: {timeLeft}</span>;
+  return <span className="regen-status">+1 in {timeLeft}</span>;
 };
 
 export const useCountdown = (

@@ -74,6 +74,8 @@ public class UserController : ControllerBase
             ClueRating = user.CachedClueRating,
             GuessEnergy = user.GuessEnergy,
             ClueEnergy = user.ClueEnergy,
+            MaxGuessEnergy = GameConfig.Current.MaxGuessEnergy,
+            MaxClueEnergy = GameConfig.Current.MaxClueEnergy,
             NextGuessRegenTime = user.NextGuessRegenTime,
             NextClueRegenTime = user.NextClueRegenTime,
             GuessRank = guessRank,
@@ -400,6 +402,8 @@ public class UserProfileDto
     public int ClueRank { get; set; }
     public int GuessEnergy { get; set; }
     public int ClueEnergy { get; set; }
+    public int MaxGuessEnergy { get; set; }
+    public int MaxClueEnergy { get; set; }
     public bool IsGuest { get; set; }
     public DateTime? NextGuessRegenTime { get; set; }
     public DateTime? NextClueRegenTime { get; set; }

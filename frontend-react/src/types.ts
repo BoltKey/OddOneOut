@@ -49,6 +49,8 @@ export interface User {
   clueRating: number;
   guessEnergy: number;
   clueEnergy: number;
+  maxGuessEnergy: number;
+  maxClueEnergy: number;
   nextGuessRegenTime: string | null;
   nextClueRegenTime: string | null;
   canGiveClues: boolean;
