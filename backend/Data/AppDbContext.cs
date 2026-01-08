@@ -15,7 +15,7 @@ public class AppDbContext : IdentityDbContext<User>
 
     // This line tells Postgres: "I want a table named 'Games' based on the Game class"
     public DbSet<Game> Games { get; set; }
-    public DbSet<User> Users { get; set; }
+    public new DbSet<User> Users { get; set; }
     public DbSet<CardSet> CardSet { get; set; }
     public DbSet<WordCard> WordCard { get; set; }
     public DbSet<Guess> Guesses { get; set; }

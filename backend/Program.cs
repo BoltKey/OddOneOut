@@ -1,12 +1,13 @@
 using OddOneOut.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.Extensions.Options; // Needed for the "me" endpoint
+using Microsoft.Extensions.Options;
 // using Microsoft.AspNetCore.OpenApi; // Uncomment if needed for .WithOpenApi()
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,7 +15,13 @@ var builder = WebApplication.CreateBuilder(args);
 // --- 1. Database ---
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(connectionString));
+{
+    options.UseNpgsql(connectionString);
+    // Suppress verbose EF Core warnings - configured via appsettings.json
+    options.ConfigureWarnings(warnings => warnings
+        .Ignore(CoreEventId.NavigationBaseIncludeIgnored)
+        .Ignore(RelationalEventId.QueryPossibleUnintendedUseOfEqualsWarning));
+});
 
 // --- 2. Identity & Auth (THE FIXED PART) ---
 
@@ -109,7 +116,7 @@ builder.Services.ConfigureExternalCookie(options =>
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    options.KnownNetworks.Clear();
+    options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
 });
 

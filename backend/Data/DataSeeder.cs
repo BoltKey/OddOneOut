@@ -10,15 +10,11 @@ public static class DataSeeder
     {
         // Find the word list file
         var path = Path.Combine(env.ContentRootPath, "Data", "possibleCards.txt");
-        logger?.LogInformation($"Seeding WordCards from: {path}");
-        Console.WriteLine($"Seeding WordCards from: {path}");
         
         // Check if file exists to prevent crashing
         if (!File.Exists(path))
         {
-            var errorMsg = $"ERROR: File not found at {path}";
-            logger?.LogError(errorMsg);
-            Console.WriteLine(errorMsg);
+            logger?.LogError("WordCards file not found at {Path}", path);
             return;
         }
 
@@ -32,9 +28,7 @@ public static class DataSeeder
 
         if (wordsFromFile.Count == 0)
         {
-            var errorMsg = "No words found in possibleCards.txt";
-            logger?.LogWarning(errorMsg);
-            Console.WriteLine(errorMsg);
+            logger?.LogWarning("No words found in possibleCards.txt");
             return;
         }
 
@@ -50,30 +44,23 @@ public static class DataSeeder
 
         if (newWords.Count == 0)
         {
-            var msg = $"All {wordsFromFile.Count} words from file already exist in database. No new words to add.";
-            logger?.LogInformation(msg);
-            Console.WriteLine(msg);
+            // Silent when everything is already seeded
+            logger?.LogDebug("All {Count} words already exist in database", wordsFromFile.Count);
             return;
         }
 
         // Create WordCard entities for new words only
-        var entities = new List<WordCard>();
-        foreach (var word in newWords)
+        var entities = newWords.Select(word => new WordCard
         {
-            entities.Add(new WordCard
-            {
-                Id = Guid.NewGuid(),
-                Category = "word",
-                Word = word
-            });
-        }
+            Id = Guid.NewGuid(),
+            Category = "word",
+            Word = word
+        }).ToList();
 
         // Add only new words to database
         context.WordCard.AddRange(entities);
         context.SaveChanges();
         
-        var successMsg = $"Successfully added {entities.Count} new WordCards to database. Total words in database: {existingWords.Count + entities.Count}";
-        logger?.LogInformation(successMsg);
-        Console.WriteLine(successMsg);
+        logger?.LogInformation("Added {Count} new WordCards. Total: {Total}", entities.Count, existingWords.Count + entities.Count);
     }
 }

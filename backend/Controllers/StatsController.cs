@@ -152,69 +152,66 @@ public async Task<IActionResult> GetHistory([FromQuery] int page = 1, [FromQuery
       if (pageSize < 1) pageSize = 10;
       if (pageSize > 50) pageSize = 50; // Cap page size
 
-      // Query games directly instead of loading the entire user object
-      var query = _context.Games
-        .Where(g => g.ClueGivers.Any(u => u.Id == userIdString))
-        .Include(g => g.CardSet)
+      // Query games by joining with GameClueGivers to get ClueGivenAt
+      var query = _context.GameClueGivers
+        .Where(gcg => gcg.UserId == userIdString)
+        .Include(gcg => gcg.Game)
+        .ThenInclude(g => g.CardSet)
         .ThenInclude(cs => cs.WordCards)
-        .OrderByDescending(g => g.CreatedAt);
+        .Include(gcg => gcg.Game)
+        .ThenInclude(g => g.Guesses)
+        .ThenInclude(gg => gg.SelectedCard)
+        .Include(gcg => gcg.Game)
+        .ThenInclude(g => g.OddOneOut)
+        .Include(gcg => gcg.Game)
+        .ThenInclude(g => g.CardSet)
+        .ThenInclude(cs => cs.Games)
+        .OrderByDescending(gcg => gcg.ClueGivenAt);
 
       var totalCount = await query.CountAsync();
       var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
-      // 1. Project the data BEFORE fetching.
-// This allows EF to write the SQL for Counts.
-var historyData = await query
-    .Skip((page - 1) * pageSize)
-    .Take(pageSize)
-    // Move Select here so it translates to SQL
-    .Select(g => new
-    {
-        GameId = g.Id,
-        CardSetId = g.CardSet.Id,
-        // EF Core will translate this nested collection into a JOIN or separate split query
-        CardSetWords = g.CardSet.WordCards.Select(wc => new
-        {
-            wc.Word,
-            wc.Id,
-            // Optimization: These Counts become SQL subqueries
-            GuessCount = _context.Guesses.Count(gg =>
-                gg.SelectedCard.Id == wc.Id && gg.Game.Id == g.Id),
+      // 1. Fetch the GameClueGivers with their Games and relationships
+      var gameClueGivers = await query
+        .Skip((page - 1) * pageSize)
+        .Take(pageSize)
+        .AsSplitQuery() // Recommended: prevents data explosion when including collections
+        .ToListAsync();
 
-            // Note: I switched object comparison to ID comparison for better SQL translation
-            CorrectGuesses = _context.Guesses.Count(gg =>
-                gg.SelectedCard.Id == wc.Id &&
-                gg.Game.Id == g.Id &&
-                gg.GuessIsInSet != (gg.SelectedCard.Id == g.OddOneOut.Id))
-        }).ToList(),
-        g.Clue,
-        OddOneOutWord = g.OddOneOut.Word,
-        g.CreatedAt,
-        g.CachedGameScore,
-        // Optimization: This becomes a subquery (SELECT COUNT(*) FROM Games...)
-        OtherGamesAmt = g.CardSet.Games.Count - 1,
-
-        // IMPORTANT: We cannot call custom C# methods like g.SuccessCoef() inside SQL.
-        // If this method relies on data inside 'g', fetch the raw data here
-        // and calculate it in step 2.
-        // For now, I'll assume you can recalculate it or it's a stored prop.
-        // If it's a stored column, just include: g.SuccessCoefStored
-    })
-    .AsSplitQuery() // Recommended: prevents data explosion when including collections
-    .ToListAsync();
+      // 2. Project the data in memory (now we can call SuccessCoef())
+      var historyData = gameClueGivers.Select(gcg => new
+      {
+          GameId = gcg.Game.Id,
+          CardSetId = gcg.Game.CardSet.Id,
+          ClueGivenAt = gcg.ClueGivenAt,
+          CardSetWords = gcg.Game.CardSet.WordCards.Select(wc => new
+          {
+              wc.Word,
+              wc.Id,
+              GuessCount = gcg.Game.Guesses.Count(gg => gg.SelectedCard?.Id == wc.Id),
+              CorrectGuesses = gcg.Game.Guesses.Count(gg =>
+                  gg.SelectedCard?.Id == wc.Id &&
+                  gg.GuessIsInSet != (gg.SelectedCard?.Id == gcg.Game.OddOneOut?.Id))
+          }).ToList(),
+          Clue = gcg.Game.Clue,
+          OddOneOutWord = gcg.Game.OddOneOut?.Word,
+          CachedGameScore = gcg.Game.CachedGameScore,
+          OtherGamesAmt = gcg.Game.CardSet.Games.Count - 1,
+          SuccessCoef = gcg.Game.SuccessCoef()
+      }).ToList();
 
 // 2. Fetch other clues for each card set (efficient batch query)
 var cardSetIds = historyData.Select(d => d.CardSetId).Distinct().ToList();
-var otherCluesByCardSet = await _context.Games
-    .Where(g => g.CardSetId.HasValue && cardSetIds.Contains(g.CardSetId.Value))
-    .Select(g => new
+var otherCluesByCardSet = await _context.GameClueGivers
+    .Where(gcg => gcg.Game.CardSetId.HasValue && cardSetIds.Contains(gcg.Game.CardSetId.Value))
+    .Select(gcg => new
     {
-        CardSetId = g.CardSetId!.Value,
-        GameId = g.Id,
-        Clue = g.Clue,
-        OddOneOutWord = g.OddOneOut.Word,
-        CreatedAt = g.CreatedAt,
-        CachedGameScore = g.CachedGameScore
+        CardSetId = gcg.Game.CardSetId!.Value,
+        GameId = gcg.Game.Id,
+        Clue = gcg.Game.Clue,
+        OddOneOutWord = gcg.Game.OddOneOut.Word,
+        ClueGivenAt = gcg.ClueGivenAt,
+        CachedGameScore = gcg.Game.CachedGameScore
     })
     .ToListAsync();
 
@@ -235,7 +232,7 @@ var history = historyData.Select(d =>
             {
                 Clue = oc.Clue,
                 OddOneOut = oc.OddOneOutWord,
-                CreatedAt = oc.CreatedAt,
+                CreatedAt = oc.ClueGivenAt,
                 GameScore = oc.CachedGameScore
             })
             .OrderByDescending(oc => ((dynamic)oc).CreatedAt)
@@ -249,11 +246,11 @@ var history = historyData.Select(d =>
         d.CardSetWords,
         d.Clue,
         OddOneOut = d.OddOneOutWord,
-        d.CreatedAt,
+        CreatedAt = d.ClueGivenAt,
         d.CachedGameScore,
         otherGamesAmt = d.OtherGamesAmt,
         OtherClues = otherClues,
-        SuccessCoef = 0.0 // Placeholder: Replace with your logic
+        SuccessCoef = d.SuccessCoef
     };
 }).ToList();
 
