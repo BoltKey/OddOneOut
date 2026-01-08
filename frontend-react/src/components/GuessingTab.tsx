@@ -87,7 +87,7 @@ export default function GuessingTab({ userId }: { userId: string }) {
         </>
       ),
       5: "All 5 words are then shuffled and you see one of those cards. Your job is to guess whether this card is part of the group that matches the clue, or the misfit.",
-      6: "After guessing, you will see the original set of 5 words. You gain or lose Guess Rating based on whether your guess is correct. Try to get as high a Guess Rating as possible! Good Luck!",
+      6: "After guessing, you will see the original set of 5 words. You gain or lose Guess Rating based on whether your guess is correct. You can also see success rates of all other players who were given other words. Try to get as high a Guess Rating as possible! Good Luck!",
       7: null,
     };
     setTutorialMessage(tutorialMessages[tutorialStep]);

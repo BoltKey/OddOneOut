@@ -247,6 +247,7 @@ public class UserController : ControllerBase
                         currentUser.UserName = await GetUniqueUsernameAsync(googleName, googleEmail);
                         currentUser.Email = googleEmail;
                         currentUser.IsGuest = false;
+                        currentUser.DisplayName = googleName ?? currentUser.DisplayName;
                         await _userManager.UpdateAsync(currentUser);
 
 
@@ -270,6 +271,7 @@ public class UserController : ControllerBase
         // UPDATE: Generate friendly username here too
         var newUserName = await GetUniqueUsernameAsync(googleName, googleEmail);
         var newUser = new User { UserName = newUserName, Email = googleEmail };
+        newUser.DisplayName = googleName;
         newUser.GuessEnergy = GameConfig.Current.MaxGuessEnergy;
         newUser.ClueEnergy = GameConfig.Current.MaxClueEnergy;
         newUser.GuessRating = GameConfig.Current.InitialGuessRating;

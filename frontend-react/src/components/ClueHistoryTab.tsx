@@ -46,10 +46,7 @@ export default function ClueHistoryTab({ userId }: { userId: string }) {
                 {entry.createdAt}
                 {entry.clue && <div>Clue: "{entry.clue}"</div>}
                 {entry.gameScore !== null && (
-                  <div>
-                    Game Score: {entry.gameScore} | Success Coef:{" "}
-                    {entry.successCoef !== null ? entry.successCoef : "N/A"}
-                  </div>
+                  <div>Game Score: {entry.gameScore}</div>
                 )}
                 {entry.cardSetWords.map((card) => (
                   <div

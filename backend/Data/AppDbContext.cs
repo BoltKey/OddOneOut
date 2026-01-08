@@ -167,11 +167,11 @@ public class Game
     public float GameScore()
   {
       var successCoef = SuccessCoef();
-      if (successCoef == null) return 0;
+      if (successCoef == null) return 100;
       var otherGames = CardSet?.Games.Where(g => g.Id != this.Id);
       float result;
       if (otherGames == null || otherGames.Count() == 0) {
-        result = (float)(successCoef - FallbackAverageSuccessCoef);
+        result = 100 + (float)(successCoef - FallbackAverageSuccessCoef);
         CachedGameScore = result;
         return result;
       }
