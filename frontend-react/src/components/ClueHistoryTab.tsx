@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../services/api";
 import "./GuessingTab.css";
 
@@ -27,19 +27,64 @@ export default function ClueHistoryTab({ userId }: { userId: string }) {
   >([]);
   const [message, setMessage] = useState<string | null>(null);
   const [clueRating, setClueRating] = useState<number | null>(null);
-  const fetchClueHistory = async () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalPages, setTotalPages] = useState(1);
+  const page = useRef<number>(1);
+  const observerTarget = useRef<HTMLDivElement>(null);
+  const isLoadingRef = useRef(false);
+  const totalPagesRef = useRef(1);
+
+  const fetchClueHistory = useCallback(async (pageNumber: number) => {
+    if (isLoadingRef.current || pageNumber > totalPagesRef.current) return;
+    
+    isLoadingRef.current = true;
+    setIsLoading(true);
     try {
-      const history = await api.getClueHistory(1);
-      setClueHistory(history.data);
+      const history = await api.getClueHistory(pageNumber);
+      setClueHistory((clueHistory) => [...clueHistory, ...history.data]);
       setClueRating(history.clueRating);
+      const newTotalPages = history.totalPages || 1;
+      totalPagesRef.current = newTotalPages;
+      setTotalPages(newTotalPages);
+      setHasMore(pageNumber < newTotalPages);
       setMessage(null);
     } catch (err: any) {
       setMessage(err.message);
+    } finally {
+      isLoadingRef.current = false;
+      setIsLoading(false);
     }
-  };
-  useEffect(() => {
-    fetchClueHistory();
   }, []);
+
+  useEffect(() => {
+    fetchClueHistory(1);
+  }, [fetchClueHistory]);
+
+  // Intersection Observer for lazy loading
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoading) {
+          const nextPage = page.current + 1;
+          page.current = nextPage;
+          fetchClueHistory(nextPage);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [hasMore, isLoading, fetchClueHistory]);
 
   // Format date/time nicely
   const formatDateTime = (dateString: string) => {
@@ -180,6 +225,14 @@ export default function ClueHistoryTab({ userId }: { userId: string }) {
               );
             })}
           </div>
+          {/* Loading trigger element */}
+          {hasMore && (
+            <div ref={observerTarget} style={{ height: "20px", marginTop: "10px" }}>
+              {isLoading && (
+                <div style={{ textAlign: "center", color: "#666" }}>Loading more...</div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -23,36 +23,62 @@ export default function GuessHistoryTab({ userId }: { userId: string }) {
   >([]);
   const page = useRef<number>(1);
   const [message, setMessage] = useState<string | null>(null);
-  const fetchGuessHistory = async (pageNumber: number) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalPages, setTotalPages] = useState(1);
+  const observerTarget = useRef<HTMLDivElement>(null);
+  const isLoadingRef = useRef(false);
+  const totalPagesRef = useRef(1);
+
+  const fetchGuessHistory = useCallback(async (pageNumber: number) => {
+    if (isLoadingRef.current || pageNumber > totalPagesRef.current) return;
+    
+    isLoadingRef.current = true;
+    setIsLoading(true);
     try {
       const history = await api.getGuessHistory(pageNumber);
       setGuessHistory((guessHistory) => [...guessHistory, ...history.data]);
+      const newTotalPages = history.totalPages || 1;
+      totalPagesRef.current = newTotalPages;
+      setTotalPages(newTotalPages);
+      setHasMore(pageNumber < newTotalPages);
       setMessage(null);
     } catch (err: any) {
       setMessage(err.message);
+    } finally {
+      isLoadingRef.current = false;
+      setIsLoading(false);
     }
-  };
+  }, []);
+
   useEffect(() => {
     fetchGuessHistory(1);
-    let intervalId = setInterval(() => {
-      checkScrollAtBottom();
-    }, 1000);
-    return () => clearInterval(intervalId);
-  }, []);
-  // check if scroll is at bottom to load more on interval
+  }, [fetchGuessHistory]);
 
-  const checkScrollAtBottom = useCallback(() => {
-    const container = document.querySelector(".app-container");
-    if (container) {
-      if (
-        container.scrollHeight - document.querySelector("html")!.scrollTop <=
-        window.innerHeight + 100
-      ) {
-        fetchGuessHistory(page.current + 1);
-        page.current = page.current + 1;
-      }
+  // Intersection Observer for lazy loading
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoading) {
+          const nextPage = page.current + 1;
+          page.current = nextPage;
+          fetchGuessHistory(nextPage);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
     }
-  }, [page]);
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [hasMore, isLoading, fetchGuessHistory]);
 
   // Format date/time nicely
   const formatDateTime = (dateString: string) => {
@@ -177,6 +203,14 @@ export default function GuessHistoryTab({ userId }: { userId: string }) {
               );
             })}
           </div>
+          {/* Loading trigger element */}
+          {hasMore && (
+            <div ref={observerTarget} style={{ height: "20px", marginTop: "10px" }}>
+              {isLoading && (
+                <div style={{ textAlign: "center", color: "#666" }}>Loading more...</div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
