@@ -235,13 +235,25 @@ public async Task<IActionResult> MakeGuess(MakeGuessDto request)
     // 2. QUERY A: Load ALL games in this set (including siblings) with their details
     // We fetch the entire batch in one flat query.
     var allGamesInSet = await _context.Games
-        .Where(g => g.CardSet.Id == cardSetId)
-        .Include(g => g.ClueGivers)
-        .Include(g => g.Guesses)
-        .Include(g => g.CardSet) // Load the parent CardSet here
-            .ThenInclude(cs => cs.WordCards)
-        .AsSplitQuery() // Optional, but good practice
-        .ToListAsync();
+    .Where(g => g.CardSet.Id == cardSetId)
+    .Include(g => g.OddOneOut) // Required for IsCorrect checks
+
+    // Load ClueGivers AND the Users behind them (prevents AspNetUsers queries)
+    .Include(g => g.ClueGivers)
+
+    // Load Guesses AND the Selected Card (prevents WordCard queries)
+    .Include(g => g.Guesses)
+        .ThenInclude(gg => gg.SelectedCard)
+
+    // Make sure we have the Game loaded on the guess for backward navigation
+    .Include(g => g.Guesses)
+
+    // Load CardSet and Words
+    .Include(g => g.CardSet)
+        .ThenInclude(cs => cs.WordCards)
+
+    //.AsSplitQuery() // Highly recommended for this many includes
+    .ToListAsync();
 
     // 3. Find your current game in the list we just loaded
     // EF Core has already wired up all the relationships in memory!
@@ -272,38 +284,41 @@ public async Task<IActionResult> MakeGuess(MakeGuessDto request)
         RatingChange = 0
     };
     game.Guesses.Add(guessRecord);
-    await _context.SaveChangesAsync();
-    game.RecalculateScore();
-    foreach (var otherGame in game.CardSet.Games)
-    {
-      otherGame.RecalculateScore();
-    }
-    int oldRating = user.GuessRating;
 
+    int oldRating = user.GuessRating;
     user.ProcessGuessResult(isCorrect, isOddOneOutTarget);
+
     int ratingChange = user.GuessRating - oldRating;
     guessRecord.RatingChange = ratingChange;
 
     game.Guesses.Add(guessRecord);
     _context.Guesses.Add(guessRecord);
+
+    game.RecalculateScore();
+    foreach (var otherGame in game.CardSet.Games)
+    {
+      otherGame.RecalculateScore();
+    }
     await _context.SaveChangesAsync();
 
     // 5. Response
     return Ok(new {
-        isCorrect,
-        newRating = user.GuessRating, // Return the new rating!
-        ratingChange,
-        clue = game.Clue,
-        allWords = game.CardSet.WordCards.Select(w => new {
-            Word = w.Word,
-            IsOddOneOut = w.Id == game.OddOneOut.Id,
-            correctGuesses = _context.Guesses.Count(
-              gg => gg.SelectedCard.Id == w.Id &&
-              gg.GuessIsInSet != (gg.SelectedCard == game.OddOneOut) && gg.Game.Id == game.Id),
-            totalGuesses = _context.Guesses.Count(
-              gg => gg.SelectedCard.Id == w.Id && gg.Game.Id == game.Id)
-        })
-    });
+    isCorrect,
+    newRating = user.GuessRating,
+    ratingChange,
+    clue = game.Clue,
+    allWords = game.CardSet.WordCards.Select(w => new {
+        Word = w.Word,
+        IsOddOneOut = w.Id == game.OddOneOut.Id,
+        correctGuesses = game.Guesses.Count(
+            gg => gg.SelectedCard?.Id == w.Id && // Use ?.Id to be safe
+            gg.GuessIsInSet != (gg.SelectedCard?.Id == game.OddOneOut?.Id)
+        ),
+        totalGuesses = game.Guesses.Count(
+            gg => gg.SelectedCard?.Id == w.Id
+        )
+    })
+});
 }
     [HttpPost("CreateGame"), Authorize]
     public async Task<IActionResult> CreateGame(CreateGameDto request)

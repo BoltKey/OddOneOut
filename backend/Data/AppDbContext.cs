@@ -208,8 +208,10 @@ public class Guess
 {
     public Guid Id { get; set; }
     public Game? Game { get; set; }
+    public Guid? GameId { get; set; }
     public User? Guesser { get; set; }
     public WordCard? SelectedCard { get; set; }
+    public Guid? SelectedCardId { get; set; }
     public bool GuessIsInSet { get; set; }
     public DateTime GuessedAt { get; set; } = DateTime.UtcNow;
     public int RatingChange { get; set; } = 0;
@@ -421,7 +423,7 @@ public class User : IdentityUser
         {
             foreach (var g in CreatedGames.OrderByDescending(g => g.CreatedAt).Take(100))
             {
-                var score = g.GameScore();
+                var score = g.CachedGameScore;
                 // -1 for each day since game creation to encourage consistent clue giving
                 var daysSinceCreation = (DateTime.UtcNow - g.CreatedAt).TotalDays;
                 score = score < 0 ? 0 : score;
