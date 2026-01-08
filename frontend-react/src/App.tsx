@@ -228,7 +228,11 @@ function App() {
                   <span className="nav-button-main">
                     <FaSearch />
                     <span className="nav-button-label">Guess</span>
-                    <span className={`energy-badge ${(guessEnergy ?? 0) > 0 ? 'has-energy' : 'no-energy'}`}>
+                    <span className={`energy-badge ${
+                      (guessEnergy ?? 0) === 0 ? 'no-energy' :
+                      (guessEnergy ?? 0) >= (user?.maxGuessEnergy ?? 0) ? 'full-energy' :
+                      'partial-energy'
+                    }`}>
                       {guessEnergy ?? 0}{user?.maxGuessEnergy ? `/${user.maxGuessEnergy}` : ''}
                     </span>
                   </span>
@@ -256,7 +260,11 @@ function App() {
                     <span className="nav-button-main">
                       <BiSolidMessageRounded />
                       <span className="nav-button-label">Give Clues</span>
-                      <span className={`energy-badge ${(clueEnergy ?? 0) > 0 ? 'has-energy' : 'no-energy'}`}>
+                      <span className={`energy-badge ${
+                        (clueEnergy ?? 0) === 0 ? 'no-energy' :
+                        (clueEnergy ?? 0) >= (user?.maxClueEnergy ?? 0) ? 'full-energy' :
+                        'partial-energy'
+                      }`}>
                         {clueEnergy ?? 0}{user?.maxClueEnergy ? `/${user.maxClueEnergy}` : ''}
                       </span>
                     </span>

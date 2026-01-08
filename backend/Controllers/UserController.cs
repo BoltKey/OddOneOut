@@ -38,24 +38,9 @@ public class UserController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-        // Optimize: Only load what we need, calculate counts in database
+        // Load the full user entity so we can access computed properties
         var user = await _context.Users
             .Where(u => u.Id == userId)
-            .Select(u => new
-            {
-                u.Id,
-                u.UserName,
-                u.DisplayName,
-                u.Email,
-                u.IsGuest,
-                u.GuessRating,
-                u.CachedClueRating,
-                u.GuessEnergy,
-                u.ClueEnergy,
-                u.NextGuessRegenTime,
-                u.NextClueRegenTime,
-                GuessCount = u.Guesses.Count
-            })
             .FirstOrDefaultAsync();
             
         if (user == null) return NotFound("User profile not found.");
@@ -63,6 +48,12 @@ public class UserController : ControllerBase
         // Calculate ranks efficiently
         var guessRank = await _context.Users.CountAsync(u => u.GuessRating > user.GuessRating) + 1;
         var clueRank = await _context.Users.CountAsync(u => u.CachedClueRating > user.CachedClueRating) + 1;
+        
+        // Get guess count
+        var guessCount = await _context.Users
+            .Where(u => u.Id == userId)
+            .Select(u => u.Guesses.Count)
+            .FirstOrDefaultAsync();
 
         var response = new UserProfileDto
         {
@@ -81,7 +72,7 @@ public class UserController : ControllerBase
             GuessRank = guessRank,
             ClueRank = clueRank,
             IsGuest = user.IsGuest,
-            canGiveClues = user.GuessCount >= GameConfig.Current.MinGuessesToGiveClues,
+            canGiveClues = guessCount >= GameConfig.Current.MinGuessesToGiveClues,
             guessesToGiveClues = GameConfig.Current.MinGuessesToGiveClues
         };
 

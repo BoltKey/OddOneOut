@@ -6,7 +6,7 @@ import "./LeaderboardTab.css";
 
 export default function GuessLeaderboardTab() {
   const [leaderboard, setLeaderboard] = useState<
-    { userName: string; guessRating: number; rank: number }[]
+    { id?: string; userName: string; guessRating: number; rank: number }[]
   >([]);
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -37,15 +37,26 @@ export default function GuessLeaderboardTab() {
   };
 
   let completeLeaderboard = leaderboard ?? [];
-  if (user && user.guessRank && user.guessRank > leaderboard.length) {
-    completeLeaderboard = [
-      ...leaderboard,
-      {
-        userName: user.userName ?? "You",
-        guessRating: user.guessRating ?? 0,
-        rank: user.guessRank ?? -1,
-      },
-    ];
+  // Only add current user if they're not already in the leaderboard
+  // Compare by ID if available, otherwise by displayName (which backend uses) or userName
+  if (user && user.guessRank) {
+    const userAlreadyInLeaderboard = leaderboard.some(
+      (entry) => 
+        (entry.id && entry.id === user.id) ||
+        entry.userName === user.displayName ||
+        entry.userName === user.userName
+    );
+    if (!userAlreadyInLeaderboard && user.guessRank > leaderboard.length) {
+      completeLeaderboard = [
+        ...leaderboard,
+        {
+          id: user.id,
+          userName: user.displayName ?? user.userName ?? "You",
+          guessRating: user.guessRating ?? 0,
+          rank: user.guessRank ?? -1,
+        },
+      ];
+    }
   }
 
   return (
@@ -65,11 +76,14 @@ export default function GuessLeaderboardTab() {
               </tr>
             </thead>
             <tbody>
-              {completeLeaderboard.map((entry) => {
-                const isCurrentUser = entry.userName === user?.userName;
+              {completeLeaderboard.map((entry, index) => {
+                const isCurrentUser = 
+                  (entry.id && entry.id === user?.id) ||
+                  entry.userName === user?.displayName ||
+                  entry.userName === user?.userName;
                 return (
                   <tr
-                    key={entry.rank}
+                    key={entry.id || `${entry.userName}-${entry.rank}-${index}`}
                     className={`leaderboard-row ${
                       isCurrentUser ? "current-user" : ""
                     } ${entry.rank <= 3 ? "top-three" : ""}`}

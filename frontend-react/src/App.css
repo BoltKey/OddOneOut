@@ -356,9 +356,14 @@ table td {
   white-space: nowrap;
 }
 
-.energy-badge.has-energy {
+.energy-badge.full-energy {
   background-color: #4caf50;
   color: white;
+}
+
+.energy-badge.partial-energy {
+  background-color: #ffc107;
+  color: #000;
 }
 
 .energy-badge.no-energy {
@@ -366,9 +371,14 @@ table td {
   color: white;
 }
 
-.dark-mode .energy-badge.has-energy {
+.dark-mode .energy-badge.full-energy {
   background-color: #388e3c;
   color: white;
+}
+
+.dark-mode .energy-badge.partial-energy {
+  background-color: #ffb300;
+  color: #000;
 }
 
 .dark-mode .energy-badge.no-energy {

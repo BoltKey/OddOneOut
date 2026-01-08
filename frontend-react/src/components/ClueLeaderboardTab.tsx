@@ -6,7 +6,7 @@ import "./LeaderboardTab.css";
 
 export default function ClueLeaderboardTab() {
   const [leaderboard, setLeaderboard] = useState<
-    { userName: string; clueRating: number; rank: number }[]
+    { id?: string; userName: string; clueRating: number; rank: number }[]
   >([]);
   const { user } = useContext(UserStatsContext);
   const [message, setMessage] = useState<string | null>(null);
@@ -37,15 +37,26 @@ export default function ClueLeaderboardTab() {
   };
 
   let completeLeaderboard = leaderboard ?? [];
-  if (user && user.clueRank && user.clueRank > leaderboard.length) {
-    completeLeaderboard = [
-      ...leaderboard,
-      {
-        userName: user.userName ?? "You",
-        clueRating: user.clueRating ?? 0,
-        rank: user.clueRank ?? -1,
-      },
-    ];
+  // Only add current user if they're not already in the leaderboard
+  // Compare by ID if available, otherwise by displayName (which backend uses) or userName
+  if (user && user.clueRank) {
+    const userAlreadyInLeaderboard = leaderboard.some(
+      (entry) => 
+        (entry.id && entry.id === user.id) ||
+        entry.userName === user.displayName ||
+        entry.userName === user.userName
+    );
+    if (!userAlreadyInLeaderboard && user.clueRank > leaderboard.length) {
+      completeLeaderboard = [
+        ...leaderboard,
+        {
+          id: user.id,
+          userName: user.displayName ?? user.userName ?? "You",
+          clueRating: user.clueRating ?? 0,
+          rank: user.clueRank ?? -1,
+        },
+      ];
+    }
   }
 
   return (
@@ -65,11 +76,14 @@ export default function ClueLeaderboardTab() {
               </tr>
             </thead>
             <tbody>
-              {completeLeaderboard.map((entry) => {
-                const isCurrentUser = entry.userName === user?.userName;
+              {completeLeaderboard.map((entry, index) => {
+                const isCurrentUser = 
+                  (entry.id && entry.id === user?.id) ||
+                  entry.userName === user?.displayName ||
+                  entry.userName === user?.userName;
                 return (
                   <tr
-                    key={entry.rank}
+                    key={entry.id || `${entry.userName}-${entry.rank}-${index}`}
                     className={`leaderboard-row ${
                       isCurrentUser ? "current-user" : ""
                     } ${entry.rank <= 3 ? "top-three" : ""}`}
