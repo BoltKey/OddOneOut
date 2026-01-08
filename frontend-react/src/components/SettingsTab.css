@@ -1,0 +1,37 @@
+.reddit-settings-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #666;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  padding: 10px 15px;
+  border-radius: 6px;
+  opacity: 0.8;
+}
+
+.reddit-settings-link:hover {
+  opacity: 1;
+  background-color: rgba(255, 69, 0, 0.1);
+  color: #ff4500;
+}
+
+.reddit-settings-link svg {
+  font-size: 1.2rem;
+  color: #ff4500;
+}
+
+.dark-mode .reddit-settings-link {
+  color: #aaa;
+  border-top-color: #444;
+}
+
+.dark-mode .reddit-settings-link:hover {
+  background-color: rgba(255, 69, 0, 0.15);
+  color: #ff6b35;
+}
+
+.dark-mode .reddit-settings-link svg {
+  color: #ff6b35;
+}

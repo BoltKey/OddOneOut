@@ -281,6 +281,32 @@ input {
   font-size: 30px;
 }
 
+.reddit-header-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  text-decoration: none;
+  font-size: 24px;
+  transition: all 0.3s ease;
+  opacity: 0.7;
+  padding: 5px;
+}
+
+.reddit-header-link:hover {
+  opacity: 1;
+  color: #ff4500;
+  transform: scale(1.1);
+}
+
+.dark-mode .reddit-header-link {
+  color: #aaa;
+}
+
+.dark-mode .reddit-header-link:hover {
+  color: #ff6b35;
+}
+
 table td {
   font-size: small;
 }

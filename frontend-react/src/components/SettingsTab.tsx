@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { UserStatsContext } from "../App";
 import { api } from "../services/api";
 import LoginPage from "./LoginPage";
+import { FaReddit } from "react-icons/fa";
+import "./SettingsTab.css";
 
 interface SettingsTabProps {
   currentDisplayName: string;
@@ -100,6 +102,18 @@ export default function SettingsTab({ currentDisplayName }: SettingsTabProps) {
       >
         Logout
       </button>
+      
+      <div style={{ marginTop: "30px", paddingTop: "20px", borderTop: "1px solid #e0e0e0" }}>
+        <a
+          href="https://www.reddit.com/r/misfitgame/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="reddit-settings-link"
+        >
+          <FaReddit />
+          <span>Join us on r/misfitgame</span>
+        </a>
+      </div>
     </div>
   );
 }

@@ -10,7 +10,7 @@ import ClueHistoryTab from "./components/ClueHistoryTab";
 import GuessLeaderboardTab from "./components/GuessLeaderboardTab";
 import ClueLeaderboardTab from "./components/ClueLeaderboardTab";
 import SettingsTab from "./components/SettingsTab";
-import { FaHistory, FaSearch, FaTrophy } from "react-icons/fa";
+import { FaHistory, FaSearch, FaTrophy, FaReddit } from "react-icons/fa";
 import { FaGear } from "react-icons/fa6";
 import { RiUserSettingsFill } from "react-icons/ri";
 import { Tooltip } from "@mui/material";
@@ -204,6 +204,18 @@ function App() {
               </button>
             </Tooltip>
           ))}
+          <Tooltip title="Join us on Reddit" id="reddit">
+            <a
+              href="https://www.reddit.com/r/misfitgame/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="reddit-header-link"
+              data-tooltip-content="Join us on Reddit"
+              data-tooltip-id="reddit"
+            >
+              <FaReddit />
+            </a>
+          </Tooltip>
         </div>
       </header>
 
