@@ -4,6 +4,7 @@ containerAuth.json
 deployKey.json
 containerapp.json
 principal.json
+backend/appsettings.Development.json
 
 # Build results
 [Dd]ebug/
