@@ -272,6 +272,7 @@ public async Task<IActionResult> MakeGuess(MakeGuessDto request)
         RatingChange = 0
     };
     game.Guesses.Add(guessRecord);
+    await _context.SaveChangesAsync();
     game.RecalculateScore();
     foreach (var otherGame in game.CardSet.Games)
     {
