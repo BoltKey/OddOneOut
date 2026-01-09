@@ -2,6 +2,7 @@ import { useState, useEffect, createContext, useContext, use } from "react";
 import LoginPage from "./components/LoginPage";
 import GuessingTab from "./components/GuessingTab"; // Make sure this exists
 import { api } from "./services/api";
+import { getDevvitContext, isDevvitEnvironment, type DevvitContext } from "./services/devvit";
 import type { User } from "./types";
 import "./App.css";
 import ClueGivingTab from "./components/ClueGivingTab";
@@ -84,6 +85,10 @@ function App() {
   const [openModal, setOpenModal] = useState<
     null | "guessHistory" | "clueHistory" | "leaderboard" | "settings"
   >(null);
+  // Track if we're running inside Reddit/Devvit
+  const [devvitContext, setDevvitContext] = useState<DevvitContext | null>(null);
+  const [devvitChecked, setDevvitChecked] = useState(false);
+
   useEffect(() => {
     localStorage.setItem("darkMode", darkMode ? "true" : "false");
     document.body.className = darkMode ? "dark-mode" : "";
@@ -140,12 +145,39 @@ function App() {
     return true;
   };
 
-  // Check login status on page load
+  // Check for Devvit context and auto-authenticate Reddit users
   useEffect(() => {
-    loadUser();
+    const initializeAuth = async () => {
+      try {
+        // First, check if we're in a Devvit/Reddit environment
+        const context = await getDevvitContext();
+        setDevvitContext(context);
+        setDevvitChecked(true);
+
+        if (context?.userId) {
+          // We're in Reddit - try to auto-authenticate
+          console.log("Detected Reddit environment, auto-authenticating...");
+          try {
+            await api.redditLogin(context.userId);
+            console.log("Reddit auto-login successful");
+          } catch (error) {
+            console.error("Reddit auto-login failed:", error);
+            // Continue to loadUser - user might already be authenticated
+          }
+        }
+      } catch (error) {
+        console.log("Not in Devvit environment");
+        setDevvitChecked(true);
+      }
+
+      // Load user data (whether Reddit login succeeded or we need regular login)
+      await loadUser();
+    };
+
+    initializeAuth();
   }, []);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading || !devvitChecked) return <div>Loading...</div>;
 
   // If not logged in, show Login Page
   if (!user || loggedOut) {
@@ -155,6 +187,8 @@ function App() {
           setLoading(true);
           loadUser();
         }}
+        isRedditContext={isDevvitEnvironment()}
+        devvitContext={devvitContext}
       />
     );
   }
