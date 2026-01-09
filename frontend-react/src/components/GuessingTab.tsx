@@ -51,7 +51,7 @@ export default function GuessingTab({ userId }: { userId: string }) {
     let storageKey = "seenGuessingTutorial-" + userId;
     let forceTutorial = false;
     if (localStorage.getItem(storageKey) && !forceTutorial) {
-      setTutorialStep(8);
+      setTutorialStep(7);
     } else {
       setTutorialStep(1);
     }
@@ -262,7 +262,7 @@ export default function GuessingTab({ userId }: { userId: string }) {
           {message && <div className="error-message">{message}</div>}
           <div className="guessing-content">
             <div className="guessing-header">
-              {tutorialStep >= 8 && (
+              {tutorialStep >= 7 && (
                 <div className="guess-rating-display">
                   <span className="rating-label">
                     Rating
