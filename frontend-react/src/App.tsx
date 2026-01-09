@@ -170,11 +170,13 @@ function App() {
               key: "guessHistory",
               tooltip: "Guessing History",
               content: <TbReportSearch />,
+              disabled: false,
             },
             {
               key: "clueHistory",
-              tooltip: "Clue History",
+              tooltip: user?.canGiveClues ? "Clue History" : "You need at least 10 guesses to unlock clue giving.",
               content: <BiSolidMessageRoundedDetail />,
+              disabled: !user?.canGiveClues,
             },
             {
               key: "leaderboard",
@@ -184,23 +186,31 @@ function App() {
                   <FaTrophy />
                 </>
               ),
+              disabled: false,
             },
             {
               key: "settings",
               tooltip: "Settings",
               content: <RiUserSettingsFill />,
+              disabled: false,
             },
-          ].map(({ key, content, tooltip }) => (
-            <Tooltip title={tooltip} id={tooltip}>
-              <button
-                key={key}
-                className={(openModal === key ? "active" : "") + " nav-button"}
-                onClick={() => setOpenModal(key as typeof openModal)}
-                data-tooltip-content={tooltip}
-                data-tooltip-id={tooltip}
-              >
-                {content}
-              </button>
+          ].map(({ key, content, tooltip, disabled }) => (
+            <Tooltip 
+              title={tooltip} 
+              id={tooltip}
+              key={key}
+              enterTouchDelay={0}
+              leaveTouchDelay={1500}
+            >
+              <span>
+                <button
+                  className={(openModal === key ? "active" : "") + " nav-button" + (disabled ? " disabled" : "")}
+                  onClick={() => !disabled && setOpenModal(key as typeof openModal)}
+                  disabled={disabled}
+                >
+                  {content}
+                </button>
+              </span>
             </Tooltip>
           ))}
           <Tooltip title="Join us on Reddit" id="reddit">
@@ -223,6 +233,7 @@ function App() {
           {[
             {
               key: "guessing",
+              tooltip: null as string | null,
               content: (
                 <>
                   <span className="nav-button-main">
@@ -247,28 +258,20 @@ function App() {
             },
             {
               key: "clueGiving",
+              tooltip: user?.canGiveClues ? null : `You need at least 10 guesses to unlock clue giving.`,
               content: (
                 <>
-                  <Tooltip
-                    title={
-                      user?.canGiveClues
-                        ? null
-                        : `You need at least ${10} guesses to unlock clue giving.`
-                    }
-                    id="give-clues-tooltip"
-                  >
-                    <span className="nav-button-main">
-                      <BiSolidMessageRounded />
-                      <span className="nav-button-label">Give Clues</span>
-                      <span className={`energy-badge ${
-                        (clueEnergy ?? 0) === 0 ? 'no-energy' :
-                        (clueEnergy ?? 0) >= (user?.maxClueEnergy ?? 0) ? 'full-energy' :
-                        'partial-energy'
-                      }`}>
-                        {clueEnergy ?? 0}{user?.maxClueEnergy ? `/${user.maxClueEnergy}` : ''}
-                      </span>
+                  <span className="nav-button-main">
+                    <BiSolidMessageRounded />
+                    <span className="nav-button-label">Give Clues</span>
+                    <span className={`energy-badge ${
+                      (clueEnergy ?? 0) === 0 ? 'no-energy' :
+                      (clueEnergy ?? 0) >= (user?.maxClueEnergy ?? 0) ? 'full-energy' :
+                      'partial-energy'
+                    }`}>
+                      {clueEnergy ?? 0}{user?.maxClueEnergy ? `/${user.maxClueEnergy}` : ''}
                     </span>
-                  </Tooltip>
+                  </span>
                   <RegenTimer
                     targetDate={nextClueRegenTime}
                     onExpire={() => {
@@ -278,15 +281,24 @@ function App() {
                 </>
               ),
             },
-          ].map(({ key, content }) => (
-            <button
+          ].map(({ key, content, tooltip }) => (
+            <Tooltip
               key={key}
-              className={selectedTab === key ? "active" : ""}
-              onClick={() => setSelectedTab(key as "guessing" | "clueGiving")}
-              disabled={key === "clueGiving" && !user?.canGiveClues}
+              title={tooltip}
+              id={`main-nav-${key}`}
+              enterTouchDelay={0}
+              leaveTouchDelay={1500}
             >
-              {content}
-            </button>
+              <span>
+                <button
+                  className={selectedTab === key ? "active" : ""}
+                  onClick={() => setSelectedTab(key as "guessing" | "clueGiving")}
+                  disabled={key === "clueGiving" && !user?.canGiveClues}
+                >
+                  {content}
+                </button>
+              </span>
+            </Tooltip>
           ))}
         </div>
         <UserStatsContext.Provider
