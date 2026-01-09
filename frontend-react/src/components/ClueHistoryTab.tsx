@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../services/api";
+import HelpIcon from "./HelpIcon";
 import "./GuessingTab.css";
 
-export default function ClueHistoryTab({ userId: _userId }: { userId: string }) {
+export default function ClueHistoryTab({
+  userId: _userId,
+}: {
+  userId: string;
+}) {
   const [clueHistory, setClueHistory] = useState<
     {
       game: string;
@@ -37,7 +42,7 @@ export default function ClueHistoryTab({ userId: _userId }: { userId: string }) 
 
   const fetchClueHistory = useCallback(async (pageNumber: number) => {
     if (isLoadingRef.current || pageNumber > totalPagesRef.current) return;
-    
+
     isLoadingRef.current = true;
     setIsLoading(true);
     try {
@@ -123,12 +128,54 @@ export default function ClueHistoryTab({ userId: _userId }: { userId: string }) 
               textAlign: "center",
               marginBottom: "15px",
               fontSize: "0.9rem",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
             }}
           >
-            Your Clue Rating:{" "}
+            <span>Your Clue Rating:</span>
             <strong>
               {clueRating !== null ? clueRating.toFixed(1) : "N/A"}
             </strong>
+            <HelpIcon
+              title="How Clue Rating Works"
+              content={
+                <>
+                  <p>
+                    Your <strong>Clue Rating</strong> measures the quality of
+                    clues you create.
+                  </p>
+                  <ul>
+                    <li>
+                      <strong>Starting Rating:</strong> 1000
+                    </li>
+                    <li>
+                      <strong>Game Score:</strong> Each game you create gets a
+                      score based on how well players guess it
+                    </li>
+                    <li>
+                      <strong>Score Calculation:</strong> 100 + (your game's
+                      success rate - average success rate of other games with
+                      the same word set)
+                    </li>
+                    <li>
+                      <strong>Success Rate:</strong> Percentage of correct
+                      guesses for your game
+                    </li>
+                  </ul>
+                  <p>
+                    <strong>Rating Update:</strong> Your rating increases by
+                    each game's score. Only your last 100 games count.
+                  </p>
+                  <p>
+                    <strong>Time Decay:</strong> Each game's contribution
+                    decreases by 1 point per day since creation. This encourages
+                    creating new, fresh clues regularly!
+                  </p>
+                </>
+              }
+            />
           </div>
           <div className="clue-history-container">
             {clueHistory.map((entry, index) => {
@@ -151,6 +198,42 @@ export default function ClueHistoryTab({ userId: _userId }: { userId: string }) 
                       <div className="clue-game-score">
                         Score:{" "}
                         <strong>{entry.gameScore?.toFixed(1) ?? "N/A"}</strong>
+                        <HelpIcon
+                          title="What is Game Score?"
+                          content={
+                            <>
+                              <p>
+                                <strong>Game Score</strong> measures how good
+                                your clue was.
+                              </p>
+                              <p>
+                                It's calculated as:{" "}
+                                <strong>
+                                  100 + (your game's success rate - average
+                                  success rate of other games with the same word
+                                  set)
+                                </strong>
+                              </p>
+                              <ul>
+                                <li>
+                                  <strong>Above 100:</strong> Your clue was
+                                  better than average - more players got it
+                                  right
+                                </li>
+                                <li>
+                                  <strong>Below 100:</strong> Your clue was
+                                  worse than average - fewer players got it
+                                  right
+                                </li>
+                              </ul>
+                              <p>
+                                This score contributes to your{" "}
+                                <strong>Clue Rating</strong>, so creating good
+                                clues is the key to a high rating!
+                              </p>
+                            </>
+                          }
+                        />
                       </div>
                     )}
                   </div>
@@ -227,9 +310,14 @@ export default function ClueHistoryTab({ userId: _userId }: { userId: string }) 
           </div>
           {/* Loading trigger element */}
           {hasMore && (
-            <div ref={observerTarget} style={{ height: "20px", marginTop: "10px" }}>
+            <div
+              ref={observerTarget}
+              style={{ height: "20px", marginTop: "10px" }}
+            >
               {isLoading && (
-                <div style={{ textAlign: "center", color: "#666" }}>Loading more...</div>
+                <div style={{ textAlign: "center", color: "#666" }}>
+                  Loading more...
+                </div>
               )}
             </div>
           )}
