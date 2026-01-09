@@ -14,7 +14,7 @@ public class WordCheckerService : IWordCheckerService
     {
         // Words containing "f*ck" patterns
         "FLICKER", "FLICKERING", "FLICKERED", "FLICKERS", "FLICKERINGLY",
-        // Words containing "c*ck" patterns  
+        // Words containing "c*ck" patterns
         "COCK", "COCKED", "COCKING", "COCKS", "COCKY", "COCKTAIL", "COCKTAILS",
         "COCKPIT", "COCKPITS", "COCKEREL", "COCKERELS", "COCKATOO", "COCKATOOS",
         "PEACOCK", "PEACOCKS", "GAMECOCK", "GAMECOCKS", "STOPCOCK", "STOPCOCKS",
@@ -70,7 +70,7 @@ public class WordCheckerService : IWordCheckerService
         // Step 1: Dictionary Check (Instant)
         if (!_validWords.Contains(word))
         {
-            return "Word is not in the dictionary (negative words like anti- un- non- are not allowed). If you think this word was blocked incorrectly, discuss in the community subreddit!"; // Not a real word
+            return "Word is not in the dictionary (negative words like anti- un- non-, -less are not allowed). If you think this word was blocked incorrectly, discuss in the community subreddit!"; // Not a real word
         }
 
         // Step 2: Safety Check (Local ML)
