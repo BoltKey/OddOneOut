@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { UserStatsContext } from "../App";
 import { api } from "../services/api";
 import LoginPage from "./LoginPage";
-import { FaReddit } from "react-icons/fa";
+import { FaReddit, FaMoon, FaSun, FaUser, FaSignOutAlt, FaRedo, FaUserShield } from "react-icons/fa";
 import "./SettingsTab.css";
 
 interface SettingsTabProps {
@@ -12,10 +12,12 @@ interface SettingsTabProps {
 export default function SettingsTab({ currentDisplayName }: SettingsTabProps) {
   const [nameInput, setNameInput] = useState(currentDisplayName);
   const [isSaved, setIsSaved] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   useEffect(() => {
     setNameInput(currentDisplayName);
   }, [currentDisplayName]);
+
   const {
     onDisplayNameChange,
     darkMode,
@@ -23,6 +25,7 @@ export default function SettingsTab({ currentDisplayName }: SettingsTabProps) {
     setLoggedOut,
     user,
     loadUser,
+    guessRating,
   } = React.useContext(UserStatsContext);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -35,75 +38,142 @@ export default function SettingsTab({ currentDisplayName }: SettingsTabProps) {
     }
   };
 
+  const handleResetTutorials = () => {
+    localStorage.removeItem("seenGuessingTutorial-" + user?.id);
+    localStorage.removeItem("seenClueTutorial-" + user?.id);
+    setShowResetConfirm(true);
+    setTimeout(() => setShowResetConfirm(false), 2000);
+  };
+
+  const handleLogout = async () => {
+    const isGuest = user?.isGuest;
+    const guestUserId = isGuest ? user?.id : null;
+    
+    setLoggedOut(true);
+    await api.logout();
+    
+    if (guestUserId) {
+      localStorage.setItem("guestUserId", guestUserId);
+    } else {
+      localStorage.removeItem("guestUserId");
+    }
+  };
+
   return (
-    <div className="p-6 bg-white rounded-lg shadow-md max-w-md mx-auto mt-10">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">Settings</h2>
-      <div>
-        <button onClick={() => setDarkMode(!darkMode)}>Dark mode💡</button>
+    <div className="settings-wrapper">
+      <h2 className="settings-title">Settings</h2>
+
+      {/* Account Info Section */}
+      <div className="settings-section">
+        <div className="settings-section-title">
+          <FaUserShield /> Account
+        </div>
+        <div className="settings-account-info">
+          <div className="account-info-row">
+            <span className="account-label">Username:</span>
+            <span className="account-value">{user?.userName || "N/A"}</span>
+          </div>
+          <div className="account-info-row">
+            <span className="account-label">Account Type:</span>
+            <span className={`account-badge ${user?.isGuest ? "guest" : "registered"}`}>
+              {user?.isGuest ? "Guest" : "Registered"}
+            </span>
+          </div>
+          <div className="account-info-row">
+            <span className="account-label">Guess Rating:</span>
+            <span className="account-value">{guessRating ?? "N/A"}</span>
+          </div>
+        </div>
       </div>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label
-            htmlFor="displayName"
-            className="block text-sm font-medium text-gray-700 mb-1"
+
+      {/* Display Name Section */}
+      <div className="settings-section">
+        <div className="settings-section-title">
+          <FaUser /> Display Name
+        </div>
+        <form onSubmit={handleSubmit} className="settings-form">
+          <div className="settings-input-group">
+            <input
+              type="text"
+              id="displayName"
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              className="settings-input"
+              placeholder="Enter your display name"
+            />
+            <button type="submit" className="settings-save-btn">
+              Save
+            </button>
+          </div>
+          {isSaved && (
+            <span className="settings-success">✓ Saved successfully!</span>
+          )}
+        </form>
+      </div>
+
+      {/* Appearance Section */}
+      <div className="settings-section">
+        <div className="settings-section-title">
+          {darkMode ? <FaMoon /> : <FaSun />} Appearance
+        </div>
+        <div className="settings-toggle-row">
+          <span className="settings-toggle-label">Dark Mode</span>
+          <button
+            className={`settings-toggle ${darkMode ? "active" : ""}`}
+            onClick={() => setDarkMode(!darkMode)}
+            aria-label="Toggle dark mode"
           >
-            Display Name
-          </label>
-          <input
-            type="text"
-            id="displayName"
-            value={nameInput}
-            onChange={(e) => setNameInput(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-            placeholder="Enter your display name"
+            <span className="toggle-slider" />
+          </button>
+        </div>
+      </div>
+
+      {/* Tutorial Section */}
+      <div className="settings-section">
+        <div className="settings-section-title">
+          <FaRedo /> Tutorials
+        </div>
+        <div className="settings-row">
+          <span className="settings-row-text">Forgot how to play? Reset the tutorials to see them again.</span>
+          <button
+            className="settings-secondary-btn"
+            onClick={handleResetTutorials}
+          >
+            Reset Tutorials
+          </button>
+        </div>
+        {showResetConfirm && (
+          <span className="settings-success">✓ Tutorials will show again!</span>
+        )}
+      </div>
+
+      {/* Guest Upgrade Section */}
+      {user && user.isGuest && (
+        <div className="settings-section settings-upgrade-section">
+          <div className="settings-section-title">
+            <FaUserShield /> Create an Account
+          </div>
+          <p className="settings-description">
+            You're playing as a guest. Create an account to save your progress permanently and access your stats from any device!
+          </p>
+          <LoginPage
+            onLoginSuccess={() => {
+              loadUser();
+            }}
+            isGuest={true}
           />
         </div>
-
-        <div className="flex items-center justify-between">
-          <button
-            type="submit"
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-          >
-            Save Name
-          </button>
-
-          {isSaved && (
-            <span className="text-green-600 text-sm font-medium animate-fade-in">
-              Saved successfully!
-            </span>
-          )}
-        </div>
-      </form>
-      {user && user.isGuest && (
-        <LoginPage
-          onLoginSuccess={() => {
-            loadUser();
-          }}
-          isGuest={true}
-        />
       )}
-      <button
-        onClick={async () => {
-          // Preserve guest user ID on logout if it's a guest
-          const isGuest = user?.isGuest;
-          const guestUserId = isGuest ? user?.id : null;
-          
-          setLoggedOut(true);
-          await api.logout();
-          
-          // Keep guest ID in localStorage for reuse
-          if (guestUserId) {
-            localStorage.setItem("guestUserId", guestUserId);
-          } else {
-            // Clear guest ID if logging out as a registered user
-            localStorage.removeItem("guestUserId");
-          }
-        }}
-      >
-        Logout
-      </button>
-      
-      <div style={{ marginTop: "30px", paddingTop: "20px", borderTop: "1px solid #e0e0e0" }}>
+
+      {/* Logout Section */}
+      <div className="settings-section settings-danger-section">
+        <button className="settings-logout-btn" onClick={handleLogout}>
+          <FaSignOutAlt /> Logout
+        </button>
+      </div>
+
+      {/* Community Section */}
+      <div className="settings-section settings-community-section">
         <a
           href="https://www.reddit.com/r/misfitgame/"
           target="_blank"

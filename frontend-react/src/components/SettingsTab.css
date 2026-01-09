@@ -1,5 +1,343 @@
-.reddit-settings-link {
+.settings-wrapper {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.settings-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.dark-mode .settings-title {
+  color: #eee;
+}
+
+/* Section Styling */
+.settings-section {
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px solid #e0e0e0;
+}
+
+.dark-mode .settings-section {
+  background-color: #2a2a2a;
+  border-color: #444;
+}
+
+.settings-section-title {
   display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 12px;
+}
+
+.dark-mode .settings-section-title {
+  color: #bbb;
+}
+
+.settings-section-title svg {
+  font-size: 1.1rem;
+}
+
+/* Account Info */
+.settings-account-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.account-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.account-info-row:last-child {
+  border-bottom: none;
+}
+
+.dark-mode .account-info-row {
+  border-bottom-color: #3a3a3a;
+}
+
+.account-label {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.dark-mode .account-label {
+  color: #999;
+}
+
+.account-value {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.dark-mode .account-value {
+  color: #ddd;
+}
+
+.account-badge {
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.account-badge.guest {
+  background-color: #ffebcd;
+  color: #b8860b;
+}
+
+.account-badge.registered {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.dark-mode .account-badge.guest {
+  background-color: #4a3d10;
+  color: #ffc107;
+}
+
+.dark-mode .account-badge.registered {
+  background-color: #1a3d1f;
+  color: #6ece6e;
+}
+
+/* Form Styling */
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-input-group {
+  display: flex;
+  gap: 10px;
+}
+
+.settings-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  background-color: white;
+  color: #333;
+  transition: border-color 0.2s;
+}
+
+.settings-input:focus {
+  outline: none;
+  border-color: #4caf50;
+}
+
+.dark-mode .settings-input {
+  background-color: #1a1a1a;
+  border-color: #444;
+  color: #eee;
+}
+
+.dark-mode .settings-input:focus {
+  border-color: #66bb6a;
+}
+
+.settings-save-btn {
+  padding: 10px 20px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.settings-save-btn:hover {
+  background-color: #45a049;
+}
+
+.settings-success {
+  color: #4caf50;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* Toggle Switch */
+.settings-toggle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.settings-toggle-label {
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.dark-mode .settings-toggle-label {
+  color: #ddd;
+}
+
+.settings-toggle {
+  position: relative;
+  width: 50px;
+  height: 26px;
+  background-color: #ccc;
+  border: none;
+  border-radius: 13px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  padding: 0;
+}
+
+.settings-toggle.active {
+  background-color: #4caf50;
+}
+
+.toggle-slider {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.3s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.settings-toggle.active .toggle-slider {
+  transform: translateX(24px);
+}
+
+/* Settings Row */
+.settings-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-row-text {
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.5;
+}
+
+.dark-mode .settings-row-text {
+  color: #aaa;
+}
+
+.settings-secondary-btn {
+  padding: 8px 16px;
+  background-color: #e0e0e0;
+  color: #333;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  align-self: flex-start;
+}
+
+.settings-secondary-btn:hover {
+  background-color: #d0d0d0;
+}
+
+.dark-mode .settings-secondary-btn {
+  background-color: #3a3a3a;
+  color: #ddd;
+}
+
+.dark-mode .settings-secondary-btn:hover {
+  background-color: #444;
+}
+
+/* Description Text */
+.settings-description {
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.dark-mode .settings-description {
+  color: #aaa;
+}
+
+/* Upgrade Section */
+.settings-upgrade-section {
+  background-color: #fff3cd;
+  border-color: #ffc107;
+}
+
+.dark-mode .settings-upgrade-section {
+  background-color: #3a3000;
+  border-color: #ffc107;
+}
+
+/* Logout Button */
+.settings-danger-section {
+  background-color: transparent;
+  border: none;
+  padding: 0;
+}
+
+.settings-logout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  background-color: #f5f5f5;
+  color: #c62828;
+  border: 1px solid #ffcdd2;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.settings-logout-btn:hover {
+  background-color: #ffebee;
+  border-color: #ef9a9a;
+}
+
+.dark-mode .settings-logout-btn {
+  background-color: #2a2a2a;
+  color: #ef5350;
+  border-color: #5a2a2a;
+}
+
+.dark-mode .settings-logout-btn:hover {
+  background-color: #3a2020;
+  border-color: #8a3030;
+}
+
+/* Community Section */
+.settings-community-section {
+  background-color: transparent;
+  border: none;
+  padding: 10px 0;
+  text-align: center;
+}
+
+.reddit-settings-link {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
   color: #666;
@@ -24,7 +362,6 @@
 
 .dark-mode .reddit-settings-link {
   color: #aaa;
-  border-top-color: #444;
 }
 
 .dark-mode .reddit-settings-link:hover {
@@ -34,4 +371,28 @@
 
 .dark-mode .reddit-settings-link svg {
   color: #ff6b35;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 600px) {
+  .settings-wrapper {
+    padding: 15px 10px;
+  }
+
+  .settings-section {
+    padding: 14px;
+  }
+
+  .settings-input-group {
+    flex-direction: column;
+  }
+
+  .settings-save-btn {
+    width: 100%;
+  }
+
+  .settings-secondary-btn {
+    width: 100%;
+    text-align: center;
+  }
 }

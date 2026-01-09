@@ -68,7 +68,8 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
             The other 4 words become{" "}
             <strong style={{ color: "var(--insetcolor)" }}>Matches</strong>.
             Create a clue that connects them, but <strong>not</strong> the
-            Misfit. You have quite limited number of clues you can give, so take your time!
+            Misfit. You have quite limited number of clues you can give, so take
+            your time!
           </div>
         </>
       ),
@@ -88,9 +89,9 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
   }, [tutorialStep, currentCards]);
 
   const advanceTutorial = useCallback(() => {
-    if (tutorialStep === 5) {
+    if (tutorialStep === 4) {
       // Complete tutorial - jump to step 6
-      setTutorialStep(6);
+      setTutorialStep(5);
       let storageKey = "seenClueTutorial-" + userId;
       localStorage.setItem(storageKey, "true");
     } else {
