@@ -48,8 +48,12 @@ public class GamesController : ControllerBase
                 return BadRequest($"You are out of guesses for now. Please wait {user.NextGuessRegenTime} before guessing again.");
             }
             var avalGames = await _context.Games
-              .Where(g => !g.ClueGivers.Any(u => u.Id == userIdString)) // Ensure user is not a ClueGiver in the game
-              // ensure user hasn't guessed in any game with same word set yet
+              // Ensure user hasn't given a clue for any game with the same card set
+              .Where(g => !_context.Set<GameClueGiver>().Any(gcg =>
+                  gcg.Game.CardSetId == g.CardSetId &&
+                  gcg.UserId == userIdString
+              ))
+              // Ensure user hasn't guessed in any game with same word set yet
               .Where(g => !_context.Guesses.Any(gu =>
                   gu.Game.CardSet.Id == g.CardSet.Id &&
                   gu.Guesser.Id == userIdString
