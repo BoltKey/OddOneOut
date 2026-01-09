@@ -461,10 +461,14 @@ public class User : IdentityUser
         }
         return result;
     }
+    public DateTime lastDecay { get; set; } = DateTime.UtcNow;
     public void decayRating()
       {
         DateTime lastGuessTime = Guesses.OrderByDescending(g => g.GuessedAt).FirstOrDefault()?.GuessedAt ?? DateTime.UtcNow;
-        var daysInactive = (DateTime.UtcNow - lastGuessTime).TotalDays;
+        var compareTo = lastDecay > lastGuessTime ? lastDecay : lastGuessTime;
+        var daysInactive = (DateTime.UtcNow - compareTo).TotalDays;
+        if (daysInactive < 1) return;
+        lastDecay = lastGuessTime.AddDays((int)daysInactive);
         GuessRating -= (int)daysInactive;
       }
 }
