@@ -62,7 +62,8 @@ export default function GuessingTab({ userId }: { userId: string }) {
       1: (
         <div>
           <div style={{ marginBottom: "10px" }}>
-            Welcome to <strong>Misfit</strong>! This quick tutorial will show you how to play.
+            Welcome to <strong>Misfit</strong>! This quick tutorial will show
+            you how to play.
           </div>
           <button onClick={advanceTutorial}>Let's go!</button>
         </div>
@@ -78,7 +79,10 @@ export default function GuessingTab({ userId }: { userId: string }) {
       3: (
         <>
           <div style={{ marginBottom: "10px" }}>
-            They picked one word as the <strong style={{ color: "var(--misfitcolor)" }}>Misfit</strong> and the other 4 as <strong style={{ color: "var(--insetcolor)" }}>Matches</strong>.
+            They picked one word as the{" "}
+            <strong style={{ color: "var(--misfitcolor)" }}>Misfit</strong> and
+            the other 4 as{" "}
+            <strong style={{ color: "var(--insetcolor)" }}>Matches</strong>.
           </div>
           <button onClick={advanceTutorial}>I see</button>
         </>
@@ -97,14 +101,22 @@ export default function GuessingTab({ userId }: { userId: string }) {
       ),
       5: (
         <div style={{ marginBottom: "10px" }}>
-          The 5 words are shuffled, and you're shown <strong>one random card</strong>.
+          The 5 words are shuffled, and you're shown{" "}
+          <strong>one random card</strong>.
           <br />
-          Your goal: Guess if this card is a <strong style={{ color: "var(--insetcolor)" }}>Match</strong> (fits the clue) or the <strong style={{ color: "var(--misfitcolor)" }}>Misfit</strong> (doesn't fit).
+          Your goal: Guess if this card is a{" "}
+          <strong style={{ color: "var(--insetcolor)" }}>Match</strong> (fits
+          the clue) or the{" "}
+          <strong style={{ color: "var(--misfitcolor)" }}>Misfit</strong>{" "}
+          (doesn't fit).
         </div>
       ),
       6: (
         <div style={{ marginBottom: "10px" }}>
-          After you guess, you'll see all 5 words revealed. <strong>Your Guess Rating</strong> goes up or down based on whether you're correct. You'll also see how other players performed with each word. Try to get the highest rating possible! Good luck!
+          After you guess, you'll see all 5 words revealed.{" "}
+          <strong>Your Guess Rating</strong> goes up or down based on whether
+          you're correct. You'll also see how other players performed with each
+          word. Try to get the highest rating possible! Good luck!
         </div>
       ),
       7: null,
@@ -166,7 +178,8 @@ export default function GuessingTab({ userId }: { userId: string }) {
         tutorialStep >= 5 && <div className="your-card">Your word:</div>}
       <div
         className={
-          "solution-words-container" + (tutorialStep === 5 ? " card-reveal" : "")
+          "solution-words-container" +
+          (tutorialStep === 5 ? " card-reveal" : "")
         }
       >
         {wordsToDisplay.map((word, index) => (
@@ -258,23 +271,40 @@ export default function GuessingTab({ userId }: { userId: string }) {
                       content={
                         <>
                           <p>
-                            Your <strong>Guess Rating</strong> measures how well you identify the Misfit word.
+                            Your <strong>Guess Rating</strong> measures how good
+                            you are at identifying Misfits and Matches.
                           </p>
                           <ul>
-                            <li><strong>Starting Rating:</strong> 1000</li>
-                            <li><strong>Correct Match:</strong> +10 base points</li>
-                            <li><strong>Wrong Match:</strong> -20 base points</li>
-                            <li><strong>Correct Misfit:</strong> +15 base points</li>
-                            <li><strong>Wrong Misfit:</strong> -30 base points</li>
+                            <li>
+                              <strong>Starting Rating:</strong> 1000
+                            </li>
+                            <li>
+                              <strong>Correct Match:</strong> +10 base points
+                            </li>
+                            <li>
+                              <strong>Wrong Match:</strong> -20 base points
+                            </li>
+                            <li>
+                              <strong>Correct Misfit:</strong> +15 base points
+                            </li>
+                            <li>
+                              <strong>Wrong Misfit:</strong> -30 base points
+                            </li>
                           </ul>
                           <p>
-                            <strong>Multiplier System:</strong> Lower ratings get more points for wins and lose fewer for losses. Higher ratings get fewer points for wins and lose more for losses. This helps balance the playing field!
+                            <strong>Multiplier System:</strong> Lower ratings
+                            get more points for wins and lose fewer for losses.
+                            Higher ratings get fewer points for wins and lose
+                            more for losses. This helps balance the playing
+                            field!
                           </p>
                           <p>
-                            <strong>Minimum Rating:</strong> 100 (you can't go below this)
+                            <strong>Minimum Rating:</strong> 100 (you can't go
+                            below this)
                           </p>
                           <p>
-                            <strong>Decay:</strong> Your rating decreases by 1 point per day if you don't play.
+                            <strong>Decay:</strong> Your rating decreases by 1
+                            point per day if you don't play.
                           </p>
                         </>
                       }

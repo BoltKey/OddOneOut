@@ -35,7 +35,7 @@ export default function GuessHistoryTab({ userId }: { userId: string }) {
 
   const fetchGuessHistory = useCallback(async (pageNumber: number) => {
     if (isLoadingRef.current || pageNumber > totalPagesRef.current) return;
-    
+
     isLoadingRef.current = true;
     setIsLoading(true);
     try {
@@ -96,7 +96,7 @@ export default function GuessHistoryTab({ userId }: { userId: string }) {
     if (diffMins < 60) return `${diffMins}m ago`;
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays < 7) return `${diffDays}d ago`;
-    
+
     // For older dates, show formatted date
     return date.toLocaleDateString("en-US", {
       month: "short",
@@ -120,23 +120,39 @@ export default function GuessHistoryTab({ userId }: { userId: string }) {
               content={
                 <>
                   <p>
-                    Your <strong>Guess Rating</strong> measures how well you identify the Misfit word.
+                    Your <strong>Guess Rating</strong> measures how good you are
+                    at identifying Misfits and Matches.
                   </p>
                   <ul>
-                    <li><strong>Starting Rating:</strong> 1000</li>
-                    <li><strong>Correct Match:</strong> +10 base points</li>
-                    <li><strong>Wrong Match:</strong> -20 base points</li>
-                    <li><strong>Correct Misfit:</strong> +15 base points</li>
-                    <li><strong>Wrong Misfit:</strong> -30 base points</li>
+                    <li>
+                      <strong>Starting Rating:</strong> 1000
+                    </li>
+                    <li>
+                      <strong>Correct Match:</strong> +10 base points
+                    </li>
+                    <li>
+                      <strong>Wrong Match:</strong> -20 base points
+                    </li>
+                    <li>
+                      <strong>Correct Misfit:</strong> +15 base points
+                    </li>
+                    <li>
+                      <strong>Wrong Misfit:</strong> -30 base points
+                    </li>
                   </ul>
                   <p>
-                    <strong>Multiplier System:</strong> Lower ratings get more points for wins and lose fewer for losses. Higher ratings get fewer points for wins and lose more for losses. This helps balance the playing field!
+                    <strong>Multiplier System:</strong> Lower ratings get more
+                    points for wins and lose fewer for losses. Higher ratings
+                    get fewer points for wins and lose more for losses. This
+                    helps balance the playing field!
                   </p>
                   <p>
-                    <strong>Minimum Rating:</strong> 100 (you can't go below this)
+                    <strong>Minimum Rating:</strong> 100 (you can't go below
+                    this)
                   </p>
                   <p>
-                    <strong>Decay:</strong> Your rating decreases by 1 point per day if you don't play.
+                    <strong>Decay:</strong> Your rating decreases by 1 point per
+                    day if you don't play.
                   </p>
                 </>
               }
@@ -169,7 +185,7 @@ export default function GuessHistoryTab({ userId }: { userId: string }) {
             {guessHistory.map((entry, index) => {
               const isCorrect =
                 entry.guessIsInSet === (entry.oddOneOut !== entry.selectedCard);
-              
+
               // Prepare words for display similar to GuessingTab
               const wordsToDisplay = entry.cardSetWords.map((card) => ({
                 word: card.word,
@@ -197,12 +213,20 @@ export default function GuessHistoryTab({ userId }: { userId: string }) {
               return (
                 <div
                   key={index}
-                  className={`history-card ${isCorrect ? "correct" : "incorrect"}`}
+                  className={`history-card ${
+                    isCorrect ? "correct" : "incorrect"
+                  }`}
                 >
                   {/* Header with time, result, and rating */}
                   <div className="history-card-header">
-                    <div className="history-time">{formatDateTime(entry.guessedAt)}</div>
-                    <div className={`history-result ${isCorrect ? "correct" : "incorrect"}`}>
+                    <div className="history-time">
+                      {formatDateTime(entry.guessedAt)}
+                    </div>
+                    <div
+                      className={`history-result ${
+                        isCorrect ? "correct" : "incorrect"
+                      }`}
+                    >
                       {isCorrect ? "✓" : "✗"}
                     </div>
                     {entry.ratingChange !== 0 && (
@@ -237,7 +261,8 @@ export default function GuessHistoryTab({ userId }: { userId: string }) {
                               <div className="success-rate">
                                 <span className="amt-correct">
                                   {word.correctGuesses}
-                                </span>/{word.totalGuesses}
+                                </span>
+                                /{word.totalGuesses}
                               </div>
                             )}
                           <div
@@ -258,9 +283,14 @@ export default function GuessHistoryTab({ userId }: { userId: string }) {
           </div>
           {/* Loading trigger element */}
           {hasMore && (
-            <div ref={observerTarget} style={{ height: "20px", marginTop: "10px" }}>
+            <div
+              ref={observerTarget}
+              style={{ height: "20px", marginTop: "10px" }}
+            >
               {isLoading && (
-                <div style={{ textAlign: "center", color: "#666" }}>Loading more...</div>
+                <div style={{ textAlign: "center", color: "#666" }}>
+                  Loading more...
+                </div>
               )}
             </div>
           )}
