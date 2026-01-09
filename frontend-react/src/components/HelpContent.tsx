@@ -20,9 +20,9 @@ export const GuessRatingHelpContent = (
     </p>
     <p style={{ marginTop: "12px", fontSize: "0.9em", color: "#666" }}>
       Something feel unfair? Share feedback on{" "}
-      <a 
-        href="https://www.reddit.com/r/misfitgame/" 
-        target="_blank" 
+      <a
+        href="https://www.reddit.com/r/misfitgame/"
+        target="_blank"
         rel="noopener noreferrer"
         style={{ color: "#ff4500" }}
       >
@@ -51,9 +51,9 @@ export const ClueRatingHelpContent = (
     </p>
     <p style={{ marginTop: "12px", fontSize: "0.9em", color: "#666" }}>
       Something feel unfair? Share feedback on{" "}
-      <a 
-        href="https://www.reddit.com/r/misfitgame/" 
-        target="_blank" 
+      <a
+        href="https://www.reddit.com/r/misfitgame/"
+        target="_blank"
         rel="noopener noreferrer"
         style={{ color: "#ff4500" }}
       >
@@ -73,9 +73,8 @@ export const GameScoreHelpContent = (
       <strong>Formula:</strong> 100 + (your success rate - average success rate of other games with same words)
     </p>
     <ul>
-      <li><strong>Above 100:</strong> Easier than average</li>
-      <li><strong>Below 100:</strong> Harder than average</li>
-      <li><strong>Around 100:</strong> Perfectly balanced!</li>
+      <li><strong>Above 100:</strong> Higher success rate than average</li>
+      <li><strong>Below 100:</strong> Lower success rate than average</li>
     </ul>
     <p>
       This score contributes to your <strong>Clue Rating</strong>. Well-balanced clues are the key to a high rating!

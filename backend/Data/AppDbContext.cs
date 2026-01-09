@@ -58,13 +58,13 @@ protected override void OnModelCreating(ModelBuilder builder)
     // Add indexes for frequently queried foreign keys
     builder.Entity<Game>()
         .HasIndex(g => g.CardSetId);
-    
+
     builder.Entity<Guess>()
         .HasIndex(g => g.GameId);
-    
+
     builder.Entity<Guess>()
         .HasIndex(g => g.SelectedCardId);
-    
+
     builder.Entity<User>()
         .HasIndex(u => u.CurrentGameId);
 }
@@ -96,7 +96,7 @@ public class CardSet
         var totalCount = await context.WordCard.CountAsync();
         if (totalCount == 0)
             throw new InvalidOperationException("No word cards available in database.");
-        
+
         var countToTake = Math.Min(wordCount, totalCount);
         var randomWords = await context.WordCard
             .FromSqlRaw("SELECT * FROM \"WordCard\" ORDER BY RANDOM() LIMIT {0}", countToTake)
@@ -164,9 +164,11 @@ public class Game
       }
       // geometric average of success rates
       double product = 1.0;
+      double dummyTotal = 3;
+      double dummyCorrect = 2;
       foreach (var stats in cardStats.Values)
       {
-        double rate = (double)(stats.correct) / (stats.total);
+        double rate = (double)(stats.correct + dummyCorrect) / (stats.total + dummyTotal);
         product *= rate;
       }
       double geoMean = Math.Pow(product, 1.0 / cardStats.Count);
