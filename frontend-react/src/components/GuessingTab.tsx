@@ -2,6 +2,7 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { api } from "../services/api";
 import { UserStatsContext } from "../App";
 import HelpIcon from "./HelpIcon";
+import { GuessRatingHelpContent } from "./HelpContent";
 import "./GuessingTab.css";
 
 export default function GuessingTab({ userId }: { userId: string }) {
@@ -268,46 +269,7 @@ export default function GuessingTab({ userId }: { userId: string }) {
                     Rating
                     <HelpIcon
                       title="How Guess Rating Works"
-                      content={
-                        <>
-                          <p>
-                            Your <strong>Guess Rating</strong> measures how good
-                            you are at identifying Misfits and Matches.
-                          </p>
-                          <ul>
-                            <li>
-                              <strong>Starting Rating:</strong> 1000
-                            </li>
-                            <li>
-                              <strong>Correct Match:</strong> +10 base points
-                            </li>
-                            <li>
-                              <strong>Wrong Match:</strong> -20 base points
-                            </li>
-                            <li>
-                              <strong>Correct Misfit:</strong> +15 base points
-                            </li>
-                            <li>
-                              <strong>Wrong Misfit:</strong> -30 base points
-                            </li>
-                          </ul>
-                          <p>
-                            <strong>Multiplier System:</strong> Lower ratings
-                            get more points for wins and lose fewer for losses.
-                            Higher ratings get fewer points for wins and lose
-                            more for losses. This helps balance the playing
-                            field!
-                          </p>
-                          <p>
-                            <strong>Minimum Rating:</strong> 100 (you can't go
-                            below this)
-                          </p>
-                          <p>
-                            <strong>Decay:</strong> Your rating decreases by 1
-                            point per day if you don't play.
-                          </p>
-                        </>
-                      }
+                      content={GuessRatingHelpContent}
                     />
                   </span>
                   <span className="rating-value">{guessRating}</span>

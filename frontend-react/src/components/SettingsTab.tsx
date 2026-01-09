@@ -2,7 +2,17 @@ import React, { useState, useEffect } from "react";
 import { UserStatsContext } from "../App";
 import { api } from "../services/api";
 import LoginPage from "./LoginPage";
-import { FaReddit, FaMoon, FaSun, FaUser, FaSignOutAlt, FaRedo, FaUserShield, FaCoffee, FaHeart } from "react-icons/fa";
+import {
+  FaReddit,
+  FaMoon,
+  FaSun,
+  FaUser,
+  FaSignOutAlt,
+  FaRedo,
+  FaUserShield,
+  FaCoffee,
+  FaHeart,
+} from "react-icons/fa";
 import "./SettingsTab.css";
 
 interface SettingsTabProps {
@@ -47,10 +57,10 @@ export default function SettingsTab({ currentDisplayName }: SettingsTabProps) {
   const handleLogout = async () => {
     const isGuest = user?.isGuest;
     const guestUserId = isGuest ? user?.id : null;
-    
+
     setLoggedOut(true);
     await api.logout();
-    
+
     if (guestUserId) {
       localStorage.setItem("guestUserId", guestUserId);
     } else {
@@ -107,10 +117,9 @@ export default function SettingsTab({ currentDisplayName }: SettingsTabProps) {
       {/* Tutorial Section */}
       <div className="settings-section">
         <div className="settings-section-title">
-          <FaRedo /> Tutorials
+          <FaRedo /> Replay Tutorials
         </div>
         <div className="settings-row">
-          <span className="settings-row-text">Forgot how to play? Reset the tutorials to see them again.</span>
           <button
             className="settings-secondary-btn"
             onClick={handleResetTutorials}
@@ -130,7 +139,8 @@ export default function SettingsTab({ currentDisplayName }: SettingsTabProps) {
             <FaUserShield /> Create an Account
           </div>
           <p className="settings-description">
-            You're playing as a guest. Create an account to save your progress permanently and access your stats from any device!
+            You're playing as a guest. Create an account to save your progress
+            permanently and access your stats from any device!
           </p>
           <LoginPage
             onLoginSuccess={() => {
