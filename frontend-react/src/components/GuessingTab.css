@@ -104,7 +104,8 @@
   animation: none;
 }
 
-.solution-words-container:not(.card-reveal) .guessing-card-wrap:not(.othercard) {
+.solution-words-container:not(.card-reveal)
+  .guessing-card-wrap:not(.othercard) {
   transform: none !important;
 }
 
@@ -263,31 +264,31 @@
     width: calc(100% - 20px) !important;
     margin: 0 auto;
   }
-  
+
   .guessing-wrapper {
     padding: 15px 10px;
     max-width: 100%;
   }
-  
+
   .guessing-content {
     gap: 15px;
     width: 100%;
     padding: 0;
   }
-  
+
   .clue-section {
     width: 100%;
     padding: 0 5px;
     box-sizing: border-box;
     max-width: 100%;
   }
-  
+
   .guessing-main {
     width: 100%;
     padding: 0;
     box-sizing: border-box;
   }
-  
+
   .solution-words-container {
     width: 100% !important;
     padding: 0 !important;
@@ -297,7 +298,7 @@
     justify-content: space-around !important;
     gap: 4px !important;
   }
-  
+
   .guess-buttons-wrapper {
     justify-content: center !important;
     align-items: center !important;
@@ -462,10 +463,11 @@
 }
 
 .clue-word-separator {
-  height: 90px;
+  height: 0px;
   width: 100%;
 }
 .clue-word-separator.visible {
+  height: 90px;
   background-image: url("/images/tutorialArrows.png");
   background-size: contain;
   background-repeat: no-repeat;

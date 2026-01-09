@@ -262,7 +262,7 @@ export default function GuessingTab({ userId }: { userId: string }) {
           {message && <div className="error-message">{message}</div>}
           <div className="guessing-content">
             <div className="guessing-header">
-              {(tutorialStep >= 8 || solutionWords.length > 0) && (
+              {tutorialStep >= 8 && (
                 <div className="guess-rating-display">
                   <span className="rating-label">
                     Rating
