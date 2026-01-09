@@ -2,19 +2,23 @@ import { useState } from "react";
 import { api } from "../services/api";
 import GoogleLoginButton from "./GoogleLoginButton";
 import { FaReddit } from "react-icons/fa";
+import type { DevvitContext } from "../services/devvit";
 import "./LoginPage.css";
 
 interface Props {
   onLoginSuccess: () => void;
   isGuest?: boolean;
+  isRedditContext?: boolean;
+  devvitContext?: DevvitContext | null;
 }
 
-export default function LoginPage({ onLoginSuccess, isGuest }: Props) {
+export default function LoginPage({ onLoginSuccess, isGuest, isRedditContext, devvitContext }: Props) {
   const [isRegistering, setIsRegistering] = useState(isGuest || false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [redditLoading, setRedditLoading] = useState(false);
   
   // Get guest display name for button text
   const getGuestButtonText = () => {
@@ -54,6 +58,51 @@ export default function LoginPage({ onLoginSuccess, isGuest }: Props) {
       setLoading(false);
     }
   };
+
+  // Handle Reddit login when user clicks the button
+  const handleRedditLogin = async () => {
+    if (!devvitContext?.userId) {
+      setError("Unable to detect Reddit account. Please try refreshing.");
+      return;
+    }
+
+    setRedditLoading(true);
+    setError("");
+
+    try {
+      await api.redditLogin(devvitContext.userId);
+      onLoginSuccess();
+    } catch (err: any) {
+      setError(err.message || "Reddit login failed. Please try again.");
+    } finally {
+      setRedditLoading(false);
+    }
+  };
+
+  // Show Reddit-specific login UI when accessed from Reddit/Devvit
+  if (isRedditContext && devvitContext?.userId) {
+    return (
+      <div className="login-container">
+        <div className="logo splashscreen"></div>
+        
+        <div className="reddit-login-section">
+          <h2>Welcome to Misfit!</h2>
+          <p>Click below to start playing with your Reddit account.</p>
+          
+          {error && <div className="error-message">{error}</div>}
+          
+          <button
+            className="reddit-login-button"
+            onClick={handleRedditLogin}
+            disabled={redditLoading}
+          >
+            <FaReddit />
+            <span>{redditLoading ? "Connecting..." : "Play with Reddit"}</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="login-container">

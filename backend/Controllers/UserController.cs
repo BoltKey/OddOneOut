@@ -232,7 +232,109 @@ public class UserController : ControllerBase
     }
 
     // ==========================================
-    // 4. GOOGLE AUTH
+    // 4. REDDIT/DEVVIT AUTH
+    // ==========================================
+    
+    /// <summary>
+    /// Authenticate a Reddit user coming from Devvit/Reddit Games.
+    /// This endpoint receives the Reddit user ID from the Devvit context
+    /// and creates or finds the corresponding user account.
+    /// </summary>
+    [HttpPost("reddit-login")]
+    public async Task<IActionResult> RedditLogin([FromBody] RedditLoginRequest request)
+    {
+        if (string.IsNullOrEmpty(request.RedditUserId))
+        {
+            return BadRequest("Reddit user ID is required.");
+        }
+
+        // Validate that it looks like a Reddit T2 ID (e.g., "t2_abc123")
+        if (!request.RedditUserId.StartsWith("t2_"))
+        {
+            return BadRequest("Invalid Reddit user ID format.");
+        }
+
+        // Check if user is already authenticated and trying to link accounts
+        if (User.Identity.IsAuthenticated)
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser != null)
+            {
+                // If user already has a Reddit ID linked, check if it matches
+                if (!string.IsNullOrEmpty(currentUser.RedditUserId))
+                {
+                    if (currentUser.RedditUserId == request.RedditUserId)
+                    {
+                        // Already linked to this Reddit account - just return success
+                        return Ok(new { userId = currentUser.Id, linked = true });
+                    }
+                    else
+                    {
+                        // Different Reddit account - don't allow re-linking
+                        return BadRequest("This account is already linked to a different Reddit account.");
+                    }
+                }
+                
+                // Link the Reddit account to the current user (guest upgrade scenario)
+                currentUser.RedditUserId = request.RedditUserId;
+                if (currentUser.IsGuest)
+                {
+                    currentUser.IsGuest = false;
+                    // Set display name from Reddit username if provided
+                    if (!string.IsNullOrEmpty(request.RedditUsername))
+                    {
+                        currentUser.DisplayName = request.RedditUsername;
+                        currentUser.UserName = await GetUniqueUsernameAsync(request.RedditUsername, null);
+                    }
+                }
+                await _userManager.UpdateAsync(currentUser);
+                await _signInManager.RefreshSignInAsync(currentUser);
+                return Ok(new { userId = currentUser.Id, linked = true });
+            }
+        }
+
+        // Try to find existing user by Reddit ID
+        var existingUser = await _context.Users
+            .FirstOrDefaultAsync(u => u.RedditUserId == request.RedditUserId);
+
+        if (existingUser != null)
+        {
+            // Found existing Reddit user - sign them in
+            await _signInManager.SignInAsync(existingUser, isPersistent: true);
+            return Ok(new { userId = existingUser.Id, isNew = false });
+        }
+
+        // Create a new user for this Reddit account
+        var redditId = request.RedditUserId.Substring(3); // Remove "t2_" prefix for username
+        var username = !string.IsNullOrEmpty(request.RedditUsername) 
+            ? await GetUniqueUsernameAsync(request.RedditUsername, null)
+            : await GetUniqueUsernameAsync($"Reddit_{redditId}", null);
+        
+        var newUser = new User
+        {
+            UserName = username,
+            RedditUserId = request.RedditUserId,
+            DisplayName = request.RedditUsername ?? $"Reddit_{redditId}",
+            IsGuest = false,
+            SourceIp = HttpContext.Connection.RemoteIpAddress?.ToString(),
+            GuessEnergy = GameConfig.Current.MaxGuessEnergy,
+            ClueEnergy = GameConfig.Current.MaxClueEnergy,
+            GuessRating = GameConfig.Current.InitialGuessRating
+        };
+
+        var createResult = await _userManager.CreateAsync(newUser);
+
+        if (createResult.Succeeded)
+        {
+            await _signInManager.SignInAsync(newUser, isPersistent: true);
+            return Ok(new { userId = newUser.Id, isNew = true });
+        }
+
+        return BadRequest(createResult.Errors);
+    }
+
+    // ==========================================
+    // 5. GOOGLE AUTH
     // ==========================================
 
     // Step A: Trigger the redirect to Google
@@ -404,4 +506,10 @@ public class UserProfileDto
 public class ChangeDisplayNameRequest
 {
     public string NewDisplayName { get; set; }
+}
+
+public class RedditLoginRequest
+{
+    public string RedditUserId { get; set; }
+    public string? RedditUsername { get; set; }
 }

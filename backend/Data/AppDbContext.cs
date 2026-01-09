@@ -269,10 +269,13 @@ public static class GameConfig
 [Index(nameof(GuessRating))]
 [Index(nameof(CachedClueRating))]
 [Index(nameof(SourceIp))]
+[Index(nameof(RedditUserId))]
 
 public class User : IdentityUser
 {
     public bool IsGuest { get; set; } = false;
+    // Reddit user ID in T2 format (e.g., "t2_abc123") - set when user authenticates via Reddit/Devvit
+    public string? RedditUserId { get; set; }
     // --- Backing Fields (The actual storage) ---
     // We explicitly define these so we can manipulate them in the Getters
     private int _guessEnergy;

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OddOneOut.Data;
@@ -11,9 +12,11 @@ using OddOneOut.Data;
 namespace OddOneOut.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260109152425_redditintegr")]
+    partial class redditintegr
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -512,7 +515,7 @@ namespace OddOneOut.Migrations
                     b.HasOne("OddOneOut.Data.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Game");
@@ -524,13 +527,11 @@ namespace OddOneOut.Migrations
                 {
                     b.HasOne("OddOneOut.Data.Game", "Game")
                         .WithMany("Guesses")
-                        .HasForeignKey("GameId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .HasForeignKey("GameId");
 
                     b.HasOne("OddOneOut.Data.User", "Guesser")
                         .WithMany("Guesses")
-                        .HasForeignKey("GuesserId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .HasForeignKey("GuesserId");
 
                     b.HasOne("OddOneOut.Data.WordCard", "SelectedCard")
                         .WithMany()

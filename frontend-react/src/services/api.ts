@@ -173,4 +173,25 @@ export const api = {
     }
     return res.json();
   },
+
+  /**
+   * Authenticate a Reddit user coming from Devvit/Reddit Games.
+   * This creates or finds a user based on their Reddit user ID.
+   */
+  redditLogin: async (redditUserId: string, redditUsername?: string) => {
+    const res = await fetch(
+      `${BASE_URL}/user/reddit-login`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ redditUserId, redditUsername }),
+      }
+    );
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(err || "Reddit login failed.");
+    }
+    return res.json();
+  },
 };

@@ -45,6 +45,8 @@ public class WordCheckerService : IWordCheckerService
         "REBUTTAL", "REBUTTALS",
         // No idea why these got flagged
         "DINING", "DINNER", "DINE", "DINES", "DINED", "DINING",
+        //
+        "DIRTY"
 
     }.ToFrozenSet();
 
