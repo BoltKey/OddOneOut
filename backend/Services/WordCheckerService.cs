@@ -42,7 +42,10 @@ public class WordCheckerService : IWordCheckerService
         "BUTTON", "BUTTONS", "BUTTONED", "BUTTONING",
         "BUTTER", "BUTTERS", "BUTTERED", "BUTTERING", "BUTTERY",
         "BUTTERFLY", "BUTTERFLIES", "BUTTERCUP", "BUTTERCUPS",
-        "REBUTTAL", "REBUTTALS"
+        "REBUTTAL", "REBUTTALS",
+        // No idea why these got flagged
+        "DINING", "DINNER", "DINE", "DINES", "DINED", "DINING",
+
     }.ToFrozenSet();
 
     public WordCheckerService(IWebHostEnvironment env)
