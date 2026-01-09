@@ -70,7 +70,7 @@ public class WordCheckerService : IWordCheckerService
         // Step 1: Dictionary Check (Instant)
         if (!_validWords.Contains(word))
         {
-            return "Word is not in the dictionary (negative words like anti- un- non- are not allowed)."; // Not a real word
+            return "Word is not in the dictionary (negative words like anti- un- non- are not allowed). If you think this word was blocked incorrectly, discuss in the community subreddit!"; // Not a real word
         }
 
         // Step 2: Safety Check (Local ML)
@@ -83,7 +83,7 @@ public class WordCheckerService : IWordCheckerService
         // Returns true if it looks like profanity (e.g. "sh!t")
         if (_profanityDetector.IsProfane(input))
         {
-            return "No profanities please."; // Valid Scrabble word, but blocked by safety filter
+            return "No profanities please. If you think this word was blocked incorrectly, discuss in the community subreddit!"; // Valid Scrabble word, but blocked by safety filter
         }
 
         return null;
