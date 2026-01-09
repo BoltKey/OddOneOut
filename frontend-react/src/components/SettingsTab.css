@@ -328,45 +328,94 @@
   border-color: #8a3030;
 }
 
-/* Community Section */
-.settings-community-section {
-  background-color: transparent;
-  border: none;
-  padding: 10px 0;
-  text-align: center;
+/* Support & Community Section */
+.settings-support-section {
+  background-color: #f9f9f9;
+}
+
+.dark-mode .settings-support-section {
+  background-color: #2a2a2a;
+}
+
+.support-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.coffee-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #333;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background-color: #f8ec9d;
+  border: 2px solid #fcec88;
+}
+
+.coffee-link:hover {
+  background-color: #ffe94d;
+  border-color: #ffe94d;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 221, 0, 0.3);
+}
+
+.coffee-link svg {
+  font-size: 1.3rem;
+  color: #000;
+}
+
+.dark-mode .coffee-link {
+  background-color: #ffdd00;
+  color: #333;
+  border-color: #ffdd00;
+}
+
+.dark-mode .coffee-link:hover {
+  background-color: #ffe94d;
+  border-color: #ffe94d;
 }
 
 .reddit-settings-link {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   color: #666;
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+  font-weight: 500;
   transition: all 0.3s ease;
-  padding: 10px 15px;
-  border-radius: 6px;
-  opacity: 0.8;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background-color: #f0f0f0;
+  border: 2px solid transparent;
 }
 
 .reddit-settings-link:hover {
-  opacity: 1;
   background-color: rgba(255, 69, 0, 0.1);
   color: #ff4500;
+  border-color: #ff4500;
 }
 
 .reddit-settings-link svg {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   color: #ff4500;
 }
 
 .dark-mode .reddit-settings-link {
   color: #aaa;
+  background-color: #333;
 }
 
 .dark-mode .reddit-settings-link:hover {
   background-color: rgba(255, 69, 0, 0.15);
   color: #ff6b35;
+  border-color: #ff6b35;
 }
 
 .dark-mode .reddit-settings-link svg {

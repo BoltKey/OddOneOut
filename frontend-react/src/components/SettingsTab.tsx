@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { UserStatsContext } from "../App";
 import { api } from "../services/api";
 import LoginPage from "./LoginPage";
-import { FaReddit, FaMoon, FaSun, FaUser, FaSignOutAlt, FaRedo, FaUserShield } from "react-icons/fa";
+import { FaReddit, FaMoon, FaSun, FaUser, FaSignOutAlt, FaRedo, FaUserShield, FaCoffee, FaHeart } from "react-icons/fa";
 import "./SettingsTab.css";
 
 interface SettingsTabProps {
@@ -25,7 +25,6 @@ export default function SettingsTab({ currentDisplayName }: SettingsTabProps) {
     setLoggedOut,
     user,
     loadUser,
-    guessRating,
   } = React.useContext(UserStatsContext);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -62,29 +61,6 @@ export default function SettingsTab({ currentDisplayName }: SettingsTabProps) {
   return (
     <div className="settings-wrapper">
       <h2 className="settings-title">Settings</h2>
-
-      {/* Account Info Section */}
-      <div className="settings-section">
-        <div className="settings-section-title">
-          <FaUserShield /> Account
-        </div>
-        <div className="settings-account-info">
-          <div className="account-info-row">
-            <span className="account-label">Username:</span>
-            <span className="account-value">{user?.userName || "N/A"}</span>
-          </div>
-          <div className="account-info-row">
-            <span className="account-label">Account Type:</span>
-            <span className={`account-badge ${user?.isGuest ? "guest" : "registered"}`}>
-              {user?.isGuest ? "Guest" : "Registered"}
-            </span>
-          </div>
-          <div className="account-info-row">
-            <span className="account-label">Guess Rating:</span>
-            <span className="account-value">{guessRating ?? "N/A"}</span>
-          </div>
-        </div>
-      </div>
 
       {/* Display Name Section */}
       <div className="settings-section">
@@ -172,17 +148,31 @@ export default function SettingsTab({ currentDisplayName }: SettingsTabProps) {
         </button>
       </div>
 
-      {/* Community Section */}
-      <div className="settings-section settings-community-section">
-        <a
-          href="https://www.reddit.com/r/misfitgame/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="reddit-settings-link"
-        >
-          <FaReddit />
-          <span>Join us on r/misfitgame</span>
-        </a>
+      {/* Support & Community Section */}
+      <div className="settings-section settings-support-section">
+        <div className="settings-section-title">
+          <FaHeart /> Support & Community
+        </div>
+        <div className="support-links">
+          <a
+            href="https://buymeacoffee.com/BoltKey"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="coffee-link"
+          >
+            <FaCoffee />
+            <span>Enjoy the game? Help cover the server costs!</span>
+          </a>
+          <a
+            href="https://www.reddit.com/r/misfitgame/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="reddit-settings-link"
+          >
+            <FaReddit />
+            <span>Join r/misfitgame</span>
+          </a>
+        </div>
       </div>
     </div>
   );
