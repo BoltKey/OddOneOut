@@ -432,13 +432,18 @@ public class User : IdentityUser
         // Added null check '?' just in case EF didn't load the collection
         if (CreatedGames != null)
         {
+            var iters = 0;
             foreach (var g in CreatedGames.OrderByDescending(g => g.CreatedAt).Take(100))
             {
                 var score = g.CachedGameScore;
                 // -1 for each day since game creation to encourage consistent clue giving
                 var daysSinceCreation = (DateTime.UtcNow - g.CreatedAt).TotalDays;
+                // recent game have higher impact
+                score *= (1.0f - (iters * 0.01f));
+
                 score = score < 0 ? 0 : score;
                 result += score - (int)daysSinceCreation;
+                iters++;
             }
         }
         return result;
