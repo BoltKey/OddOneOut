@@ -45,15 +45,11 @@ public class GamesController : ControllerBase
             // assign new game to user
             if (!user.TrySpendGuessEnergy())
             {
-                return BadRequest($"You are out of guesses for now. Please wait {user.NextGuessRegenTime} before guessing again.");
+                return BadRequest($"You are out of guesses for now. Please wait {user.NextGuessRegenTime} before guessing again. This limit ensures the game stays interesting for everyone, and gives other clue givers time to add new games. If the limit feels too limiting, please, discuss it on the community subreddit!");
             }
             var avalGames = await _context.Games
-              // Ensure user hasn't given a clue for any game with the same card set
-              .Where(g => !_context.Set<GameClueGiver>().Any(gcg =>
-                  gcg.Game.CardSetId == g.CardSetId &&
-                  gcg.UserId == userIdString
-              ))
-              // Ensure user hasn't guessed in any game with same word set yet
+              .Where(g => !g.ClueGivers.Any(u => u.Id == userIdString)) // Ensure user is not a ClueGiver in the game
+              // ensure user hasn't guessed in any game with same word set yet
               .Where(g => !_context.Guesses.Any(gu =>
                   gu.Game.CardSet.Id == g.CardSet.Id &&
                   gu.Guesser.Id == userIdString
@@ -179,7 +175,7 @@ public class GamesController : ControllerBase
         {
           if (!user.TrySpendClueEnergy())
           {
-              return BadRequest($"You are out of clues for now. Please wait {user.NextClueRegenTime} before guessing again.");
+              return BadRequest($"You are out of clues for now. Please wait {user.NextClueRegenTime} before guessing again. The limit is so low to not let players spam low-quality clues, and really think of the best clues! If the limit feels too limiting, please, discuss it on the community subreddit!");
           }
             // Optimize query: use IDs instead of object comparisons and filter in database
             var currentGameId = user.CurrentGameId;
@@ -331,7 +327,9 @@ public async Task<IActionResult> MakeGuess(MakeGuessDto request)
         {
           return BadRequest("Clue cannot be empty.");
         }
-        string result = _wordCheckerService.WordInvalidReason(request.clue);
+        // Normalize clue to lowercase for case-insensitive matching
+        var normalizedClue = request.clue?.ToLowerInvariant();
+        string result = _wordCheckerService.WordInvalidReason(normalizedClue);
         if (result != null)
         {
             return BadRequest(result);
@@ -359,9 +357,9 @@ public async Task<IActionResult> MakeGuess(MakeGuessDto request)
         {
             return NotFound("The specified OddOneOut card could not be found.");
         }
-        // check if game with same word set and clue already exists
+        // check if game with same word set and clue already exists (case-insensitive)
 var existingGame = await _context.Games
-    .FirstOrDefaultAsync(g => g.CardSetId == cardSet.Id && g.Clue == request.clue);
+    .FirstOrDefaultAsync(g => g.CardSetId == cardSet.Id && g.Clue == normalizedClue);
         CreateGameResponseDto response;
         if (existingGame != null)
         {
@@ -387,8 +385,8 @@ var existingGame = await _context.Games
                 Id = Guid.NewGuid(),
                 CreatedAt = DateTime.UtcNow,
 
-                // Map simple properties
-                Clue = request.clue,
+                // Map simple properties (normalized to lowercase)
+                Clue = normalizedClue,
 
                 // Map the entities we just fetched
                 CardSet = cardSet,
