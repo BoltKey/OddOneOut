@@ -21,53 +21,63 @@ public class AppDbContext : IdentityDbContext<User>
     public DbSet<Guess> Guesses { get; set; }
     public DbSet<GameClueGiver> GameClueGivers { get; set; }
 protected override void OnModelCreating(ModelBuilder builder)
-{
-    base.OnModelCreating(builder); // Required for Identity
+    {
+        base.OnModelCreating(builder);
 
-    // --- 1. Configure the Many-to-Many (ClueGivers <-> CreatedGames) ---
-    // Removed AutoInclude for better query performance - include explicitly when needed
-    builder.Entity<Game>()
-    .HasMany(g => g.ClueGivers)
-    .WithMany(u => u.CreatedGames)
-    .UsingEntity<GameClueGiver>(
-        j => j
-            .HasOne(gc => gc.User)
+        // --- 1. Configure the Many-to-Many (ClueGivers <-> CreatedGames) ---
+        builder.Entity<Game>()
+            .HasMany(g => g.ClueGivers)
+            .WithMany(u => u.CreatedGames)
+            .UsingEntity<GameClueGiver>(
+                j => j
+                    .HasOne(gc => gc.User)
+                    .WithMany()
+                    .HasForeignKey(gc => gc.UserId)
+                    .OnDelete(DeleteBehavior.Restrict), // Optional: Don't delete games just because a user is deleted
+                j => j
+                    .HasOne(gc => gc.Game)
+                    .WithMany()
+                    .HasForeignKey(gc => gc.GameId)
+                    .OnDelete(DeleteBehavior.Cascade), // Deleting a Game deletes the ClueGiver links
+                j =>
+                {
+                    j.Property(pt => pt.ClueGivenAt).HasDefaultValueSql("now()");
+                    j.HasKey(t => new { t.GameId, t.UserId });
+                    j.ToTable("GameClueGivers");
+                });
+
+        // --- 2. Configure the One-to-Many (CurrentGame <-> Users playing it) ---
+        builder.Entity<User>()
+            .HasOne(u => u.CurrentGame)
             .WithMany()
-            .HasForeignKey(gc => gc.UserId), // <--- CHANGE: Use UserId, not User
-        j => j
-            .HasOne(gc => gc.Game)
-            .WithMany()
-            .HasForeignKey(gc => gc.GameId), // <--- CHANGE: Use GameId, not Game
-        j =>
+            .HasForeignKey(u => u.CurrentGameId);
+
+        // --- 3. [NEW] Configure the Guess Deletion Direction ---
+        builder.Entity<Guess>(entity =>
         {
-            j.Property(pt => pt.ClueGivenAt).HasDefaultValueSql("now()");
+            // DIRECTION 1: Game -> Guess (The Fix)
+            // When a Game is deleted, Cascade delete the Guesses
+            entity.HasOne(g => g.Game)
+                  .WithMany(game => game.Guesses)
+                  .HasForeignKey(g => g.GameId)
+                  .OnDelete(DeleteBehavior.Cascade);
 
-            // CHANGE: Use IDs for the composite key
-            j.HasKey(t => new { t.GameId, t.UserId });
-
-            j.ToTable("GameClueGivers");
+            // DIRECTION 2: User -> Guess (The Safety)
+            // When a User is deleted, do NOT cascade (Restrict).
+            // This prevents accidental data loss or "orphaned" games.
+            entity.HasOne(g => g.Guesser)
+                  .WithMany(user => user.Guesses)
+                  // Note: Since you don't have an explicit 'GuesserId' property in Guess,
+                  // EF uses a shadow property. We configure the navigation directly.
+                  .OnDelete(DeleteBehavior.SetNull);
         });
-    // --- 2. Configure the One-to-Many (CurrentGame <-> Users playing it) ---
-    // A user has one CurrentGame. A Game has (implicitly) many users playing it.
-    builder.Entity<User>()
-        .HasOne(u => u.CurrentGame)
-        .WithMany() // We leave this empty because Game doesn't have a "List<User> CurrentPlayers"
-        .HasForeignKey(u => u.CurrentGameId);
 
-    // Removed AutoInclude for better query performance - include explicitly when needed
-    // Add indexes for frequently queried foreign keys
-    builder.Entity<Game>()
-        .HasIndex(g => g.CardSetId);
-
-    builder.Entity<Guess>()
-        .HasIndex(g => g.GameId);
-
-    builder.Entity<Guess>()
-        .HasIndex(g => g.SelectedCardId);
-
-    builder.Entity<User>()
-        .HasIndex(u => u.CurrentGameId);
-}
+        // --- Indexes ---
+        builder.Entity<Game>().HasIndex(g => g.CardSetId);
+        builder.Entity<Guess>().HasIndex(g => g.GameId);
+        builder.Entity<Guess>().HasIndex(g => g.SelectedCardId);
+        builder.Entity<User>().HasIndex(u => u.CurrentGameId);
+    }
 }
 
 
