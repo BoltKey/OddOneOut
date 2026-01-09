@@ -45,6 +45,10 @@ public class UserController : ControllerBase
             
         if (user == null) return NotFound("User profile not found.");
 
+        // Decay rating for inactive users when they check their profile
+        user.decayRating();
+        await _context.SaveChangesAsync();
+
         // Calculate ranks efficiently
         var guessRank = await _context.Users.CountAsync(u => u.GuessRating > user.GuessRating) + 1;
         var clueRank = await _context.Users.CountAsync(u => u.CachedClueRating > user.CachedClueRating) + 1;

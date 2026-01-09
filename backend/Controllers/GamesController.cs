@@ -293,6 +293,16 @@ public async Task<IActionResult> MakeGuess(MakeGuessDto request)
     {
       otherGame.RecalculateScore();
     }
+
+    // Occasionally decay ratings for clue givers (10% chance to avoid spamming)
+    if (new Random().NextDouble() < 0.1)
+    {
+        foreach (var clueGiver in game.ClueGivers)
+        {
+            clueGiver.decayRating();
+        }
+    }
+
     await _context.SaveChangesAsync();
 
     // 5. Response

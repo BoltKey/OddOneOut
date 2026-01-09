@@ -276,6 +276,22 @@ return Ok(new
     [HttpGet("GuessLeaderboard")]
     public async Task<IActionResult> GetAllTimeLeaderboard()
     {
+        // Occasionally decay a few random inactive users (5% chance, decays 3 users)
+        if (new Random().NextDouble() < 0.05)
+        {
+            var inactiveUsers = await _context.Users
+                .Where(u => u.lastDecay < DateTime.UtcNow.AddDays(-1))
+                .OrderBy(u => Guid.NewGuid())
+                .Take(3)
+                .ToListAsync();
+            
+            foreach (var u in inactiveUsers)
+            {
+                u.decayRating();
+            }
+            await _context.SaveChangesAsync();
+        }
+
         // Optimize: Calculate rank efficiently using a single query with window functions
         var topUsers = await _context.Users
             .Where(u => !u.IsGuest)
