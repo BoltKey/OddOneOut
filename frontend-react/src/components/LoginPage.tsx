@@ -142,7 +142,7 @@ export default function LoginPage({ onLoginSuccess, isGuest, isRedditContext, de
 
       <div className="login-content">
         <div className="google-login-section">
-          <GoogleLoginButton />
+          <GoogleLoginButton onSuccess={onLoginSuccess} />
         </div>
         
         <div className="divider">

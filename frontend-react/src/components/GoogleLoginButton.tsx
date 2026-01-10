@@ -1,16 +1,57 @@
-// 1. Import 'styles' as a variable
+import { useCallback, useEffect } from "react";
 import styles from "./GoogleLoginButton.module.css";
 
-const GoogleLoginButton = () => {
+interface GoogleLoginButtonProps {
+  onSuccess?: () => void;
+}
+
+const GoogleLoginButton = ({ onSuccess }: GoogleLoginButtonProps) => {
+  const handleGoogleLogin = useCallback(() => {
+    // Calculate popup dimensions and position (centered)
+    const width = 500;
+    const height = 600;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+
+    // Open popup for Google OAuth - add popup=true query param so backend knows
+    const popup = window.open(
+      `${import.meta.env.VITE_API_URL}/user/login-google?popup=true`,
+      "google-login",
+      `width=${width},height=${height},left=${left},top=${top},popup=yes`
+    );
+
+    // Focus the popup
+    popup?.focus();
+  }, []);
+
+  // Listen for message from popup when auth completes
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // Verify the message origin matches our API URL
+      const apiUrl = new URL(import.meta.env.VITE_API_URL);
+      if (event.origin !== apiUrl.origin) return;
+
+      if (event.data?.type === "google-auth-success") {
+        // Auth succeeded - small delay to ensure cookies have synced in PWA context
+        setTimeout(() => {
+          onSuccess?.();
+        }, 100);
+      } else if (event.data?.type === "google-auth-error") {
+        console.error("Google auth failed:", event.data.error);
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [onSuccess]);
+
   return (
-    // 2. Access classes via the styles object
-    // Note: If you used my camelCase CSS from the previous step, use .googleBtn
-    // If you used kebab-case (.google-btn) in the CSS file, use styles['google-btn']
-    <a
-      href={`${import.meta.env.VITE_API_URL}/user/login-google`}
+    <button
+      onClick={handleGoogleLogin}
       className={
         styles.googleBtn + " button" + " button-highlight button-white"
       }
+      type="button"
     >
       <div className={styles.googleIconWrapper}>
         <svg className={styles.googleIcon} viewBox="0 0 48 48">
@@ -34,7 +75,7 @@ const GoogleLoginButton = () => {
         </svg>
       </div>
       <span className={styles.btnText}>Sign in with Google</span>
-    </a>
+    </button>
   );
 };
 

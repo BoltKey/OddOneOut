@@ -9,6 +9,7 @@ export const api = {
     const res = await fetch(`${BASE_URL}/user/signup`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ username, password, email }),
     });
     if (!res.ok) {
@@ -30,6 +31,7 @@ export const api = {
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ username, password }),
       }
     );
@@ -43,6 +45,7 @@ export const api = {
   logout: async () => {
     const res = await fetch(`${BASE_URL}/user/logout`, {
       method: "POST",
+      credentials: "include",
     });
     if (!res.ok) {
       throw new Error("Logout failed.");
@@ -81,6 +84,7 @@ export const api = {
     const res = await fetch(`${BASE_URL}/User/ChangeDisplayName`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ NewDisplayName }),
     });
     if (!res.ok) {
@@ -93,6 +97,7 @@ export const api = {
   assignedGuess: async () => {
     const res = await fetch(`${BASE_URL}/Games/AssignedGuess`, {
       method: "POST",
+      credentials: "include",
     });
     if (!res.ok) {
       const errorText = await res.text();
@@ -103,6 +108,7 @@ export const api = {
   assignedClueGiving: async () => {
     const res = await fetch(`${BASE_URL}/Games/AssignedGiveClue`, {
       method: "POST",
+      credentials: "include",
     });
     if (!res.ok) {
       throw new Error(
@@ -116,6 +122,7 @@ export const api = {
     const res = await fetch(`${BASE_URL}/Games/MakeGuess`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ guessIsInSet: guess }),
     });
     if (!res.ok) {
@@ -127,6 +134,7 @@ export const api = {
     const res = await fetch(`${BASE_URL}/Games/CreateGame`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ clue, wordSetId: gameId, oddOneOut }),
     });
     if (!res.ok) {
@@ -135,14 +143,18 @@ export const api = {
     return res.json();
   },
   getGuessHistory: async (page: number) => {
-    const res = await fetch(`${BASE_URL}/Stats/GuessHistory?page=${page}`);
+    const res = await fetch(`${BASE_URL}/Stats/GuessHistory?page=${page}`, {
+      credentials: "include",
+    });
     if (!res.ok) {
       throw new Error("Failed to fetch guess history.");
     }
     return res.json();
   },
   getClueHistory: async (page: number) => {
-    const res = await fetch(`${BASE_URL}/Stats/ClueHistory?page=${page}`);
+    const res = await fetch(`${BASE_URL}/Stats/ClueHistory?page=${page}`, {
+      credentials: "include",
+    });
     if (!res.ok) {
       throw new Error("Failed to fetch clue history.");
     }
@@ -167,7 +179,9 @@ export const api = {
     return res.json();
   },
   getMe: async (): Promise<User> => {
-    const res = await fetch(`${BASE_URL}/User/me`);
+    const res = await fetch(`${BASE_URL}/User/me`, {
+      credentials: "include",
+    });
     if (!res.ok) {
       throw new Error("Not authenticated");
     }

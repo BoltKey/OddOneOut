@@ -343,20 +343,25 @@ public class UserController : ControllerBase
 
     // Step A: Trigger the redirect to Google
     [HttpGet("login-google")]
-    public IActionResult LoginGoogle()
+    public IActionResult LoginGoogle([FromQuery] bool popup = false)
     {
-        var redirectUrl = Url.Action("GoogleCallback", "user", null, Request.Scheme);
+        // Include popup flag in the callback URL so we know how to respond
+        var redirectUrl = Url.Action("GoogleCallback", "user", new { popup }, Request.Scheme);
         var properties = _signInManager.ConfigureExternalAuthenticationProperties(GoogleDefaults.AuthenticationScheme, redirectUrl);
         return Challenge(properties, GoogleDefaults.AuthenticationScheme);
     }
 
     // Step B: Handle the return from Google
     [HttpGet("google-callback")]
-    public async Task<IActionResult> GoogleCallback()
+    public async Task<IActionResult> GoogleCallback([FromQuery] bool popup = false)
     {
         var info = await _signInManager.GetExternalLoginInfoAsync();
         var clientUrl = _configuration["ClientUrl"] ?? "http://localhost:5173";
-        if (info == null) return Redirect($"{clientUrl}/login?error=auth_failed");
+        
+        if (info == null)
+        {
+            return popup ? PopupResponse("error", "auth_failed") : Redirect($"{clientUrl}/login?error=auth_failed");
+        }
 
         // Grab the Google Name (e.g., "John Doe") and Email
         var googleName = info.Principal.FindFirstValue(ClaimTypes.Name);
@@ -392,10 +397,10 @@ public class UserController : ControllerBase
 
                         // Refresh cookie
                         await _signInManager.SignInAsync(currentUser, isPersistent: true);
-                        return Redirect($"{clientUrl}/");
+                        return popup ? PopupResponse("success") : Redirect($"{clientUrl}/");
                     }
                 }
-                return Redirect($"{clientUrl}/");
+                return popup ? PopupResponse("success") : Redirect($"{clientUrl}/");
             }
         }
 
@@ -403,7 +408,7 @@ public class UserController : ControllerBase
         var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: true);
         if (result.Succeeded)
         {
-            return Redirect($"{clientUrl}/");
+            return popup ? PopupResponse("success") : Redirect($"{clientUrl}/");
         }
 
         // 3. New User Registration
@@ -421,10 +426,42 @@ public class UserController : ControllerBase
         {
             await _userManager.AddLoginAsync(newUser, info);
             await _signInManager.SignInAsync(newUser, isPersistent: true);
-            return Redirect($"{clientUrl}/");
+            return popup ? PopupResponse("success") : Redirect($"{clientUrl}/");
         }
 
-        return Redirect($"{clientUrl}/login?error=unknown");
+        return popup ? PopupResponse("error", "unknown") : Redirect($"{clientUrl}/login?error=unknown");
+    }
+    
+    // Helper method to return HTML that posts a message to the opener window and closes itself
+    // This is used for popup-based OAuth flow (PWA support)
+    private ContentResult PopupResponse(string status, string? error = null)
+    {
+        var messageType = status == "success" ? "google-auth-success" : "google-auth-error";
+        var errorJson = error != null ? $", error: '{error}'" : "";
+        
+        var html = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Authentication Complete</title>
+</head>
+<body>
+    <p>Authentication complete. This window will close automatically.</p>
+    <script>
+        if (window.opener) {{
+            window.opener.postMessage({{ type: '{messageType}'{errorJson} }}, '*');
+        }}
+        window.close();
+        // Fallback: if window.close() doesn't work (some browsers block it),
+        // show a message to the user
+        setTimeout(function() {{
+            document.body.innerHTML = '<p>Authentication complete! You can close this window.</p>';
+        }}, 500);
+    </script>
+</body>
+</html>";
+        
+        return Content(html, "text/html");
     }
 
     // ==========================================
