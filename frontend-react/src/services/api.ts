@@ -3,6 +3,31 @@ import type { User } from "../types";
 const BASE_URL = import.meta.env.VITE_API_URL;
 // VITE_API_URL will automatically be swapped when you run 'npm run build';
 
+// Helper to get auth headers - uses JWT token if available (for iframe/itch.io),
+// otherwise relies on cookies (for regular web/PWA)
+const getAuthHeaders = (): HeadersInit => {
+  const token = localStorage.getItem("authToken");
+  if (token) {
+    return { Authorization: `Bearer ${token}` };
+  }
+  return {};
+};
+
+// Helper to make authenticated fetch requests
+const authFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
+  const authHeaders = getAuthHeaders();
+  const headers = {
+    ...authHeaders,
+    ...(options.headers || {}),
+  };
+  
+  return fetch(url, {
+    ...options,
+    headers,
+    credentials: "include", // Still include credentials for cookie-based auth
+  });
+};
+
 export const api = {
   // 1. REGISTER (Create new user)
   register: async (username: string, password: string, email?: string) => {
@@ -43,10 +68,11 @@ export const api = {
     return;
   },
   logout: async () => {
-    const res = await fetch(`${BASE_URL}/user/logout`, {
+    const res = await authFetch(`${BASE_URL}/user/logout`, {
       method: "POST",
-      credentials: "include",
     });
+    // Clear the auth token on logout
+    localStorage.removeItem("authToken");
     if (!res.ok) {
       throw new Error("Logout failed.");
     }
@@ -81,10 +107,9 @@ export const api = {
     return data;
   },
   changeDisplayName: async (NewDisplayName: string) => {
-    const res = await fetch(`${BASE_URL}/User/ChangeDisplayName`, {
+    const res = await authFetch(`${BASE_URL}/User/ChangeDisplayName`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      credentials: "include",
       body: JSON.stringify({ NewDisplayName }),
     });
     if (!res.ok) {
@@ -95,9 +120,8 @@ export const api = {
   },
 
   assignedGuess: async () => {
-    const res = await fetch(`${BASE_URL}/Games/AssignedGuess`, {
+    const res = await authFetch(`${BASE_URL}/Games/AssignedGuess`, {
       method: "POST",
-      credentials: "include",
     });
     if (!res.ok) {
       const errorText = await res.text();
@@ -106,9 +130,8 @@ export const api = {
     return res.json();
   },
   assignedClueGiving: async () => {
-    const res = await fetch(`${BASE_URL}/Games/AssignedGiveClue`, {
+    const res = await authFetch(`${BASE_URL}/Games/AssignedGiveClue`, {
       method: "POST",
-      credentials: "include",
     });
     if (!res.ok) {
       throw new Error(
@@ -119,10 +142,9 @@ export const api = {
   },
 
   submitGuess: async (guess: boolean) => {
-    const res = await fetch(`${BASE_URL}/Games/MakeGuess`, {
+    const res = await authFetch(`${BASE_URL}/Games/MakeGuess`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      credentials: "include",
       body: JSON.stringify({ guessIsInSet: guess }),
     });
     if (!res.ok) {
@@ -131,10 +153,9 @@ export const api = {
     return res.json();
   },
   submitClue: async (clue: string, gameId: string, oddOneOut: string) => {
-    const res = await fetch(`${BASE_URL}/Games/CreateGame`, {
+    const res = await authFetch(`${BASE_URL}/Games/CreateGame`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      credentials: "include",
       body: JSON.stringify({ clue, wordSetId: gameId, oddOneOut }),
     });
     if (!res.ok) {
@@ -143,18 +164,14 @@ export const api = {
     return res.json();
   },
   getGuessHistory: async (page: number) => {
-    const res = await fetch(`${BASE_URL}/Stats/GuessHistory?page=${page}`, {
-      credentials: "include",
-    });
+    const res = await authFetch(`${BASE_URL}/Stats/GuessHistory?page=${page}`);
     if (!res.ok) {
       throw new Error("Failed to fetch guess history.");
     }
     return res.json();
   },
   getClueHistory: async (page: number) => {
-    const res = await fetch(`${BASE_URL}/Stats/ClueHistory?page=${page}`, {
-      credentials: "include",
-    });
+    const res = await authFetch(`${BASE_URL}/Stats/ClueHistory?page=${page}`);
     if (!res.ok) {
       throw new Error("Failed to fetch clue history.");
     }
@@ -179,9 +196,7 @@ export const api = {
     return res.json();
   },
   getMe: async (): Promise<User> => {
-    const res = await fetch(`${BASE_URL}/User/me`, {
-      credentials: "include",
-    });
+    const res = await authFetch(`${BASE_URL}/User/me`);
     if (!res.ok) {
       throw new Error("Not authenticated");
     }

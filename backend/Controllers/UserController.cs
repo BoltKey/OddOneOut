@@ -4,8 +4,12 @@ using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using OddOneOut.Data;
 using System.Security.Claims;
+using System.Text;
+using System.IdentityModel.Tokens.Jwt;
 using Microsoft.Extensions.Configuration;
 
 [ApiController]
@@ -16,17 +20,46 @@ public class UserController : ControllerBase
     private readonly UserManager<User> _userManager;
     private readonly SignInManager<User> _signInManager;
     private readonly IConfiguration _configuration;
+    private readonly JwtSettings _jwtSettings;
 
     public UserController(
         AppDbContext context,
         UserManager<User> userManager,
         SignInManager<User> signInManager,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IOptions<JwtSettings> jwtSettings)
     {
         _context = context;
         _userManager = userManager;
         _signInManager = signInManager;
         _configuration = configuration;
+        _jwtSettings = jwtSettings.Value;
+    }
+    
+    // Helper method to generate JWT token for a user
+    private string GenerateJwtToken(User user)
+    {
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Key));
+        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id),
+            new Claim(ClaimTypes.Name, user.UserName ?? ""),
+            new Claim(ClaimTypes.Email, user.Email ?? ""),
+            new Claim("DisplayName", user.DisplayName ?? ""),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
+
+        var token = new JwtSecurityToken(
+            issuer: _jwtSettings.Issuer,
+            audience: _jwtSettings.Audience,
+            claims: claims,
+            expires: DateTime.UtcNow.AddDays(_jwtSettings.ExpiryDays),
+            signingCredentials: credentials
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
     // ==========================================
@@ -494,10 +527,10 @@ public class UserController : ControllerBase
 
                         // Refresh cookie
                         await _signInManager.SignInAsync(currentUser, isPersistent: true);
-                        return popup ? PopupResponse("success") : Redirect($"{clientUrl}/");
+                        return popup ? PopupResponse("success", null, currentUser) : Redirect($"{clientUrl}/");
                     }
                 }
-                return popup ? PopupResponse("success") : Redirect($"{clientUrl}/");
+                return popup ? PopupResponse("success", null, currentUser) : Redirect($"{clientUrl}/");
             }
         }
 
@@ -505,7 +538,13 @@ public class UserController : ControllerBase
         var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: true);
         if (result.Succeeded)
         {
-            return popup ? PopupResponse("success") : Redirect($"{clientUrl}/");
+            // For popup mode, we need the user object to generate JWT token
+            if (popup)
+            {
+                var existingUser = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+                return PopupResponse("success", null, existingUser);
+            }
+            return Redirect($"{clientUrl}/");
         }
 
         // 3. New User Registration
@@ -523,7 +562,7 @@ public class UserController : ControllerBase
         {
             await _userManager.AddLoginAsync(newUser, info);
             await _signInManager.SignInAsync(newUser, isPersistent: true);
-            return popup ? PopupResponse("success") : Redirect($"{clientUrl}/");
+            return popup ? PopupResponse("success", null, newUser) : Redirect($"{clientUrl}/");
         }
 
         return popup ? PopupResponse("error", "unknown") : Redirect($"{clientUrl}/login?error=unknown");
@@ -531,10 +570,19 @@ public class UserController : ControllerBase
     
     // Helper method to return HTML that posts a message to the opener window and closes itself
     // This is used for popup-based OAuth flow (PWA support)
-    private ContentResult PopupResponse(string status, string? error = null)
+    // When a user is provided, includes a JWT token for iframe contexts (like itch.io) where cookies don't work
+    private ContentResult PopupResponse(string status, string? error = null, User? user = null)
     {
         var messageType = status == "success" ? "google-auth-success" : "google-auth-error";
         var errorJson = error != null ? $", error: '{error}'" : "";
+        
+        // Generate JWT token if user is provided (for iframe/itch.io support)
+        var tokenJson = "";
+        if (user != null && status == "success")
+        {
+            var token = GenerateJwtToken(user);
+            tokenJson = $", token: '{token}'";
+        }
         
         var html = $@"
 <!DOCTYPE html>
@@ -546,7 +594,7 @@ public class UserController : ControllerBase
     <p>Authentication complete. This window will close automatically.</p>
     <script>
         if (window.opener) {{
-            window.opener.postMessage({{ type: '{messageType}'{errorJson} }}, '*');
+            window.opener.postMessage({{ type: '{messageType}'{errorJson}{tokenJson} }}, '*');
         }}
         window.close();
         // Fallback: if window.close() doesn't work (some browsers block it),

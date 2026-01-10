@@ -32,6 +32,12 @@ const GoogleLoginButton = ({ onSuccess }: GoogleLoginButtonProps) => {
       if (event.origin !== apiUrl.origin) return;
 
       if (event.data?.type === "google-auth-success") {
+        // If a JWT token is provided (for iframe/itch.io contexts where cookies don't work),
+        // store it in localStorage for use in API requests
+        if (event.data.token) {
+          localStorage.setItem("authToken", event.data.token);
+          console.log("Stored auth token for iframe context");
+        }
         // Auth succeeded - small delay to ensure cookies have synced in PWA context
         setTimeout(() => {
           onSuccess?.();

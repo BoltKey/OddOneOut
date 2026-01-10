@@ -3,11 +3,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 // using Microsoft.AspNetCore.OpenApi; // Uncomment if needed for .WithOpenApi()
 
 var builder = WebApplication.CreateBuilder(args);
@@ -52,7 +55,16 @@ builder.Services.Configure<GameSettings>(
 
 // --- 3. Other Services ---
 builder.Services.AddSingleton<OddOneOut.Services.IWordCheckerService, OddOneOut.Services.WordCheckerService>();
-builder.Services.AddAuthorizationBuilder();
+
+// Configure authorization to accept both Cookie and JWT authentication
+builder.Services.AddAuthorization(options =>
+{
+    options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder(
+        IdentityConstants.ApplicationScheme,
+        JwtBearerDefaults.AuthenticationScheme)
+        .RequireAuthenticatedUser()
+        .Build();
+});
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -84,7 +96,25 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 });
+// JWT Configuration for iframe/itch.io support
+var jwtKey = builder.Configuration["Jwt:Key"] ?? "YourSuperSecretKeyThatIsAtLeast32CharactersLong!";
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "OddOneOut";
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "OddOneOutUsers";
+
 builder.Services.AddAuthentication()
+    .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtIssuer,
+            ValidAudience = jwtAudience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+        };
+    })
     .AddGoogle(options =>
 {
     options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
@@ -98,6 +128,15 @@ builder.Services.AddAuthentication()
     options.CorrelationCookie.SameSite = SameSiteMode.Unspecified;
     options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
     options.SignInScheme = IdentityConstants.ExternalScheme;
+});
+
+// Store JWT settings for use in controllers
+builder.Services.Configure<JwtSettings>(options =>
+{
+    options.Key = jwtKey;
+    options.Issuer = jwtIssuer;
+    options.Audience = jwtAudience;
+    options.ExpiryDays = 30;
 });
 // 1. Relax the "Application" cookie (Guest & Local logins)
 builder.Services.ConfigureApplicationCookie(options =>
