@@ -1,8 +1,10 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import { api } from "../services/api";
-import { UserStatsContext } from "../App";
+import { UserStatsContext, useCountdown } from "../App";
 import HelpIcon from "./HelpIcon";
 import { GuessRatingHelpContent } from "./HelpContent";
+import { TbReportSearch } from "react-icons/tb";
+import { BiSolidMessageRounded } from "react-icons/bi";
 import "./GuessingTab.css";
 
 export default function GuessingTab({ userId }: { userId: string }) {
@@ -20,8 +22,28 @@ export default function GuessingTab({ userId }: { userId: string }) {
     setGuessRating,
     guessRatingChange,
     setGuessRatingChange,
+    guessEnergy,
+    nextGuessRegenTime,
     loadUser,
+    navigateToTab,
+    openModal,
+    user,
   } = useContext(UserStatsContext);
+  const [outOfGuesses, setOutOfGuesses] = useState(false);
+  
+  // Track previous guessEnergy to detect when it increases
+  const [prevGuessEnergy, setPrevGuessEnergy] = useState<number | null>(null);
+
+  // Countdown hook for when out of guesses - must be called at top level
+  const countdownText = useCountdown(
+    guessEnergy === 0 ? nextGuessRegenTime : null,
+    () => {
+      loadUser();
+    }
+  );
+
+  const isWaitingForEnergy = guessEnergy === 0 && nextGuessRegenTime;
+
   const [solutionWords, setSolutionWords] = useState<
     {
       word: string;
@@ -40,14 +62,33 @@ export default function GuessingTab({ userId }: { userId: string }) {
       setSolutionWords([]);
       setIsCorrect(null);
       setMessage(null);
+      setOutOfGuesses(false);
       await loadUser();
     } catch (err: any) {
-      setMessage(err.message);
+      // Check if user is out of guesses
+      const errorMsg = err.message?.toLowerCase() || "";
+      if (errorMsg.includes("no guesses") || errorMsg.includes("out of") || errorMsg.includes("energy")) {
+        setOutOfGuesses(true);
+        setMessage(null);
+      } else {
+        setMessage(err.message);
+        setOutOfGuesses(false);
+      }
+      await loadUser();
     }
   };
   useEffect(() => {
     fetchAssignedGame();
   }, []);
+  
+  // When countdown expires and guessEnergy increases, auto-fetch new game
+  useEffect(() => {
+    if (prevGuessEnergy === 0 && guessEnergy !== null && guessEnergy > 0 && outOfGuesses) {
+      fetchAssignedGame();
+    }
+    setPrevGuessEnergy(guessEnergy);
+  }, [guessEnergy, outOfGuesses]);
+  
   useEffect(() => {
     let storageKey = "seenGuessingTutorial-" + userId;
     let forceTutorial = false;
@@ -235,18 +276,37 @@ export default function GuessingTab({ userId }: { userId: string }) {
     }
   }
   if (solutionWords.length > 0) {
-    buttons.push(
-      <button
-        onClick={() => {
-          advanceTutorial();
-          fetchAssignedGame();
-
-          loadUser();
-        }}
-      >
-        Next game
-      </button>
-    );
+    if (isWaitingForEnergy) {
+      // When out of guesses, show "Done" button that leads to out-of-guesses screen
+      buttons.push(
+        <button
+          key="done"
+          onClick={() => {
+            advanceTutorial();
+            setOutOfGuesses(true);
+            setSolutionWords([]);
+            setCurrentCard("");
+            setCurrentClue(null);
+          }}
+          className="button-done"
+        >
+          Done
+        </button>
+      );
+    } else {
+      buttons.push(
+        <button
+          key="next-game"
+          onClick={() => {
+            advanceTutorial();
+            fetchAssignedGame();
+            loadUser();
+          }}
+        >
+          Next game
+        </button>
+      );
+    }
   }
   return (
     <div
@@ -260,8 +320,46 @@ export default function GuessingTab({ userId }: { userId: string }) {
       )}
       {tutorialStep === 1 ? null : (
         <>
-          {message && <div className="error-message">{message}</div>}
-          <div className="guessing-content">
+          {message && !outOfGuesses && <div className="error-message">{message}</div>}
+          {outOfGuesses && (
+            <div className="out-of-guesses-screen">
+              <div className="out-of-guesses-icon">⏳</div>
+              <h2 className="out-of-guesses-title">Out of Guesses!</h2>
+              <p className="out-of-guesses-message">
+                You've used all your guesses for now.
+              </p>
+              <div className="out-of-guesses-stats">
+                {nextGuessRegenTime && (
+                  <div className="out-of-guesses-countdown">
+                    <span className="countdown-label">Next guess in:</span>
+                    <span className="countdown-value">{countdownText}</span>
+                  </div>
+                )}
+                <div className="out-of-guesses-rating">
+                  <span className="rating-label">Your Rating</span>
+                  <span className="rating-value">{guessRating}</span>
+                </div>
+              </div>
+              <div className="out-of-guesses-actions">
+                <p className="actions-label">In the meantime...</p>
+                <button
+                  className="action-button action-history"
+                  onClick={() => openModal("guessHistory")}
+                >
+                  <TbReportSearch /> View Guess History
+                </button>
+                {user?.canGiveClues && (
+                  <button
+                    className="action-button action-clues"
+                    onClick={() => navigateToTab("clueGiving")}
+                  >
+                    <BiSolidMessageRounded /> Give Clues
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+          {!outOfGuesses && <div className="guessing-content">
             <div className="guessing-header">
               {tutorialStep >= 6 && (
                 <div className="guess-rating-display">
@@ -317,7 +415,7 @@ export default function GuessingTab({ userId }: { userId: string }) {
                 <div className="tutorial-message">{tutorialMessage}</div>
               )}
             </div>
-          </div>
+          </div>}
         </>
       )}
     </div>

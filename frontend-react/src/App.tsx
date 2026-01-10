@@ -21,6 +21,9 @@ import {
   BiSolidMessageRoundedDetail,
 } from "react-icons/bi";
 
+export type OpenModalType = "guessHistory" | "clueHistory" | "leaderboard" | "settings" | null;
+export type SelectedTabType = "guessing" | "clueGiving";
+
 export const UserStatsContext = createContext<{
   user: User | null;
   guessRating: number | null;
@@ -40,6 +43,8 @@ export const UserStatsContext = createContext<{
   darkMode: boolean;
   setDarkMode: (darkMode: boolean) => void;
   setLoggedOut: (loggedOut: boolean) => void;
+  navigateToTab: (tab: SelectedTabType) => void;
+  openModal: (modal: OpenModalType) => void;
 }>({
   user: null,
   guessRating: null,
@@ -59,6 +64,8 @@ export const UserStatsContext = createContext<{
   darkMode: false,
   setDarkMode: () => {},
   setLoggedOut: () => {},
+  navigateToTab: () => {},
+  openModal: () => {},
 });
 
 function App() {
@@ -355,6 +362,8 @@ function App() {
             darkMode,
             setDarkMode,
             setLoggedOut,
+            navigateToTab: setSelectedTab,
+            openModal: setOpenModal,
           }}
         >
           {selectedTab === "guessing" ? (

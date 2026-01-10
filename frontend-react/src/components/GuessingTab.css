@@ -858,3 +858,213 @@
 .dark-mode .other-clue-time {
   color: #777;
 }
+
+/* Out of Guesses Screen */
+.out-of-guesses-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 15px 20px;
+  text-align: center;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.out-of-guesses-icon {
+  font-size: 2.5rem;
+  margin-bottom: 8px;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+.out-of-guesses-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 6px 0;
+}
+
+.dark-mode .out-of-guesses-title {
+  color: #fff;
+}
+
+.out-of-guesses-message {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 0 0 12px 0;
+  line-height: 1.4;
+}
+
+.dark-mode .out-of-guesses-message {
+  color: #aaa;
+}
+
+.out-of-guesses-stats {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  align-items: stretch;
+  width: 100%;
+  max-width: 320px;
+}
+
+.out-of-guesses-countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%);
+  border-radius: 10px;
+  border: 2px solid #4a90d9;
+  flex: 1;
+}
+
+.dark-mode .out-of-guesses-countdown {
+  background: linear-gradient(135deg, #1a2a3a 0%, #2a3a4a 100%);
+  border-color: #5a9ae9;
+}
+
+.out-of-guesses-countdown .countdown-label {
+  font-size: 0.7rem;
+  color: #666;
+  font-weight: 500;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.dark-mode .out-of-guesses-countdown .countdown-label {
+  color: #aaa;
+}
+
+.out-of-guesses-countdown .countdown-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #4a90d9;
+}
+
+.dark-mode .out-of-guesses-countdown .countdown-value {
+  color: #5a9ae9;
+}
+
+.out-of-guesses-rating {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  flex: 1;
+}
+
+.dark-mode .out-of-guesses-rating {
+  background-color: #2a2a2a;
+  border-color: #555;
+}
+
+.out-of-guesses-rating .rating-label {
+  font-size: 0.7rem;
+  color: #666;
+  font-weight: 500;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dark-mode .out-of-guesses-rating .rating-label {
+  color: #aaa;
+}
+
+.out-of-guesses-rating .rating-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.dark-mode .out-of-guesses-rating .rating-value {
+  color: #ddd;
+}
+
+/* Done Button */
+/*.guess-buttons-wrapper button.button-done {
+  background-color: #4a90d9 !important;
+  color: white !important;
+}
+
+.guess-buttons-wrapper button.button-done:hover {
+  background-color: #3a80c9 !important;
+}
+
+.dark-mode .guess-buttons-wrapper button.button-done {
+  background-color: #5a9ae9 !important;
+}
+
+.dark-mode .guess-buttons-wrapper button.button-done:hover {
+  background-color: #4a8ad9 !important;
+}*/
+
+/* Out of Guesses Actions */
+.out-of-guesses-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  width: 100%;
+}
+
+.out-of-guesses-actions .actions-label {
+  font-size: 0.8rem;
+  color: #666;
+  margin: 0;
+  font-weight: 500;
+}
+
+.dark-mode .out-of-guesses-actions .actions-label {
+  color: #aaa;
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  max-width: 240px;
+}
+
+.action-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+
+.dark-mode .action-button.action-history {
+  background: linear-gradient(135deg, #5a6fd6 0%, #6a4192 100%);
+}
+
+.dark-mode .action-button.action-history:hover {
+  background: linear-gradient(135deg, #4a5fc6 0%, #5a3182 100%);
+}
+
+.dark-mode .action-button.action-clues {
+  background: linear-gradient(135deg, #e083eb 0%, #e5475c 100%);
+}
+
+.dark-mode .action-button.action-clues:hover {
+  background: linear-gradient(135deg, #d073db 0%, #d5374c 100%);
+}
