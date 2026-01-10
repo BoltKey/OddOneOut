@@ -255,7 +255,7 @@ export default function GuessingTab({ userId }: { userId: string }) {
         (solutionWords.length > 0 ? (isCorrect ? "correct" : "incorrect") : "")
       }
     >
-      {tutorialMessage && (
+      {tutorialMessage && tutorialStep < 6 && (
         <div className="tutorial-message">{tutorialMessage}</div>
       )}
       {tutorialStep === 1 ? null : (
@@ -263,7 +263,7 @@ export default function GuessingTab({ userId }: { userId: string }) {
           {message && <div className="error-message">{message}</div>}
           <div className="guessing-content">
             <div className="guessing-header">
-              {tutorialStep >= 7 && (
+              {tutorialStep >= 6 && (
                 <div className="guess-rating-display">
                   <span className="rating-label">
                     Rating
@@ -312,6 +312,9 @@ export default function GuessingTab({ userId }: { userId: string }) {
               {cardDisplay}
               {tutorialStep >= 5 && (
                 <div className="guess-buttons-wrapper">{buttons}</div>
+              )}
+              {tutorialMessage && tutorialStep >= 6 && (
+                <div className="tutorial-message">{tutorialMessage}</div>
               )}
             </div>
           </div>
