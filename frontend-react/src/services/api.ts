@@ -223,30 +223,4 @@ export const api = {
     }
     return res.json();
   },
-
-  /**
-   * Authenticate a Kongregate user.
-   * This verifies the game auth token with Kongregate's API and creates or finds a user.
-   */
-  kongregateLogin: async (kongregateUserId: number, kongregateUsername: string, gameAuthToken: string) => {
-    const res = await fetch(
-      `${BASE_URL}/user/kongregate-login`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ kongregateUserId, kongregateUsername, gameAuthToken }),
-      }
-    );
-    if (!res.ok) {
-      const err = await res.text();
-      throw new Error(err || "Kongregate login failed.");
-    }
-    const data = await res.json();
-    // Store the JWT token for iframe contexts where cookies don't work
-    if (data.token) {
-      localStorage.setItem("authToken", data.token);
-    }
-    return data;
-  },
 };
