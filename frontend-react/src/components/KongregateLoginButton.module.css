@@ -1,0 +1,60 @@
+.container {
+  width: 100%;
+}
+
+.kongregateBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 24px;
+  background-color: #c4302b;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.kongregateBtn:hover:not(:disabled) {
+  background-color: #a02722;
+  transform: translateY(-1px);
+}
+
+.kongregateBtn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.kongregateBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.kongregateIconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kongregateIcon {
+  width: 24px;
+  height: 24px;
+}
+
+.btnText {
+  font-weight: 500;
+}
+
+.error {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background-color: rgba(220, 53, 69, 0.1);
+  border: 1px solid rgba(220, 53, 69, 0.3);
+  border-radius: 4px;
+  color: #dc3545;
+  font-size: 14px;
+  text-align: center;
+}
