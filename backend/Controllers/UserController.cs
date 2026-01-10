@@ -338,6 +338,103 @@ public class UserController : ControllerBase
     }
 
     // ==========================================
+    // 4b. ITCH.IO LOGIN
+    // ==========================================
+    
+    /// <summary>
+    /// Authenticate an itch.io user.
+    /// This endpoint receives the itch.io user ID from the itch.io JavaScript API
+    /// and creates or finds the corresponding user account.
+    /// </summary>
+    [HttpPost("itchio-login")]
+    public async Task<IActionResult> ItchioLogin([FromBody] ItchioLoginRequest request)
+    {
+        if (request.ItchioUserId <= 0)
+        {
+            return BadRequest("Itch.io user ID is required.");
+        }
+
+        var itchioUserIdStr = request.ItchioUserId.ToString();
+
+        // Check if user is already authenticated and trying to link accounts
+        if (User.Identity.IsAuthenticated)
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser != null)
+            {
+                // If user already has an itch.io ID linked, check if it matches
+                if (!string.IsNullOrEmpty(currentUser.ItchioUserId))
+                {
+                    if (currentUser.ItchioUserId == itchioUserIdStr)
+                    {
+                        // Already linked to this itch.io account - just return success
+                        return Ok(new { userId = currentUser.Id, linked = true });
+                    }
+                    else
+                    {
+                        // Different itch.io account - don't allow re-linking
+                        return BadRequest("This account is already linked to a different itch.io account.");
+                    }
+                }
+                
+                // Link the itch.io account to the current user (guest upgrade scenario)
+                currentUser.ItchioUserId = itchioUserIdStr;
+                if (currentUser.IsGuest)
+                {
+                    currentUser.IsGuest = false;
+                    // Set display name from itch.io username if provided
+                    if (!string.IsNullOrEmpty(request.ItchioUsername))
+                    {
+                        currentUser.DisplayName = request.ItchioUsername;
+                        currentUser.UserName = await GetUniqueUsernameAsync(request.ItchioUsername, null);
+                    }
+                }
+                await _userManager.UpdateAsync(currentUser);
+                await _signInManager.RefreshSignInAsync(currentUser);
+                return Ok(new { userId = currentUser.Id, linked = true });
+            }
+        }
+
+        // Try to find existing user by itch.io ID
+        var existingUser = await _context.Users
+            .FirstOrDefaultAsync(u => u.ItchioUserId == itchioUserIdStr);
+
+        if (existingUser != null)
+        {
+            // Found existing itch.io user - sign them in
+            await _signInManager.SignInAsync(existingUser, isPersistent: true);
+            return Ok(new { userId = existingUser.Id, isNew = false });
+        }
+
+        // Create a new user for this itch.io account
+        var username = !string.IsNullOrEmpty(request.ItchioUsername) 
+            ? await GetUniqueUsernameAsync(request.ItchioUsername, null)
+            : await GetUniqueUsernameAsync($"Itchio_{itchioUserIdStr}", null);
+        
+        var newUser = new User
+        {
+            UserName = username,
+            ItchioUserId = itchioUserIdStr,
+            DisplayName = request.ItchioUsername ?? $"Itchio_{itchioUserIdStr}",
+            IsGuest = false,
+            SourceIp = HttpContext.Connection.RemoteIpAddress?.ToString(),
+            GuessEnergy = GameConfig.Current.MaxGuessEnergy,
+            ClueEnergy = GameConfig.Current.MaxClueEnergy,
+            GuessRating = GameConfig.Current.InitialGuessRating
+        };
+
+        var createResult = await _userManager.CreateAsync(newUser);
+
+        if (createResult.Succeeded)
+        {
+            await _signInManager.SignInAsync(newUser, isPersistent: true);
+            return Ok(new { userId = newUser.Id, isNew = true });
+        }
+
+        return BadRequest(createResult.Errors);
+    }
+
+    // ==========================================
     // 5. GOOGLE AUTH
     // ==========================================
 
@@ -553,4 +650,10 @@ public class RedditLoginRequest
 {
     public string RedditUserId { get; set; }
     public string? RedditUsername { get; set; }
+}
+
+public class ItchioLoginRequest
+{
+    public long ItchioUserId { get; set; }
+    public string? ItchioUsername { get; set; }
 }

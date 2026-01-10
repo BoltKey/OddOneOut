@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
+    "build:itchio": "vite build --mode itchio --outDir dist-itchio",
     "preview": "vite preview"
   },
   "dependencies": {

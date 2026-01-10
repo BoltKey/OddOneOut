@@ -2,7 +2,9 @@ import { useState } from "react";
 import { api } from "../services/api";
 import GoogleLoginButton from "./GoogleLoginButton";
 import { FaReddit } from "react-icons/fa";
+import { SiItchdotio } from "react-icons/si";
 import type { DevvitContext } from "../services/devvit";
+import type { ItchioContext } from "../services/itchio";
 import "./LoginPage.css";
 
 interface Props {
@@ -10,15 +12,18 @@ interface Props {
   isGuest?: boolean;
   isRedditContext?: boolean;
   devvitContext?: DevvitContext | null;
+  isItchioContext?: boolean;
+  itchioContext?: ItchioContext | null;
 }
 
-export default function LoginPage({ onLoginSuccess, isGuest, isRedditContext, devvitContext }: Props) {
+export default function LoginPage({ onLoginSuccess, isGuest, isRedditContext, devvitContext, isItchioContext, itchioContext }: Props) {
   const [isRegistering, setIsRegistering] = useState(isGuest || false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [redditLoading, setRedditLoading] = useState(false);
+  const [itchioLoading, setItchioLoading] = useState(false);
   
   // Get guest display name for button text
   const getGuestButtonText = () => {
@@ -78,6 +83,72 @@ export default function LoginPage({ onLoginSuccess, isGuest, isRedditContext, de
       setRedditLoading(false);
     }
   };
+
+  // Handle itch.io login when user clicks the button
+  const handleItchioLogin = async () => {
+    if (!itchioContext?.userId) {
+      setError("Unable to detect itch.io account. Please make sure you're logged in to itch.io.");
+      return;
+    }
+
+    setItchioLoading(true);
+    setError("");
+
+    try {
+      await api.itchioLogin(itchioContext.userId, itchioContext.username);
+      onLoginSuccess();
+    } catch (err: any) {
+      setError(err.message || "Itch.io login failed. Please try again.");
+    } finally {
+      setItchioLoading(false);
+    }
+  };
+
+  // Show itch.io-specific login UI when accessed from itch.io with a logged-in user
+  if (isItchioContext && itchioContext?.userId) {
+    return (
+      <div className="login-container">
+        <div className="logo splashscreen"></div>
+        
+        <div className="itchio-login-section">
+          <h2>Welcome to Misfit!</h2>
+          <p>Click below to start playing with your itch.io account.</p>
+          
+          {error && <div className="error-message">{error}</div>}
+          
+          <button
+            className="itchio-login-button"
+            onClick={handleItchioLogin}
+            disabled={itchioLoading}
+          >
+            <SiItchdotio />
+            <span>{itchioLoading ? "Connecting..." : `Play as ${itchioContext.displayName || itchioContext.username}`}</span>
+          </button>
+          
+          <div className="guest-option">
+            <p>Or play without linking your account:</p>
+            <button
+              className="guest-button"
+              onClick={async () => {
+                try {
+                  const storedGuestId = localStorage.getItem("guestUserId");
+                  const result = await api.createGuest(storedGuestId || undefined);
+                  if (result?.userId) {
+                    localStorage.setItem("guestUserId", result.userId);
+                  }
+                  onLoginSuccess();
+                } catch (err: any) {
+                  setError(err.message || "An error occurred");
+                }
+              }}
+            >
+              {getGuestButtonText()}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Show Reddit-specific login UI when accessed from Reddit/Devvit
   if (isRedditContext && devvitContext?.userId) {

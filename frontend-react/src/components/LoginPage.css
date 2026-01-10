@@ -390,3 +390,73 @@
   background-color: #e64a19;
   box-shadow: 0 4px 12px rgba(255, 87, 34, 0.4);
 }
+
+/* Itch.io Login Section (when accessed from itch.io) */
+.itchio-login-section {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.itchio-login-section h2 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 1.5rem;
+}
+
+.dark-mode .itchio-login-section h2 {
+  color: #fff;
+}
+
+.itchio-login-section p {
+  margin: 0 0 25px 0;
+  color: #666;
+  font-size: 1rem;
+}
+
+.dark-mode .itchio-login-section p {
+  color: #aaa;
+}
+
+.itchio-login-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 16px 24px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  background-color: #fa5c5c;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(250, 92, 92, 0.3);
+}
+
+.itchio-login-button svg {
+  font-size: 1.5rem;
+}
+
+.itchio-login-button:hover:not(:disabled) {
+  background-color: #e54848;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(250, 92, 92, 0.4);
+}
+
+.itchio-login-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.dark-mode .itchio-login-button {
+  background-color: #fa5c5c;
+  box-shadow: 0 2px 8px rgba(250, 92, 92, 0.3);
+}
+
+.dark-mode .itchio-login-button:hover:not(:disabled) {
+  background-color: #e54848;
+  box-shadow: 0 4px 12px rgba(250, 92, 92, 0.4);
+}

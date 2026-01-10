@@ -270,12 +270,15 @@ public static class GameConfig
 [Index(nameof(CachedClueRating))]
 [Index(nameof(SourceIp))]
 [Index(nameof(RedditUserId))]
+[Index(nameof(ItchioUserId))]
 
 public class User : IdentityUser
 {
     public bool IsGuest { get; set; } = false;
     // Reddit user ID in T2 format (e.g., "t2_abc123") - set when user authenticates via Reddit/Devvit
     public string? RedditUserId { get; set; }
+    // Itch.io user ID (numeric, stored as string) - set when user authenticates via itch.io
+    public string? ItchioUserId { get; set; }
     // --- Backing Fields (The actual storage) ---
     // We explicitly define these so we can manipulate them in the Getters
     private int _guessEnergy;
