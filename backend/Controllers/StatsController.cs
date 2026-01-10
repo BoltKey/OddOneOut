@@ -195,7 +195,7 @@ public async Task<IActionResult> GetHistory([FromQuery] int page = 1, [FromQuery
           }).ToList(),
           Clue = gcg.Game.Clue,
           OddOneOutWord = gcg.Game.OddOneOut?.Word,
-          CachedGameScore = gcg.Game.CachedGameScore,
+          GameScore = gcg.Game.CachedGameScore, // Renamed to match frontend expectation
           OtherGamesAmt = gcg.Game.CardSet.Games.Count - 1,
           SuccessCoef = gcg.Game.SuccessCoef()
       }).ToList();
@@ -247,7 +247,7 @@ var history = historyData.Select(d =>
         d.Clue,
         OddOneOut = d.OddOneOutWord,
         CreatedAt = d.ClueGivenAt,
-        d.CachedGameScore,
+        d.GameScore,
         otherGamesAmt = d.OtherGamesAmt,
         OtherClues = otherClues,
         SuccessCoef = d.SuccessCoef
@@ -255,18 +255,19 @@ var history = historyData.Select(d =>
 }).ToList();
 
 
-// 3. Fetch user rating separately (this is fast, single query)
-var clueScore = await _context.Users
-    .Where(u => u.Id == userIdString)
-    .Select(u => u.CachedClueRating)
-    .FirstOrDefaultAsync();
-
-// _context.SaveChanges(); // Removed: You usually shouldn't save changes on a GET request.
+// 3. Fetch user and recalculate rating if dirty
+var user = await _context.Users.FindAsync(userIdString);
+if (user != null && user.ClueRatingDirty)
+{
+    await _context.UpdateClueGiverRatingsAsync(new[] { userIdString });
+    user.ClueRatingDirty = false;
+    await _context.SaveChangesAsync();
+}
 
 return Ok(new
 {
     Data = history,
-    ClueRating = clueScore,
+    ClueRating = user?.CachedClueRating ?? 0,
     Page = page,
     PageSize = pageSize,
     TotalCount = totalCount,
@@ -314,7 +315,28 @@ return Ok(new
     [HttpGet("ClueLeaderboard")]
     public async Task<IActionResult> GetClueLeaderboard()
     {
-        // Optimize: Calculate rank efficiently using a single query
+        // Recalculate ratings for dirty users who might be in top positions
+        // We check top 20 by cached rating + any dirty users to ensure accurate leaderboard
+        var potentialTopUserIds = await _context.Users
+            .Where(u => !u.IsGuest && (u.ClueRatingDirty || _context.Users
+                .Where(top => !top.IsGuest)
+                .OrderByDescending(top => top.CachedClueRating)
+                .Take(20)
+                .Select(top => top.Id)
+                .Contains(u.Id)))
+            .Where(u => u.ClueRatingDirty)
+            .Select(u => u.Id)
+            .ToListAsync();
+
+        if (potentialTopUserIds.Count > 0)
+        {
+            await _context.UpdateClueGiverRatingsAsync(potentialTopUserIds);
+            await _context.Users
+                .Where(u => potentialTopUserIds.Contains(u.Id))
+                .ExecuteUpdateAsync(u => u.SetProperty(x => x.ClueRatingDirty, false));
+        }
+
+        // Now fetch accurate leaderboard
         var topUsers = await _context.Users
             .Where(u => !u.IsGuest)
             .OrderByDescending(u => u.CachedClueRating)
@@ -327,7 +349,7 @@ return Ok(new
                     .Where(other => !other.IsGuest && other.CachedClueRating > u.CachedClueRating)
                     .Count() + 1
             })
-            .Take(10) // Fixed: was taking only 1, should take top 10 like the other leaderboard
+            .Take(10)
             .ToListAsync();
 
         return Ok(topUsers);

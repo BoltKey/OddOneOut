@@ -20,6 +20,47 @@ public class AppDbContext : IdentityDbContext<User>
     public DbSet<WordCard> WordCard { get; set; }
     public DbSet<Guess> Guesses { get; set; }
     public DbSet<GameClueGiver> GameClueGivers { get; set; }
+
+    /// <summary>
+    /// Updates CachedClueRating for the specified users using an efficient database query
+    /// instead of loading all CreatedGames into memory.
+    /// </summary>
+    public async Task UpdateClueGiverRatingsAsync(IEnumerable<string> userIds)
+    {
+        var distinctUserIds = userIds.Distinct().ToList();
+        if (distinctUserIds.Count == 0) return;
+
+        foreach (var userId in distinctUserIds)
+        {
+            // Query only the data we need - much more efficient than loading full Game entities
+            var gameData = await GameClueGivers
+                .Where(gcg => gcg.UserId == userId)
+                .OrderByDescending(gcg => gcg.Game.CreatedAt)
+                .Take(100)
+                .Select(gcg => new { gcg.Game.CachedGameScore, gcg.Game.CreatedAt })
+                .ToListAsync();
+
+            float result = 1000f;
+            int iters = 0;
+            foreach (var g in gameData)
+            {
+                var score = g.CachedGameScore;
+                var daysSinceCreation = (DateTime.UtcNow - g.CreatedAt).TotalDays;
+                // Recent games have higher impact (1% less per game index)
+                score *= (1.0f - (iters * 0.01f));
+                score = score < 0 ? 0 : score;
+                result += score - (float)daysSinceCreation;
+                iters++;
+            }
+
+            // Update the user's cached rating
+            var user = await Users.FindAsync(userId);
+            if (user != null)
+            {
+                user.CachedClueRating = result;
+            }
+        }
+    }
 protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -215,11 +256,8 @@ public class Game
     public void RecalculateScore()
     {
       CachedGameScore = GameScore();
-      foreach(var clueGiver in ClueGivers)
-      {
-        clueGiver.CachedClueRating = clueGiver.ClueRating();
-      }
-
+      // Note: Clue giver ratings are now updated separately via UpdateClueGiverRatingsAsync
+      // to avoid requiring all CreatedGames to be loaded in memory
     }
     // priority based on difference between difficulty of this and easiest game
     public int? Priority { get; set; }
@@ -268,12 +306,15 @@ public static class GameConfig
 }
 [Index(nameof(GuessRating))]
 [Index(nameof(CachedClueRating))]
+[Index(nameof(ClueRatingDirty))]
 [Index(nameof(SourceIp))]
 [Index(nameof(RedditUserId))]
 [Index(nameof(ItchioUserId))]
 
 public class User : IdentityUser
 {
+    // Flag indicating CachedClueRating needs recalculation
+    public bool ClueRatingDirty { get; set; } = false;
     public bool IsGuest { get; set; } = false;
     // Reddit user ID in T2 format (e.g., "t2_abc123") - set when user authenticates via Reddit/Devvit
     public string? RedditUserId { get; set; }

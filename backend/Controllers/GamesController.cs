@@ -186,8 +186,10 @@ public class GamesController : ControllerBase
                   (_context.Set<GameClueGiver>().Any(gcg => gcg.GameId == g.Id && gcg.UserId == userIdString) || // Check if user is a clue giver in that game
                   _context.Guesses.Any(gu => gu.GameId == g.Id && gu.Guesser.Id == userIdString)) // Check if user has guessed
               ) && _context.Set<GameClueGiver>().Count(gcg => _context.Games.Any(game => game.CardSetId == cs.Id && game.Id == gcg.GameId)) < 20) // Limit to card sets with less than 20 clue givers total
-              .Include(cs => cs.WordCards)   // 2. Load the Cards inside the Set
-              .OrderBy(c => Guid.NewGuid()) // Note: Can be optimized with PostgreSQL RANDOM() if needed
+              .Include(cs => cs.WordCards)
+              // Prioritize card sets with fewer clue givers (distributes load more evenly)
+              .OrderBy(cs => _context.Set<GameClueGiver>().Count(gcg => _context.Games.Any(game => game.CardSetId == cs.Id && game.Id == gcg.GameId)))
+              .ThenBy(cs => cs.CreatedAt) // Secondary: older sets first (FIFO fairness)
               .FirstOrDefaultAsync();
         }
 
@@ -294,7 +296,18 @@ public async Task<IActionResult> MakeGuess(MakeGuessDto request)
       otherGame.RecalculateScore();
     }
 
-    // Occasionally decay ratings for clue givers (10% chance to avoid spamming)
+    // Mark all affected clue givers' ratings as dirty (single bulk UPDATE - very fast)
+    var affectedClueGiverIds = game.CardSet.Games
+        .SelectMany(g => g.ClueGivers)
+        .Select(cg => cg.Id)
+        .Distinct()
+        .ToList();
+    
+    await _context.Users
+        .Where(u => affectedClueGiverIds.Contains(u.Id))
+        .ExecuteUpdateAsync(u => u.SetProperty(x => x.ClueRatingDirty, true));
+
+    // Occasionally decay guess ratings for clue givers (10% chance)
     if (new Random().NextDouble() < 0.1)
     {
         foreach (var clueGiver in game.ClueGivers)
@@ -381,8 +394,15 @@ var existingGame = await _context.Games
             existingGame.ClueGivers.Add(user);
             user.AssignedCardSet = null;
             existingGame.RecalculateScore();
-            // Batch SaveChangesAsync calls - save once after all updates
+
+            // Mark all clue givers' ratings as dirty (single bulk UPDATE)
+            var clueGiverIds = existingGame.ClueGivers.Select(cg => cg.Id).ToList();
+            await _context.Users
+                .Where(u => clueGiverIds.Contains(u.Id))
+                .ExecuteUpdateAsync(u => u.SetProperty(x => x.ClueRatingDirty, true));
+
             await _context.SaveChangesAsync();
+
             response = new CreateGameResponseDto
             {
                 GameId = existingGame.Id,
