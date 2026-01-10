@@ -42,6 +42,11 @@ export default defineConfig(({ command, mode }) => ({
               "apple-touch-icon.png",
               "mask-icon.svg",
             ],
+            workbox: {
+              // Don't let the service worker intercept /api routes
+              // This is critical for OAuth popups to work correctly
+              navigateFallbackDenylist: [/^\/api/],
+            },
             manifest: {
               name: "Misfit",
               short_name: "Misfit",
