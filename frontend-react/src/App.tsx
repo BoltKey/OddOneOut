@@ -3,7 +3,6 @@ import LoginPage from "./components/LoginPage";
 import GuessingTab from "./components/GuessingTab"; // Make sure this exists
 import { api } from "./services/api";
 import { getDevvitContext, isDevvitEnvironment, type DevvitContext } from "./services/devvit";
-import { getItchioContext, isItchioEnvironment, type ItchioContext } from "./services/itchio";
 import type { User } from "./types";
 import "./App.css";
 import ClueGivingTab from "./components/ClueGivingTab";
@@ -86,10 +85,9 @@ function App() {
   const [openModal, setOpenModal] = useState<
     null | "guessHistory" | "clueHistory" | "leaderboard" | "settings"
   >(null);
-  // Track if we're running inside Reddit/Devvit or itch.io
+  // Track if we're running inside Reddit/Devvit
   const [devvitContext, setDevvitContext] = useState<DevvitContext | null>(null);
-  const [itchioContext, setItchioContext] = useState<ItchioContext | null>(null);
-  const [platformChecked, setPlatformChecked] = useState(false);
+  const [devvitChecked, setDevvitChecked] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("darkMode", darkMode ? "true" : "false");
@@ -147,63 +145,39 @@ function App() {
     return true;
   };
 
-  // Check for Devvit/itch.io context and auto-authenticate platform users
+  // Check for Devvit context and auto-authenticate Reddit users
   useEffect(() => {
     const initializeAuth = async () => {
-      let authenticated = false;
-
-      // First, check if we're in a Devvit/Reddit environment
       try {
-        const devvit = await getDevvitContext();
-        setDevvitContext(devvit);
+        // First, check if we're in a Devvit/Reddit environment
+        const context = await getDevvitContext();
+        setDevvitContext(context);
+        setDevvitChecked(true);
 
-        if (devvit?.userId) {
+        if (context?.userId) {
           // We're in Reddit - try to auto-authenticate
           console.log("Detected Reddit environment, auto-authenticating...");
           try {
-            await api.redditLogin(devvit.userId);
+            await api.redditLogin(context.userId);
             console.log("Reddit auto-login successful");
-            authenticated = true;
           } catch (error) {
             console.error("Reddit auto-login failed:", error);
+            // Continue to loadUser - user might already be authenticated
           }
         }
       } catch (error) {
         console.log("Not in Devvit environment");
+        setDevvitChecked(true);
       }
 
-      // Check if we're in an itch.io environment (only if not already authenticated)
-      if (!authenticated) {
-        try {
-          const itchio = await getItchioContext();
-          setItchioContext(itchio);
-
-          if (itchio?.userId) {
-            // We're on itch.io with a logged-in user - try to auto-authenticate
-            console.log("Detected itch.io environment, auto-authenticating...");
-            try {
-              await api.itchioLogin(itchio.userId, itchio.username);
-              console.log("Itch.io auto-login successful");
-              authenticated = true;
-            } catch (error) {
-              console.error("Itch.io auto-login failed:", error);
-            }
-          }
-        } catch (error) {
-          console.log("Not in itch.io environment or error:", error);
-        }
-      }
-
-      setPlatformChecked(true);
-
-      // Load user data (whether platform login succeeded or we need regular login)
+      // Load user data (whether Reddit login succeeded or we need regular login)
       await loadUser();
     };
 
     initializeAuth();
   }, []);
 
-  if (loading || !platformChecked) return <div>Loading...</div>;
+  if (loading || !devvitChecked) return <div>Loading...</div>;
 
   // If not logged in, show Login Page
   if (!user || loggedOut) {
@@ -215,8 +189,6 @@ function App() {
         }}
         isRedditContext={isDevvitEnvironment()}
         devvitContext={devvitContext}
-        isItchioContext={isItchioEnvironment()}
-        itchioContext={itchioContext}
       />
     );
   }

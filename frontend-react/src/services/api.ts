@@ -208,25 +208,4 @@ export const api = {
     }
     return res.json();
   },
-
-  /**
-   * Authenticate an itch.io user.
-   * This creates or finds a user based on their itch.io user ID.
-   */
-  itchioLogin: async (itchioUserId: number, itchioUsername?: string) => {
-    const res = await fetch(
-      `${BASE_URL}/user/itchio-login`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ itchioUserId, itchioUsername }),
-      }
-    );
-    if (!res.ok) {
-      const err = await res.text();
-      throw new Error(err || "Itch.io login failed.");
-    }
-    return res.json();
-  },
 };
