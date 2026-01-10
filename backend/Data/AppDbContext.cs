@@ -271,6 +271,7 @@ public static class GameConfig
 [Index(nameof(SourceIp))]
 [Index(nameof(RedditUserId))]
 [Index(nameof(ItchioUserId))]
+[Index(nameof(KongregateUserId))]
 
 public class User : IdentityUser
 {
@@ -279,6 +280,8 @@ public class User : IdentityUser
     public string? RedditUserId { get; set; }
     // Itch.io user ID (numeric, stored as string) - set when user authenticates via itch.io
     public string? ItchioUserId { get; set; }
+    // Kongregate user ID (numeric, stored as string) - set when user authenticates via Kongregate
+    public string? KongregateUserId { get; set; }
     // --- Backing Fields (The actual storage) ---
     // We explicitly define these so we can manipulate them in the Getters
     private int _guessEnergy;

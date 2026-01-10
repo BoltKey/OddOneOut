@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { api } from "../services/api";
 import GoogleLoginButton from "./GoogleLoginButton";
+import KongregateLoginButton from "./KongregateLoginButton";
 import { FaReddit } from "react-icons/fa";
 import type { DevvitContext } from "../services/devvit";
+import { isKongregateContext, initKongregate, type KongregateUser } from "../services/kongregate";
 import "./LoginPage.css";
 
 interface Props {
@@ -10,15 +12,29 @@ interface Props {
   isGuest?: boolean;
   isRedditContext?: boolean;
   devvitContext?: DevvitContext | null;
+  isKongregateContext?: boolean;
+  kongregateUser?: KongregateUser | null;
 }
 
-export default function LoginPage({ onLoginSuccess, isGuest, isRedditContext, devvitContext }: Props) {
+export default function LoginPage({ onLoginSuccess, isGuest, isRedditContext, devvitContext, isKongregateContext: isKongregateContextProp, kongregateUser: kongregateUserProp }: Props) {
   const [isRegistering, setIsRegistering] = useState(isGuest || false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [redditLoading, setRedditLoading] = useState(false);
+  const [isKongregate, setIsKongregate] = useState(isKongregateContextProp || false);
+  const [kongregateUser, setKongregateUser] = useState<KongregateUser | null>(kongregateUserProp || null);
+
+  // Detect Kongregate context on mount if not passed as prop
+  useEffect(() => {
+    if (!isKongregateContextProp && isKongregateContext()) {
+      setIsKongregate(true);
+      initKongregate().then((user) => {
+        setKongregateUser(user);
+      });
+    }
+  }, [isKongregateContextProp]);
   
   // Get guest display name for button text
   const getGuestButtonText = () => {
@@ -99,6 +115,30 @@ export default function LoginPage({ onLoginSuccess, isGuest, isRedditContext, de
             <FaReddit />
             <span>{redditLoading ? "Connecting..." : "Play with Reddit"}</span>
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show Kongregate-specific login UI when accessed from Kongregate
+  if (isKongregate) {
+    return (
+      <div className="login-container">
+        <div className="logo splashscreen"></div>
+        
+        <div className="kongregate-login-section">
+          <h2>Welcome to Misfit!</h2>
+          <p>{kongregateUser ? `Welcome, ${kongregateUser.username}! Click below to start playing.` : "Sign in to Kongregate to play!"}</p>
+          
+          {error && <div className="error-message">{error}</div>}
+          
+          <KongregateLoginButton kongregateUser={kongregateUser} onSuccess={onLoginSuccess} />
+          
+          {!kongregateUser && (
+            <p className="kongregate-guest-note">
+              You need to be signed in to Kongregate to save your progress.
+            </p>
+          )}
         </div>
       </div>
     );
