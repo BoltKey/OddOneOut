@@ -1,13 +1,37 @@
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
+
+// Plugin to remove crossorigin attributes from HTML (needed for itch.io)
+function removeCrossorigin(): Plugin {
+  return {
+    name: 'remove-crossorigin',
+    transformIndexHtml(html) {
+      return html.replace(/ crossorigin/g, '');
+    }
+  };
+}
 
 // https://vitejs.dev/config/
 export default defineConfig(({ command, mode }) => ({
   // Use relative paths for itch.io compatibility (serves from subdirectory)
   base: mode === "itchio" ? "./" : "/",
+  // Disable crossorigin attributes for itch.io (causes CORS issues in their iframe/CDN)
+  build: mode === "itchio" ? {
+    modulePreload: { polyfill: false },
+    rollupOptions: {
+      output: {
+        // Use simpler file names without hashes for itch.io compatibility
+        entryFileNames: 'assets/[name].js',
+        chunkFileNames: 'assets/[name].js',
+        assetFileNames: 'assets/[name].[ext]'
+      }
+    }
+  } : {},
   plugins: [
     react(),
+    // Remove crossorigin attributes for itch.io builds
+    ...(mode === "itchio" ? [removeCrossorigin()] : []),
     // Disable PWA for itch.io builds (service workers don't work in iframes)
     ...(mode !== "itchio"
       ? [
