@@ -229,12 +229,12 @@ public class GamesController : ControllerBase
                 .ToList();
             
             // Score function for ranking candidates (lower = better)
-            double ScoreCandidate(CardSetCandidate x)
+            double PenaltyCandidate(CardSetCandidate x)
             {
                 // Success rate: 0-1 range (higher = easier)
                 double successRate = x.TotalGuessCount > 0 
-                    ? (double)x.CorrectGuessCount / x.TotalGuessCount 
-                    : 0.5;
+                    ? ((double)x.CorrectGuessCount + 2) / (x.TotalGuessCount + 3) 
+                    : 0.9;
                 
                 // Clue diversity: unique clues / total clue givers (higher = better)
                 // 10 clue givers with 10 unique clues = 1.0 (great)
@@ -250,37 +250,37 @@ public class GamesController : ControllerBase
                 double expFactor = Math.Min(1.0, clueExperience / 10.0);
                 
                 // === SCORING (lower = better) ===
-                double score = x.ClueGiverCount;  // Base: fewer clue givers = better
+                double penalty = x.ClueGiverCount;  // Base: fewer clue givers = better
                 
                 // Success rate handling varies by experience:
                 // - New users: prefer moderate success rate (0.6-0.7), penalize extremes
                 // - Experienced: prefer harder sets (lower success rate)
-                double idealSuccessRate = 0.65 - (expFactor * 0.15);  // 0.65 -> 0.50
+                double idealSuccessRate = 0.95 - (expFactor * 0.15);  // 0.85 -> 0.70
                 double successPenalty = Math.Abs(successRate - idealSuccessRate) * 10;
-                score += successPenalty;
+                penalty += successPenalty;
                 
                 // Interestingness bonus (always good, but especially for new users)
                 double interestBonus = scoreSpread * (0.15 - expFactor * 0.05);  // 0.15 -> 0.10
-                score -= interestBonus;
+                penalty += interestBonus;
                 
                 // Diversity bonus (more important for experienced users)
                 // Low diversity (many clue givers, few unique clues) = big penalty
-                double diversityBonus = clueDiversity * (3 + expFactor * 4);  // 3 -> 7
-                score -= diversityBonus;
+                double diversityBonus = (2 + expFactor * 5) * (1 / clueDiversity - 1);  // 5 -> 12
+                penalty += diversityBonus;
                 
-                return score;
+                return penalty;
             }
             
             // Pick the best from the random pool
             var bestCandidate = randomPool
-                .OrderBy(ScoreCandidate)
+                .OrderBy(PenaltyCandidate)
                 .ThenBy(x => x.CreatedAt)
                 .FirstOrDefault();
             
             // If best candidate has a bad score, create a fresh card set instead
             // Threshold: score > 15 means too many clue givers, bad diversity, or wrong difficulty
-            const double BAD_SCORE_THRESHOLD = 15.0;
-            bool shouldCreateNew = bestCandidate == null || ScoreCandidate(bestCandidate) > BAD_SCORE_THRESHOLD;
+            const double BAD_PENALTY_THRESHOLD = 15.0;
+            bool shouldCreateNew = bestCandidate == null || PenaltyCandidate(bestCandidate) > BAD_PENALTY_THRESHOLD;
             
             if (!shouldCreateNew && bestCandidate != null)
             {
