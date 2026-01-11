@@ -101,12 +101,6 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
           <div style={{ marginBottom: "10px" }}>
             You are given <strong>5 words</strong>. Pick one as the{" "}
             <strong style={{ color: "var(--misfitcolor)" }}>Misfit</strong>.
-          </div>
-        </>
-      ),
-      3: (
-        <>
-          <div style={{ marginBottom: "10px" }}>
             The other 4 words become{" "}
             <strong style={{ color: "var(--insetcolor)" }}>Matches</strong>.
             Create a clue that connects them, but <strong>not</strong> the
@@ -115,7 +109,7 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
           </div>
         </>
       ),
-      4: (
+      3: (
         <>
           <div style={{ marginBottom: "10px" }}>
             You can check how your clue is doing in the Clue History tab. Either
@@ -125,16 +119,19 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
           </div>
         </>
       ),
-      5: null,
+      4: null,
     };
     setTutorialMessage(tutorialMessages[tutorialStep]);
   }, [tutorialStep, currentCards]);
 
   const advanceTutorial = useCallback(() => {
-    if (tutorialStep === 4) {
+    let storageKey = "seenClueTutorial-" + userId;
+    if (tutorialStep === 2) {
+      localStorage.setItem(storageKey, "true");
+    }
+    if (tutorialStep === 3) {
       // Complete tutorial - jump to step 6
-      setTutorialStep(5);
-      let storageKey = "seenClueTutorial-" + userId;
+      setTutorialStep(4);
       localStorage.setItem(storageKey, "true");
     } else {
       setTutorialStep(tutorialStep + 1);
@@ -142,9 +139,6 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
   }, [tutorialStep, userId]);
 
   const handleCardClick = (index: number) => {
-    if (tutorialStep === 2) {
-      advanceTutorial();
-    }
     setSelectedCardIndex(index);
   };
 
@@ -217,7 +211,7 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
           </div>
         </>
       )}
-      {!outOfClues && selectedCardIndex !== null && tutorialStep >= 3 && (
+      {!outOfClues && tutorialStep >= 2 && (
         <div className="clue-input-section">
           <div className="clue-input-label">Your clue:</div>
           <input
@@ -243,9 +237,6 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
                     setSelectedCardIndex(null);
                     setSubmitStatus(null);
                     setCurrentCards(null);
-                    if (tutorialStep === 4) {
-                      advanceTutorial();
-                    }
                     setOutOfClues(true);
                   }}
                 >
@@ -258,7 +249,7 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
                     setClue("");
                     setSelectedCardIndex(null);
                     setSubmitStatus(null);
-                    if (tutorialStep === 4) {
+                    if (tutorialStep === 2) {
                       advanceTutorial();
                     }
                     await fetchAssignedGame();
