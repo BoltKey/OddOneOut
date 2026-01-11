@@ -220,3 +220,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Make the implicit Program class public so it can be referenced by WebApplicationFactory<Program>
+public partial class Program { }

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -30,6 +30,13 @@
   <None Update="Data\possibleClues.txt">
     <CopyToOutputDirectory>Always</CopyToOutputDirectory>
   </None>
+</ItemGroup>
+
+<ItemGroup>
+  <!-- Exclude test project from main project -->
+  <Compile Remove="OddOneOut.Tests\**" />
+  <Content Remove="OddOneOut.Tests\**" />
+  <None Remove="OddOneOut.Tests\**" />
 </ItemGroup>
 
 </Project>
