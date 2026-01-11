@@ -177,20 +177,108 @@ public class GamesController : ControllerBase
           {
               return BadRequest($"You are out of clues for now. Please wait {user.NextClueRegenTime} before guessing again. The limit is so low to not let players spam low-quality clues, and really think of the best clues! If the limit feels too limiting, please, discuss it on the community subreddit!");
           }
-            // Optimize query: use IDs instead of object comparisons and filter in database
+            // Get user's clue-giving experience (how many clues they've given)
             var currentGameId = user.CurrentGameId;
-            cardSet = await _context.CardSet
+            var clueExperience = await _context.Set<GameClueGiver>()
+                .CountAsync(gcg => gcg.UserId == userIdString);
+            
+            // STEP 1: Get random sample of eligible card set IDs (fast, no heavy aggregations)
+            // This scales well - only fetches 50 IDs regardless of total card sets
+            var eligibleIds = await _context.CardSet
               .Where(cs => !_context.Games.Any(g =>
-                  g.CardSetId == cs.Id &&           // Match the game to the card set
-                  g.Id != currentGameId &&          // Exclude current game
-                  (_context.Set<GameClueGiver>().Any(gcg => gcg.GameId == g.Id && gcg.UserId == userIdString) || // Check if user is a clue giver in that game
-                  _context.Guesses.Any(gu => gu.GameId == g.Id && gu.Guesser.Id == userIdString)) // Check if user has guessed
-              ) && _context.Set<GameClueGiver>().Count(gcg => _context.Games.Any(game => game.CardSetId == cs.Id && game.Id == gcg.GameId)) < 20) // Limit to card sets with less than 20 clue givers total
-              .Include(cs => cs.WordCards)
-              // Prioritize card sets with fewer clue givers (distributes load more evenly)
-              .OrderBy(cs => _context.Set<GameClueGiver>().Count(gcg => _context.Games.Any(game => game.CardSetId == cs.Id && game.Id == gcg.GameId)))
-              .ThenBy(cs => cs.CreatedAt) // Secondary: older sets first (FIFO fairness)
-              .FirstOrDefaultAsync();
+                  g.CardSetId == cs.Id &&
+                  g.Id != currentGameId &&
+                  (_context.Set<GameClueGiver>().Any(gcg => gcg.GameId == g.Id && gcg.UserId == userIdString) ||
+                  _context.Guesses.Any(gu => gu.GameId == g.Id && gu.Guesser.Id == userIdString))
+              ))
+              .Select(cs => cs.Id)
+              .OrderBy(id => Guid.NewGuid())  // Random order in database
+              .Take(50)                        // Limit to 50 candidates
+              .ToListAsync();
+            
+            // STEP 2: Calculate metrics only for the 50 random candidates (not all 5000!)
+            var candidates = await _context.CardSet
+              .Where(cs => eligibleIds.Contains(cs.Id))
+              .Select(cs => new CardSetCandidate {
+                  CardSetId = cs.Id,
+                  CreatedAt = cs.CreatedAt,
+                  ClueGiverCount = _context.Set<GameClueGiver>().Count(gcg => 
+                      _context.Games.Any(game => game.CardSetId == cs.Id && game.Id == gcg.GameId)),
+                  // Success rate from guesses (higher = easier)
+                  CorrectGuessCount = _context.Guesses.Count(g => 
+                      g.Game.CardSetId == cs.Id && 
+                      g.GuessIsInSet != (g.SelectedCardId == g.Game.OddOneOut.Id)),
+                  TotalGuessCount = _context.Guesses.Count(g => g.Game.CardSetId == cs.Id),
+                  UniqueClueCount = _context.Games.Where(g => g.CardSetId == cs.Id)
+                      .Select(g => g.Clue).Distinct().Count(),
+                  TotalGameCount = _context.Games.Count(g => g.CardSetId == cs.Id),
+                  // "Interestingness": score spread between games (higher = more varied outcomes)
+                  MaxGameScore = _context.Games.Where(g => g.CardSetId == cs.Id)
+                      .Max(g => (float?)g.CachedGameScore) ?? 0,
+                  MinGameScore = _context.Games.Where(g => g.CardSetId == cs.Id)
+                      .Min(g => (float?)g.CachedGameScore) ?? 0
+              })
+              .Where(x => x.ClueGiverCount < 20)
+              .ToListAsync();
+            
+            // STEP 3: Pick 10 random from the 50 candidates for final scoring
+            var rand = new Random();
+            var randomPool = candidates
+                .OrderBy(_ => rand.Next())
+                .Take(10)
+                .ToList();
+            
+            // Score function for ranking candidates
+            double ScoreCandidate(CardSetCandidate x)
+            {
+                // Success rate: 0-1 range (higher = easier)
+                double successRate = x.TotalGuessCount > 0 
+                    ? (double)x.CorrectGuessCount / x.TotalGuessCount 
+                    : 0.5;
+                // Clue diversity: unique clues / total games (higher = better)
+                double clueDiversity = x.TotalGameCount > 0 
+                    ? (double)x.UniqueClueCount / x.TotalGameCount 
+                    : 1.0;
+                // Interestingness: score spread between best and worst games
+                double scoreSpread = x.MaxGameScore - x.MinGameScore;
+                
+                // Experience factor: 0 = brand new, approaches 1 as they gain experience
+                double expFactor = Math.Min(1.0, clueExperience / 10.0);
+                
+                // === SCORING (lower = better) ===
+                double score = x.ClueGiverCount;  // Base: fewer clue givers = better
+                
+                // Success rate handling varies by experience:
+                // - New users: prefer moderate success rate (0.6-0.7), penalize extremes
+                // - Experienced: prefer harder sets (lower success rate)
+                double idealSuccessRate = 0.65 - (expFactor * 0.15);  // 0.65 -> 0.50
+                double successPenalty = Math.Abs(successRate - idealSuccessRate) * 10;
+                score += successPenalty;
+                
+                // Interestingness bonus (always good, but especially for new users)
+                double interestBonus = scoreSpread * (0.15 - expFactor * 0.05);  // 0.15 -> 0.10
+                score -= interestBonus;
+                
+                // Diversity bonus (more important for experienced users)
+                double diversityBonus = clueDiversity * (3 + expFactor * 4);  // 3 -> 7
+                score -= diversityBonus;
+                
+                return score;
+            }
+            
+            // Pick the best from the random pool
+            var bestId = randomPool
+                .OrderBy(ScoreCandidate)
+                .ThenBy(x => x.CreatedAt)
+                .Select(x => x.CardSetId)
+                .FirstOrDefault();
+            
+            if (bestId != Guid.Empty)
+            {
+                cardSet = await _context.CardSet
+                    .Include(cs => cs.WordCards)
+                    .FirstOrDefaultAsync(cs => cs.Id == bestId);
+            }
         }
 
         if (cardSet == null)
@@ -471,4 +559,19 @@ public class CreateGameResponseDto
 {
     public Guid GameId { get; set; }
     public int ClueGiverAmt { get; set; }
+}
+
+// Internal DTO for card set selection query
+public class CardSetCandidate
+{
+    public Guid CardSetId { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public int ClueGiverCount { get; set; }
+    public int CorrectGuessCount { get; set; }
+    public int TotalGuessCount { get; set; }
+    public int UniqueClueCount { get; set; }
+    public int TotalGameCount { get; set; }
+    // For "interestingness" - spread between best/worst game scores
+    public float MaxGameScore { get; set; }
+    public float MinGameScore { get; set; }
 }
