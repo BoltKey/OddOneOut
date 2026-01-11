@@ -58,7 +58,7 @@ public class GamesController : ControllerBase
               .Include(g => g.CardSet)   // 2. Load the Cards inside the Set
                   .ThenInclude(cs => cs.WordCards) // 3. Load the WordCards inside the CardSet
               .Include(g => g.Guesses) // Include guesses for scoring
-              .OrderBy(c => Guid.NewGuid()) // Note: Can be optimized with PostgreSQL RANDOM() if needed
+              .OrderBy(c => EF.Functions.Random()) // Random order (works with both SQLite and PostgreSQL)
               .Take(GameConfig.Current.GuessAssignGamesAmt)
               .ToListAsync();
             var experience = await _context.Guesses
@@ -192,7 +192,7 @@ public class GamesController : ControllerBase
                   _context.Guesses.Any(gu => gu.GameId == g.Id && gu.Guesser.Id == userIdString))
               ))
               .Select(cs => cs.Id)
-              .OrderBy(id => Guid.NewGuid())  // Random order in database
+              .OrderBy(id => EF.Functions.Random())  // Random order (works with both SQLite and PostgreSQL)
               .Take(50)                        // Limit to 50 candidates
               .ToListAsync();
             

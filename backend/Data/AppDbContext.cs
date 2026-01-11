@@ -65,6 +65,10 @@ protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
 
+        // Detect if we're using SQLite (for testing) vs PostgreSQL (production)
+        var isSqlite = Database.ProviderName?.Contains("Sqlite") == true;
+        var defaultTimestampSql = isSqlite ? "datetime('now')" : "now()";
+
         // --- 1. Configure the Many-to-Many (ClueGivers <-> CreatedGames) ---
         builder.Entity<Game>()
             .HasMany(g => g.ClueGivers)
@@ -82,7 +86,7 @@ protected override void OnModelCreating(ModelBuilder builder)
                     .OnDelete(DeleteBehavior.Cascade), // Deleting a Game deletes the ClueGiver links
                 j =>
                 {
-                    j.Property(pt => pt.ClueGivenAt).HasDefaultValueSql("now()");
+                    j.Property(pt => pt.ClueGivenAt).HasDefaultValueSql(defaultTimestampSql);
                     j.HasKey(t => new { t.GameId, t.UserId });
                     j.ToTable("GameClueGivers");
                 });
@@ -141,17 +145,31 @@ public class CardSet
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public static async Task<CardSet> CreateRandomAsync(AppDbContext context, int wordCount = 5)
     {
-        // 1. Fetch random words using PostgreSQL's efficient ORDER BY RANDOM()
-        // This is much more efficient than Guid.NewGuid() for large datasets
-        // For PostgreSQL with Npgsql, we use FromSqlRaw with ORDER BY RANDOM()
+        // 1. Fetch random words using database-specific random ordering
         var totalCount = await context.WordCard.CountAsync();
         if (totalCount == 0)
             throw new InvalidOperationException("No word cards available in database.");
 
         var countToTake = Math.Min(wordCount, totalCount);
-        var randomWords = await context.WordCard
-            .FromSqlRaw("SELECT * FROM \"WordCard\" ORDER BY RANDOM() LIMIT {0}", countToTake)
-            .ToListAsync();
+        
+        // Detect provider and use appropriate SQL
+        var isSqlite = context.Database.ProviderName?.Contains("Sqlite") == true;
+        List<WordCard> randomWords;
+        
+        if (isSqlite)
+        {
+            // SQLite uses unquoted table names
+            randomWords = await context.WordCard
+                .FromSqlRaw("SELECT * FROM WordCard ORDER BY RANDOM() LIMIT {0}", countToTake)
+                .ToListAsync();
+        }
+        else
+        {
+            // PostgreSQL uses quoted table names
+            randomWords = await context.WordCard
+                .FromSqlRaw("SELECT * FROM \"WordCard\" ORDER BY RANDOM() LIMIT {0}", countToTake)
+                .ToListAsync();
+        }
 
         if (randomWords.Count == 0)
             throw new InvalidOperationException("No word cards available in database.");
