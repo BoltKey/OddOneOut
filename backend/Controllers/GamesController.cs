@@ -32,6 +32,14 @@ public class GamesController : ControllerBase
 
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var user = await _context.Users.FindAsync(userIdString);
+        
+        // Check if user is in spam cooldown
+        if (user.SpamCooldownUntil.HasValue && user.SpamCooldownUntil > DateTime.UtcNow)
+        {
+            var remainingMinutes = (int)Math.Ceiling((user.SpamCooldownUntil.Value - DateTime.UtcNow).TotalMinutes);
+            return BadRequest($"Slow down! It looks like you're guessing too quickly without reading the clues. Take a {remainingMinutes}-minute break to think about your strategy. Hint: the Misfit appears more often than you'd expect - random guessing won't work!");
+        }
+        
         // check if user has assigned set
         var game = await _context.Users
         .Where(u => u.Id == userIdString)
@@ -42,6 +50,15 @@ public class GamesController : ControllerBase
         .FirstOrDefaultAsync();
         if (game == null)
         {
+            // Check for spam pattern before spending energy
+            var spamCheckResult = await CheckForSpamPattern(userIdString);
+            if (spamCheckResult != null)
+            {
+                user.SpamCooldownUntil = DateTime.UtcNow.AddMinutes(GameConfig.Current.SpamCooldownMinutes);
+                await _context.SaveChangesAsync();
+                return BadRequest(spamCheckResult);
+            }
+            
             // assign new game to user
             if (!user.TrySpendGuessEnergy())
             {
@@ -439,6 +456,37 @@ public async Task<IActionResult> MakeGuess(MakeGuessDto request)
     })
 });
 }
+    /// <summary>
+    /// Checks if user is spam-guessing (rapid "Match" guesses in succession).
+    /// Returns error message if spam detected, null if OK.
+    /// </summary>
+    private async Task<string?> CheckForSpamPattern(string userId)
+    {
+        var windowStart = DateTime.UtcNow.AddSeconds(-GameConfig.Current.SpamDetectionWindowSeconds);
+        
+        // Get recent guesses within the time window
+        var recentGuesses = await _context.Guesses
+            .Where(g => g.Guesser.Id == userId && g.GuessedAt >= windowStart)
+            .OrderByDescending(g => g.GuessedAt)
+            .Select(g => g.GuessIsInSet)
+            .ToListAsync();
+        
+        // Not enough guesses to trigger spam detection
+        if (recentGuesses.Count < GameConfig.Current.SpamDetectionMinGuesses)
+            return null;
+        
+        // If ALL recent guesses were "Match" (GuessIsInSet = true), it's spam
+        if (recentGuesses.All(isMatch => isMatch))
+        {
+            var cooldownMinutes = GameConfig.Current.SpamCooldownMinutes;
+            return $"Slow down! You guessed 'Match' {recentGuesses.Count} times in a row without thinking. " +
+                   $"Take a {cooldownMinutes}-minute break and read the clues more carefully. " +
+                   $"Tip: The Misfit appears more often than 1-in-5 — always guessing 'Match' is a losing strategy!";
+        }
+        
+        return null;
+    }
+
     [HttpPost("CreateGame"), Authorize]
     public async Task<IActionResult> CreateGame(CreateGameDto request)
     {

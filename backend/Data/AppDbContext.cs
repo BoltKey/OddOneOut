@@ -310,6 +310,12 @@ public class GameSettings
     public int MinGuessesToGiveClues { get; set; } = 2;
     public int GuessAssignGamesAmt { get; set; } = 100;
     public float RegisterTimeoutMinutes { get; set; } = 20f;
+    
+    // Spam detection settings
+    public int SpamDetectionWindowSeconds { get; set; } = 15; // Check guesses within last 15 seconds
+    public int SpamDetectionMinGuesses { get; set; } = 5; // Minimum guesses to trigger check
+    public int SpamDetectionMinRatingLoss { get; set; } = 30; // (unused) Total rating loss threshold
+    public int SpamCooldownMinutes { get; set; } = 2; // How long to block
 }
 public static class GameConfig
 {
@@ -524,6 +530,10 @@ public class User : IdentityUser
         return result;
     }
     public DateTime lastDecay { get; set; } = DateTime.UtcNow;
+    
+    // Spam detection: user is blocked from guessing until this time
+    public DateTime? SpamCooldownUntil { get; set; }
+    
     public void decayRating()
       {
         DateTime lastGuessTime = Guesses.OrderByDescending(g => g.GuessedAt).FirstOrDefault()?.GuessedAt ?? DateTime.UtcNow;

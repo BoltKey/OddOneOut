@@ -22,6 +22,14 @@ public class GameTests
             BaseRewardOddOne = 20,
             BasePenaltyOddOne = 50,
             OddOneOutChance = 0.4f,
+            SpamDetectionWindowSeconds = 8,
+            SpamDetectionMinGuesses = 5,
+            SpamCooldownMinutes = 2,
+            GuessEnergyRegenIntervalMinutes = 0.3f,
+            ClueEnergyRegenIntervalMinutes = 4f,
+            MinGuessesToGiveClues = 2,
+            GuessAssignGamesAmt = 100,
+            RegisterTimeoutMinutes = 0f, // Disable rate limiting in tests
         });
     }
 

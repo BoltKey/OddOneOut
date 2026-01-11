@@ -102,6 +102,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 options.MinGuessesToGiveClues = 2;
                 options.GuessAssignGamesAmt = 100;
                 options.RegisterTimeoutMinutes = 0f; // Disable rate limiting in tests
+                options.SpamDetectionWindowSeconds = 8;
+                options.SpamDetectionMinGuesses = 5;
+                options.SpamCooldownMinutes = 2;
             });
 
             // Configure JWT settings for tests
