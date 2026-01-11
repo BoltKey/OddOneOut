@@ -1,5 +1,3 @@
-import React from "react";
-
 export const GuessRatingHelpContent = (
   <>
     <p>
@@ -50,25 +48,33 @@ export const ClueRatingHelpContent = (
     <p>
       Your <strong>Clue Rating</strong> measures the quality of your clues.
     </p>
+    <p>
+      <strong>Clue Success Rate:</strong> Each card gets a success rate calculated using the following formula: <br></br>
+      <br />
+      (correct guesses + 2) / (total guesses + 3) * 100
+      <br />
+      <br />
+      The clue success rate is then calculated as the geometric mean of the success rates of all the cards.
+    </p>
+    <p>
+      The success rate is then compared to success rates of all other clues for the same card set. So the final game score is 100 + (clue success rate - average clue success rate).
+    </p>
+    Put simply:
     <ul>
       <li>
-        <strong>Starting Rating:</strong> 1000
+        <strong>Above 100:</strong> Better than average clue
       </li>
       <li>
-        <strong>Game Score:</strong> Based on how well players guess your clue
-      </li>
-      <li>
-        <strong>Score = 100 +</strong> (your success rate - average success
-        rate)
+        <strong>Below 100:</strong> Worse than average clue
       </li>
     </ul>
     <p>
-      <strong>Rating Update:</strong> Your rating increases by each game's
-      score. Only your last 100 games count.
+      <strong>Rating Calculation:</strong> Sum of your last 100 game scores,
+      starting from 1000. Each older clue has weigh of 1% less than the first one.
     </p>
     <p>
       <strong>Time Decay:</strong> Each game's contribution decreases by 1 point
-      per day. Create fresh clues regularly!
+      per day. Create fresh clues regularly to keep your rating high!
     </p>
     <p style={{ marginTop: "12px", fontSize: "0.9em", color: "#666" }}>
       Something feel unfair? Share feedback on{" "}
@@ -85,32 +91,3 @@ export const ClueRatingHelpContent = (
   </>
 );
 
-export const GameScoreHelpContent = (
-  <>
-    <p>
-      <strong>Game Score</strong> measures how well-balanced your clue was.
-    </p>
-    <p>
-      <strong>Clue Success Rate:</strong> Each clue has a success rate based on
-      geometric average of success rates for each individual word. In addition,
-      each card counts 3 dummy guesses, out of which 2 count as correct.
-      Basically, you goal is to create clues that are good for all the cards. If
-      one card is too hard, it will be more punishing.
-      <strong>Clue Score Formula:</strong> 100 + (your clue's success rate -
-      average success rate of other clues with same words)
-    </p>
-    <ul>
-      <li>
-        <strong>Above 100:</strong> Better clue than average
-      </li>
-      <li>
-        <strong>Below 100:</strong> Worse clue than average
-      </li>
-    </ul>
-    <p>
-      This score contributes to your <strong>Clue Rating</strong>. Each clue
-      loses 1 point per day, and older clues count for less score, 1% less for
-      each clue. (e.g. your 5th most recent clue counts 5% less).
-    </p>
-  </>
-);

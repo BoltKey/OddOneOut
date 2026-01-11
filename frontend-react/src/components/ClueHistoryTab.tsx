@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../services/api";
 import HelpIcon from "./HelpIcon";
-import { ClueRatingHelpContent, GameScoreHelpContent } from "./HelpContent";
+import { ClueRatingHelpContent } from "./HelpContent";
 import "./GuessingTab.css";
 
 export default function ClueHistoryTab({
@@ -156,31 +156,24 @@ export default function ClueHistoryTab({
 
               return (
                 <div key={index} className="clue-history-card">
-                  {/* Header */}
-                  <div className="clue-history-header">
-                    <div className="history-time">
-                      {formatDateTime(entry.createdAt)}
-                    </div>
-                    {entry.gameScore !== null && (
-                      <div className="clue-game-score">
-                        Score:{" "}
-                        <strong>{entry.gameScore?.toFixed(1) ?? "N/A"}</strong>
-                        <HelpIcon
-                          title="What is Game Score?"
-                          content={GameScoreHelpContent}
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Your Clue - prominent */}
+                  {/* Your Clue - same format as other clues */}
                   <div className="clue-history-your-clue">
                     <div className="clue-history-your-clue-label">
                       Your Clue
                     </div>
-                    <div className="history-clue-text">{entry.clue}</div>
-                    <div className="clue-odd-one-out">
-                      Misfit: <strong>{entry.oddOneOut}</strong>
+                    <div className="other-clue-text">{entry.clue}</div>
+                    <div className="other-clue-details">
+                      <span className="other-clue-misfit">
+                        Misfit: {entry.oddOneOut}
+                      </span>
+                      {entry.gameScore !== null && (
+                        <span className="other-clue-score">
+                          Score: {entry.gameScore.toFixed(1)}
+                        </span>
+                      )}
+                      <span className="other-clue-time">
+                        {formatDateTime(entry.createdAt)}
+                      </span>
                     </div>
                   </div>
 
