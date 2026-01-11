@@ -1,6 +1,8 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import { api } from "../services/api";
-import { UserStatsContext } from "../App";
+import { UserStatsContext, useCountdown } from "../App";
+import { BiSolidMessageRoundedDetail } from "react-icons/bi";
+import { FaSearch } from "react-icons/fa";
 import "./ClueGivingTab.css";
 
 export default function ClueGivingTab({ userId }: { userId: string }) {
@@ -15,7 +17,28 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
   const [tutorialStep, setTutorialStep] = useState<number>(0);
   const [tutorialMessage, setTutorialMessage] =
     useState<React.ReactNode | null>(null);
-  const { loadUser } = useContext(UserStatsContext);
+  const [outOfClues, setOutOfClues] = useState(false);
+  
+  const {
+    loadUser,
+    clueEnergy,
+    nextClueRegenTime,
+    navigateToTab,
+    openModal,
+  } = useContext(UserStatsContext);
+
+  // Track previous clueEnergy to detect when it increases
+  const [prevClueEnergy, setPrevClueEnergy] = useState<number | null>(null);
+
+  // Countdown hook for when out of clues
+  const countdownText = useCountdown(
+    clueEnergy === 0 ? nextClueRegenTime : null,
+    () => {
+      loadUser();
+    }
+  );
+
+  const isWaitingForEnergy = clueEnergy === 0 && nextClueRegenTime;
 
   const fetchAssignedGame = async () => {
     try {
@@ -24,14 +47,33 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
       setCurrentCards(words);
       setWordSetId(id);
       setMessage(null);
+      setOutOfClues(false);
+      await loadUser();
     } catch (err: any) {
-      setMessage(err.message);
+      // Check if user is out of clues
+      const errorMsg = err.message?.toLowerCase() || "";
+      if (errorMsg.includes("no clue") || errorMsg.includes("out of") || errorMsg.includes("energy")) {
+        setOutOfClues(true);
+        setMessage(null);
+      } else {
+        setMessage(err.message);
+        setOutOfClues(false);
+      }
+      await loadUser();
     }
   };
 
   useEffect(() => {
     fetchAssignedGame();
   }, []);
+
+  // When countdown expires and clueEnergy increases, auto-fetch new game
+  useEffect(() => {
+    if (prevClueEnergy === 0 && clueEnergy !== null && clueEnergy > 0 && outOfClues) {
+      fetchAssignedGame();
+    }
+    setPrevClueEnergy(clueEnergy);
+  }, [clueEnergy, outOfClues]);
 
   useEffect(() => {
     let storageKey = "seenClueTutorial-" + userId;
@@ -111,9 +153,38 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
       {tutorialMessage && (
         <div className="tutorial-message">{tutorialMessage}</div>
       )}
-      {tutorialStep >= 2 && currentCards && (
+      {message && !outOfClues && <div className="error-message">{message}</div>}
+      {outOfClues && (
+        <div className="out-of-clues-screen">
+          <div className="out-of-clues-icon">⏳</div>
+          <h2 className="out-of-clues-title">You are done for now, wait for guessers and check back later in the clue history how you did!</h2>
+          <div className="out-of-clues-stats">
+            {nextClueRegenTime && (
+              <div className="out-of-clues-countdown">
+                <span className="countdown-label">Next clue in:</span>
+                <span className="countdown-value">{countdownText}</span>
+              </div>
+            )}
+          </div>
+          <div className="out-of-clues-actions">
+            <p className="actions-label">In the meantime...</p>
+            <button
+              className="action-button action-history"
+              onClick={() => openModal("clueHistory")}
+            >
+              <BiSolidMessageRoundedDetail /> View Clue History
+            </button>
+            <button
+              className="action-button action-guess"
+              onClick={() => navigateToTab("guessing")}
+            >
+              <FaSearch /> Make Guesses
+            </button>
+          </div>
+        </div>
+      )}
+      {!outOfClues && tutorialStep >= 2 && currentCards && (
         <>
-          {message && <div className="error-message">{message}</div>}
           <div className="clue-instructions">
             {tutorialStep >= 3 ? (
               <>
@@ -146,7 +217,7 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
           </div>
         </>
       )}
-      {selectedCardIndex !== null && tutorialStep >= 3 && (
+      {!outOfClues && selectedCardIndex !== null && tutorialStep >= 3 && (
         <div className="clue-input-section">
           <div className="clue-input-label">Your clue:</div>
           <input
@@ -164,20 +235,38 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
           {submitStatus ? (
             <div className="submit-status">
               <div className="submit-status-message">{submitStatus}</div>
-              <button
-                className="next-game-button"
-                onClick={async () => {
-                  setClue("");
-                  setSelectedCardIndex(null);
-                  setSubmitStatus(null);
-                  if (tutorialStep === 4) {
-                    advanceTutorial();
-                  }
-                  await fetchAssignedGame();
-                }}
-              >
-                Next Game
-              </button>
+              {isWaitingForEnergy ? (
+                <button
+                  className="next-game-button button-done"
+                  onClick={() => {
+                    setClue("");
+                    setSelectedCardIndex(null);
+                    setSubmitStatus(null);
+                    setCurrentCards(null);
+                    if (tutorialStep === 4) {
+                      advanceTutorial();
+                    }
+                    setOutOfClues(true);
+                  }}
+                >
+                  Done
+                </button>
+              ) : (
+                <button
+                  className="next-game-button"
+                  onClick={async () => {
+                    setClue("");
+                    setSelectedCardIndex(null);
+                    setSubmitStatus(null);
+                    if (tutorialStep === 4) {
+                      advanceTutorial();
+                    }
+                    await fetchAssignedGame();
+                  }}
+                >
+                  Next Game
+                </button>
+              )}
             </div>
           ) : (
             <button

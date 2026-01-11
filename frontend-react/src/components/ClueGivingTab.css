@@ -266,3 +266,150 @@
   color: #ff6b6b;
   border-color: #5a2a2a;
 }
+
+/* Out of Clues Screen */
+.out-of-clues-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 15px 20px;
+  text-align: center;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.out-of-clues-icon {
+  font-size: 2.5rem;
+  margin-bottom: 8px;
+}
+
+.out-of-clues-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 6px 0;
+}
+
+.dark-mode .out-of-clues-title {
+  color: #fff;
+}
+
+.out-of-clues-message {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 0 0 12px 0;
+  line-height: 1.4;
+}
+
+.dark-mode .out-of-clues-message {
+  color: #aaa;
+}
+
+.out-of-clues-stats {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  align-items: stretch;
+  width: 100%;
+  max-width: 320px;
+  justify-content: center;
+}
+
+.out-of-clues-countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 24px;
+  background: linear-gradient(135deg, #fff0f5 0%, #ffe6ee 100%);
+  border-radius: 10px;
+  border: 2px solid #d94a7b;
+}
+
+.dark-mode .out-of-clues-countdown {
+  background: linear-gradient(135deg, #3a1a2a 0%, #4a2a3a 100%);
+  border-color: #e95a8b;
+}
+
+.out-of-clues-countdown .countdown-label {
+  font-size: 0.7rem;
+  color: #666;
+  font-weight: 500;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.dark-mode .out-of-clues-countdown .countdown-label {
+  color: #aaa;
+}
+
+.out-of-clues-countdown .countdown-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #d94a7b;
+}
+
+.dark-mode .out-of-clues-countdown .countdown-value {
+  color: #e95a8b;
+}
+
+/* Out of Clues Actions */
+.out-of-clues-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  width: 100%;
+}
+
+.out-of-clues-actions .actions-label {
+  font-size: 0.8rem;
+  color: #666;
+  margin: 0;
+  font-weight: 500;
+}
+
+.dark-mode .out-of-clues-actions .actions-label {
+  color: #aaa;
+}
+
+.out-of-clues-screen .action-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  max-width: 240px;
+}
+
+.out-of-clues-screen .action-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Done Button */
+.next-game-button.button-done {
+  background-color: #4a90d9 !important;
+}
+
+.next-game-button.button-done:hover {
+  background-color: #3a80c9 !important;
+}
+
+.dark-mode .next-game-button.button-done {
+  background-color: #5a9ae9 !important;
+}
+
+.dark-mode .next-game-button.button-done:hover {
+  background-color: #4a8ad9 !important;
+}
