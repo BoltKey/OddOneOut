@@ -228,17 +228,21 @@ public class GamesController : ControllerBase
                 .Take(10)
                 .ToList();
             
-            // Score function for ranking candidates
+            // Score function for ranking candidates (lower = better)
             double ScoreCandidate(CardSetCandidate x)
             {
                 // Success rate: 0-1 range (higher = easier)
                 double successRate = x.TotalGuessCount > 0 
                     ? (double)x.CorrectGuessCount / x.TotalGuessCount 
                     : 0.5;
-                // Clue diversity: unique clues / total games (higher = better)
-                double clueDiversity = x.TotalGameCount > 0 
-                    ? (double)x.UniqueClueCount / x.TotalGameCount 
+                
+                // Clue diversity: unique clues / total clue givers (higher = better)
+                // 10 clue givers with 10 unique clues = 1.0 (great)
+                // 10 clue givers with 1 unique clue = 0.1 (terrible - everyone gave same clue)
+                double clueDiversity = x.ClueGiverCount > 0 
+                    ? (double)x.UniqueClueCount / x.ClueGiverCount 
                     : 1.0;
+                
                 // Interestingness: score spread between best and worst games
                 double scoreSpread = x.MaxGameScore - x.MinGameScore;
                 
@@ -260,6 +264,7 @@ public class GamesController : ControllerBase
                 score -= interestBonus;
                 
                 // Diversity bonus (more important for experienced users)
+                // Low diversity (many clue givers, few unique clues) = big penalty
                 double diversityBonus = clueDiversity * (3 + expFactor * 4);  // 3 -> 7
                 score -= diversityBonus;
                 
@@ -267,17 +272,26 @@ public class GamesController : ControllerBase
             }
             
             // Pick the best from the random pool
-            var bestId = randomPool
+            var bestCandidate = randomPool
                 .OrderBy(ScoreCandidate)
                 .ThenBy(x => x.CreatedAt)
-                .Select(x => x.CardSetId)
                 .FirstOrDefault();
             
-            if (bestId != Guid.Empty)
+            // If best candidate has a bad score, create a fresh card set instead
+            // Threshold: score > 15 means too many clue givers, bad diversity, or wrong difficulty
+            const double BAD_SCORE_THRESHOLD = 15.0;
+            bool shouldCreateNew = bestCandidate == null || ScoreCandidate(bestCandidate) > BAD_SCORE_THRESHOLD;
+            
+            if (!shouldCreateNew && bestCandidate != null)
             {
                 cardSet = await _context.CardSet
                     .Include(cs => cs.WordCards)
-                    .FirstOrDefaultAsync(cs => cs.Id == bestId);
+                    .FirstOrDefaultAsync(cs => cs.Id == bestCandidate.CardSetId);
+            }
+            // If score was bad or no candidates, create a fresh card set
+            else
+            {
+                cardSet = await CardSet.CreateRandomAsync(_context);
             }
         }
 
