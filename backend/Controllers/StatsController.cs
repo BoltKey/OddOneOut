@@ -282,11 +282,15 @@ return Ok(new
         {
             var inactiveUsers = await _context.Users
                 .Where(u => u.lastDecay < DateTime.UtcNow.AddDays(-1))
-                .OrderBy(u => Guid.NewGuid())
-                .Take(3)
+                .Take(50) // Limit to avoid loading too many users
                 .ToListAsync();
             
-            foreach (var u in inactiveUsers)
+            // Shuffle in-memory and take 3 random users
+            var randomUsers = inactiveUsers
+                .OrderBy(_ => Guid.NewGuid())
+                .Take(3);
+            
+            foreach (var u in randomUsers)
             {
                 u.decayRating();
             }
