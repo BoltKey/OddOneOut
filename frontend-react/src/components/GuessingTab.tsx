@@ -323,11 +323,8 @@ export default function GuessingTab({ userId }: { userId: string }) {
           {message && !outOfGuesses && <div className="error-message">{message}</div>}
           {outOfGuesses && (
             <div className="out-of-guesses-screen">
-              <div className="out-of-guesses-icon">⏳</div>
-              <h2 className="out-of-guesses-title">Out of Guesses!</h2>
-              <p className="out-of-guesses-message">
-                You've used all your guesses for now.
-              </p>
+              <div className="out-of-guesses-icon">✅</div>
+              <h2 className="out-of-guesses-title">Guessing done</h2>
               <div className="out-of-guesses-stats">
                 {nextGuessRegenTime && (
                   <div className="out-of-guesses-countdown">
