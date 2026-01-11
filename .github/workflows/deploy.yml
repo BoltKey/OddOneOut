@@ -20,11 +20,35 @@ env:
   IMAGE_NAME: "my-dotnet-react-app"
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore dependencies
+        run: dotnet restore
+        working-directory: backend
+
+      - name: Build
+        run: dotnet build --no-restore
+        working-directory: backend
+
+      - name: Run tests
+        run: dotnet test --no-build --verbosity normal
+        working-directory: backend
+
+  build:
+    runs-on: ubuntu-latest
+    needs: test  # Only run build if tests pass
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       # 1. Log into Azure using the Service Principal
       - name: Azure Login
