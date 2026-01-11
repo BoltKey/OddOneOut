@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { FaQuestionCircle } from "react-icons/fa";
 import "./HelpIcon.css";
 
@@ -10,6 +10,33 @@ interface HelpIconProps {
 export default function HelpIcon({ content, title }: HelpIconProps) {
   const [isOpen, setIsOpen] = useState(false);
 
+  // Close popup handler that manages history
+  const closePopup = useCallback(() => {
+    if (isOpen && window.history.state?.helpPopup) {
+      window.history.back();
+    } else {
+      setIsOpen(false);
+    }
+  }, [isOpen]);
+
+  // Open popup and push history state
+  const openPopup = useCallback(() => {
+    window.history.pushState({ helpPopup: true }, '');
+    setIsOpen(true);
+  }, []);
+
+  // Handle browser back button
+  useEffect(() => {
+    const handlePopState = () => {
+      if (isOpen) {
+        setIsOpen(false);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [isOpen]);
+
   return (
     <div className="help-icon-container">
       <button
@@ -17,7 +44,11 @@ export default function HelpIcon({ content, title }: HelpIconProps) {
         className="help-icon-button"
         onClick={(e) => {
           e.stopPropagation();
-          setIsOpen(!isOpen);
+          if (isOpen) {
+            closePopup();
+          } else {
+            openPopup();
+          }
         }}
         aria-label="Help"
       >
@@ -27,14 +58,14 @@ export default function HelpIcon({ content, title }: HelpIconProps) {
         <>
           <div
             className="help-icon-overlay"
-            onClick={() => setIsOpen(false)}
+            onClick={closePopup}
           />
           <div className="help-icon-popup">
             {title && <div className="help-icon-title">{title}</div>}
             <div className="help-icon-content">{content}</div>
             <button
               className="help-icon-close"
-              onClick={() => setIsOpen(false)}
+              onClick={closePopup}
             >
               Close
             </button>

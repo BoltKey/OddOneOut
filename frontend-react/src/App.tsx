@@ -89,12 +89,40 @@ function App() {
     }
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
-  const [openModal, setOpenModal] = useState<
+  const [openModal, setOpenModalState] = useState<
     null | "guessHistory" | "clueHistory" | "leaderboard" | "settings"
   >(null);
   // Track if we're running inside Reddit/Devvit
   const [devvitContext, setDevvitContext] = useState<DevvitContext | null>(null);
   const [devvitChecked, setDevvitChecked] = useState(false);
+
+  // Wrapper for setOpenModal that handles browser history for back navigation
+  const setOpenModal = (modal: typeof openModal) => {
+    if (modal !== null && openModal === null) {
+      // Opening a modal - push state to history
+      window.history.pushState({ modal: true }, '');
+    } else if (modal === null && openModal !== null) {
+      // Closing modal via UI (not back button) - go back in history
+      // Check if we pushed a state (current state has modal: true)
+      if (window.history.state?.modal) {
+        window.history.back();
+        return; // The popstate handler will close the modal
+      }
+    }
+    setOpenModalState(modal);
+  };
+
+  // Handle browser back button to close modals
+  useEffect(() => {
+    const handlePopState = () => {
+      if (openModal !== null) {
+        setOpenModalState(null);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [openModal]);
 
   useEffect(() => {
     localStorage.setItem("darkMode", darkMode ? "true" : "false");
