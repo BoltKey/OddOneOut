@@ -10,6 +10,7 @@ namespace OddOneOut.Tests.Integration;
 /// <summary>
 /// Integration tests for the GamesController API endpoints.
 /// </summary>
+[Collection("Sequential")]
 public class GamesControllerTests : IntegrationTestBase
 {
     public GamesControllerTests(CustomWebApplicationFactory factory) : base(factory)
@@ -37,11 +38,11 @@ public class GamesControllerTests : IntegrationTestBase
         // Arrange
         var userId = $"test-user-{Guid.NewGuid()}";
         var user = CreateTestUser(userId);
-        
+
         // Create a clue giver and their game
         var clueGiver = CreateTestUser($"clue-giver-{Guid.NewGuid()}", "ClueGiver");
         var (cardSet, game) = CreateGameWithCardSet(clueGiver);
-        
+
         var client = CreateAuthenticatedClient(userId);
 
         // Act
@@ -49,7 +50,7 @@ public class GamesControllerTests : IntegrationTestBase
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        
+
         var result = await response.Content.ReadFromJsonAsync<GameGuessResponse>();
         result.Should().NotBeNull();
         result!.GameId.Should().NotBeEmpty();
@@ -62,7 +63,7 @@ public class GamesControllerTests : IntegrationTestBase
     {
         // Arrange
         var userId = $"test-user-{Guid.NewGuid()}";
-        
+
         using (var scope = Factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -92,11 +93,11 @@ public class GamesControllerTests : IntegrationTestBase
         // Arrange
         var userId = $"test-user-{Guid.NewGuid()}";
         var user = CreateTestUser(userId);
-        
+
         // Create a clue giver and their game
         var clueGiver = CreateTestUser($"clue-giver-{Guid.NewGuid()}", "ClueGiver");
         var (cardSet, game) = CreateGameWithCardSet(clueGiver);
-        
+
         var client = CreateAuthenticatedClient(userId);
 
         // Act - call twice
@@ -133,7 +134,7 @@ public class GamesControllerTests : IntegrationTestBase
         // Arrange
         var userId = $"test-user-{Guid.NewGuid()}";
         var user = CreateTestUser(userId);
-        
+
         var client = CreateAuthenticatedClient(userId);
 
         // Act
@@ -141,7 +142,7 @@ public class GamesControllerTests : IntegrationTestBase
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        
+
         var result = await response.Content.ReadFromJsonAsync<CardSetResponse>();
         result.Should().NotBeNull();
         result!.Id.Should().NotBeEmpty();
@@ -153,7 +154,7 @@ public class GamesControllerTests : IntegrationTestBase
     {
         // Arrange
         var userId = $"test-user-{Guid.NewGuid()}";
-        
+
         using (var scope = Factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -183,7 +184,7 @@ public class GamesControllerTests : IntegrationTestBase
         // Arrange
         var userId = $"test-user-{Guid.NewGuid()}";
         var user = CreateTestUser(userId);
-        
+
         var client = CreateAuthenticatedClient(userId);
         var request = new { GuessIsInSet = true };
 
@@ -200,11 +201,11 @@ public class GamesControllerTests : IntegrationTestBase
         // Arrange
         var userId = $"test-user-{Guid.NewGuid()}";
         var user = CreateTestUser(userId);
-        
+
         // Create a clue giver and their game
         var clueGiver = CreateTestUser($"clue-giver-{Guid.NewGuid()}", "ClueGiver");
         var (cardSet, game) = CreateGameWithCardSet(clueGiver);
-        
+
         var client = CreateAuthenticatedClient(userId);
 
         // First, get a game assigned
@@ -217,7 +218,7 @@ public class GamesControllerTests : IntegrationTestBase
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        
+
         var result = await response.Content.ReadFromJsonAsync<MakeGuessResponse>();
         result.Should().NotBeNull();
         result!.Clue.Should().NotBeNullOrEmpty();
@@ -253,7 +254,7 @@ public class GamesControllerTests : IntegrationTestBase
         // Arrange
         var userId = $"test-user-{Guid.NewGuid()}";
         var user = CreateTestUser(userId);
-        
+
         var client = CreateAuthenticatedClient(userId);
 
         // First get assigned a card set
@@ -272,11 +273,11 @@ public class GamesControllerTests : IntegrationTestBase
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        
+
         var result = await response.Content.ReadFromJsonAsync<CreateGameResponse>();
         result.Should().NotBeNull();
         result!.GameId.Should().NotBeEmpty();
-        result.ClueGiverAmt.Should().BeGreaterThanOrEqualTo(1);
+        result.TotalClueGiversCount.Should().BeGreaterThanOrEqualTo(1);
     }
 
     [Fact]
@@ -285,7 +286,7 @@ public class GamesControllerTests : IntegrationTestBase
         // Arrange
         var userId = $"test-user-{Guid.NewGuid()}";
         var user = CreateTestUser(userId);
-        
+
         var client = CreateAuthenticatedClient(userId);
 
         var request = new
@@ -308,7 +309,7 @@ public class GamesControllerTests : IntegrationTestBase
         // Arrange
         var userId = $"test-user-{Guid.NewGuid()}";
         var user = CreateTestUser(userId);
-        
+
         var client = CreateAuthenticatedClient(userId);
 
         // First get assigned a card set
@@ -335,7 +336,7 @@ public class GamesControllerTests : IntegrationTestBase
         // Arrange
         var userId1 = $"test-user-1-{Guid.NewGuid()}";
         var userId2 = $"test-user-2-{Guid.NewGuid()}";
-        
+
         // First user creates a game
         var user1 = CreateTestUser(userId1, "User1");
         var client1 = CreateAuthenticatedClient(userId1);
@@ -352,6 +353,8 @@ public class GamesControllerTests : IntegrationTestBase
 
         var createResponse1 = await client1.PostAsJsonAsync("/api/Games/CreateGame", request1);
         var result1 = await createResponse1.Content.ReadFromJsonAsync<CreateGameResponse>();
+        result1.Should().NotBeNull();
+        var origClueGiversCount = result1!.TotalClueGiversCount;
 
         // Second user creates a game with the same clue on the same card set
         // First, they need to be assigned the same card set
@@ -378,11 +381,11 @@ public class GamesControllerTests : IntegrationTestBase
 
         // Assert
         createResponse2.StatusCode.Should().Be(HttpStatusCode.OK);
-        
+
         var result2 = await createResponse2.Content.ReadFromJsonAsync<CreateGameResponse>();
         result2.Should().NotBeNull();
         result2!.GameId.Should().Be(result1!.GameId); // Same game
-        result2.ClueGiverAmt.Should().Be(2); // Now has 2 clue givers
+        result2.TotalClueGiversCount.Should().Be(origClueGiversCount + 1); // Now has 2 clue givers
     }
 
     #endregion
@@ -422,5 +425,5 @@ public class WordInfo
 public class CreateGameResponse
 {
     public Guid GameId { get; set; }
-    public int ClueGiverAmt { get; set; }
+    public int TotalClueGiversCount { get; set; }
 }

@@ -559,8 +559,7 @@ var existingGame = await _context.Games
             response = new CreateGameResponseDto
             {
                 GameId = existingGame.Id,
-                ClueGiverAmt = existingGame.ClueGivers.Count - 1,
-                OtherClueGiversCount = cardSetStats.OtherClueGiversCount,
+                TotalClueGiversCount = cardSetStats.TotalClueGiversCount,
                 DifferentCluesCount = cardSetStats.DifferentCluesCount
             };
             return Ok(response);
@@ -592,14 +591,13 @@ var existingGame = await _context.Games
         response = new CreateGameResponseDto
         {
             GameId = newGame.Id,
-            ClueGiverAmt = newGame.ClueGivers.Count,
-            OtherClueGiversCount = newCardSetStats.OtherClueGiversCount,
+            TotalClueGiversCount = newCardSetStats.TotalClueGiversCount,
             DifferentCluesCount = newCardSetStats.DifferentCluesCount
         };
         return Ok(response);
     }
 
-    private async Task<(int OtherClueGiversCount, int DifferentCluesCount)> GetCardSetClueStats(Guid cardSetId, Guid newGameId)
+    private async Task<(int TotalClueGiversCount, int DifferentCluesCount)> GetCardSetClueStats(Guid cardSetId, Guid newGameId)
     {
         // Get all games for this card set
         var gamesForCardSet = await _context.Games
@@ -611,11 +609,12 @@ var existingGame = await _context.Games
         var differentCluesCount = gamesForCardSet.Count;
 
         // Count other clue givers (excluding current user)
-        var otherClueGiversCount = gamesForCardSet
+        var totalClueGiversCount = gamesForCardSet
             .SelectMany(g => g.ClueGivers)
+            .Distinct()
             .Count();
 
-        return (otherClueGiversCount - 1, differentCluesCount - 1);
+        return (totalClueGiversCount, differentCluesCount);
     }
 }
 
@@ -650,8 +649,7 @@ public class MakeGuessDto
 public class CreateGameResponseDto
 {
     public Guid GameId { get; set; }
-    public int ClueGiverAmt { get; set; }
-    public int OtherClueGiversCount { get; set; }
+    public int TotalClueGiversCount { get; set; }
     public int DifferentCluesCount { get; set; }
 }
 
