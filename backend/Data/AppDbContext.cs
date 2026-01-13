@@ -211,6 +211,7 @@ public class Game
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public string? Clue { get; set; }
     public WordCard? OddOneOut { get; set; }
+    public Guid? OddOneOutId { get; set; }
     public List<Guess> Guesses { get; set; } = new();
     public const int FallbackAverageSuccessCoef = 80;
     // game difficulty calculated based on number of correct guesses
