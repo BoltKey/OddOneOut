@@ -1,4 +1,4 @@
-Privacy Policy for Misfit
+# Privacy Policy for Misfit
 
 Last Updated: 2026-01-13
 
