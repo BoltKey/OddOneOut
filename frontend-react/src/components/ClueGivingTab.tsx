@@ -11,6 +11,10 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
   const [message, setMessage] = useState<string | null>(null);
   const [clue, setClue] = useState<string>("");
   const [submitStatus, setSubmitStatus] = useState<string | null>(null);
+  const [submitStats, setSubmitStats] = useState<{
+    otherClueGiversCount: number;
+    differentCluesCount: number;
+  } | null>(null);
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(
     null
   );
@@ -229,6 +233,14 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
           {submitStatus ? (
             <div className="submit-status">
               <div className="submit-status-message">{submitStatus}</div>
+              {submitStats && submitStats.otherClueGiversCount > 0 && (
+                <button
+                  className="check-it-out-button"
+                  onClick={() => openModal("clueHistory")}
+                >
+                  Check it out
+                </button>
+              )}
               {isWaitingForEnergy ? (
                 <button
                   className="next-game-button button-done"
@@ -236,6 +248,7 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
                     setClue("");
                     setSelectedCardIndex(null);
                     setSubmitStatus(null);
+                    setSubmitStats(null);
                     setCurrentCards(null);
                     setOutOfClues(true);
                   }}
@@ -249,6 +262,7 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
                     setClue("");
                     setSelectedCardIndex(null);
                     setSubmitStatus(null);
+                    setSubmitStats(null);
                     if (tutorialStep === 2) {
                       advanceTutorial();
                     }
@@ -289,15 +303,36 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
     if (tutorialStep === 3) {
       advanceTutorial();
     }
-    if (result.clueGiverAmt === 1) {
-      setSubmitStatus(
-        "Clue submitted! You were the first to give it for this word set."
-      );
+    
+    // Build a single combined message
+    const otherClueGiversCount = result.otherClueGiversCount;
+    const differentCluesCount = result.differentCluesCount;
+    const sameClueGivers = result.clueGiverAmt;
+    
+    let message = "Clue submitted! ";
+    
+    if (otherClueGiversCount === 0) {
+      // You're the only cluegiver for this word set
+      message += "You were the first to give a clue for this word set - you will have to wait for other players to guess.";
+    } else if (sameClueGivers === 0) {
+      // First for this clue, but others gave different clues
+      message += `You were the first to give this clue. ${otherClueGiversCount} other player${otherClueGiversCount !== 1 ? "s" : ""} gave ${differentCluesCount - 1} other clue${differentCluesCount - 1 !== 1 ? "s" : ""}.`;
     } else {
-      setSubmitStatus(
-        `Clue submitted! It was the same clue given by ${result.clueGiverAmt} clue givers so far for this word set.`
-      );
+      // Others gave the same clue
+      message += `${sameClueGivers - 1} other players gave the same clue.`;
+      // Check if there are also different clues
+      const otherDifferentClues = differentCluesCount;
+      if (otherDifferentClues > 0) {
+        message += ` ${otherDifferentClues} other clue${otherDifferentClues !== 1 ? "s" : ""} also exist${otherDifferentClues === 1 ? "s" : ""}.`;
+      }
     }
+    
+    setSubmitStatus(message);
+    // Store stats for button visibility
+    setSubmitStats({
+      otherClueGiversCount: result.otherClueGiversCount,
+      differentCluesCount: result.differentCluesCount,
+    });
     await loadUser();
   }
 }

@@ -532,7 +532,7 @@ public async Task<IActionResult> MakeGuess(MakeGuessDto request)
         }
         // check if game with same word set and clue already exists (case-insensitive)
 var existingGame = await _context.Games
-    .FirstOrDefaultAsync(g => g.CardSetId == cardSet.Id && g.Clue == normalizedClue);
+    .FirstOrDefaultAsync(g => g.CardSetId == cardSet.Id && g.Clue == normalizedClue && g.OddOneOutId == oddCard.Id);
         CreateGameResponseDto response;
         if (existingGame != null)
         {
@@ -553,10 +553,15 @@ var existingGame = await _context.Games
 
             await _context.SaveChangesAsync();
 
+            // Calculate stats for this card set
+            var cardSetStats = await GetCardSetClueStats(cardSet.Id, existingGame.Id);
+
             response = new CreateGameResponseDto
             {
                 GameId = existingGame.Id,
-                ClueGiverAmt = existingGame.ClueGivers.Count
+                ClueGiverAmt = existingGame.ClueGivers.Count - 1,
+                OtherClueGiversCount = cardSetStats.OtherClueGiversCount,
+                DifferentCluesCount = cardSetStats.DifferentCluesCount
             };
             return Ok(response);
         }
@@ -580,12 +585,37 @@ var existingGame = await _context.Games
 
         _context.Games.Add(newGame);
         await _context.SaveChangesAsync(); // Saves to Postgres!
+
+        // Calculate stats for this card set (after saving, so this game is included)
+        var newCardSetStats = await GetCardSetClueStats(cardSet.Id, newGame.Id);
+
         response = new CreateGameResponseDto
         {
             GameId = newGame.Id,
-            ClueGiverAmt = newGame.ClueGivers.Count
+            ClueGiverAmt = newGame.ClueGivers.Count,
+            OtherClueGiversCount = newCardSetStats.OtherClueGiversCount,
+            DifferentCluesCount = newCardSetStats.DifferentCluesCount
         };
         return Ok(response);
+    }
+
+    private async Task<(int OtherClueGiversCount, int DifferentCluesCount)> GetCardSetClueStats(Guid cardSetId, Guid newGameId)
+    {
+        // Get all games for this card set
+        var gamesForCardSet = await _context.Games
+            .Where(g => g.CardSetId == cardSetId)
+            .Include(g => g.ClueGivers)
+            .ToListAsync();
+
+        // Count different clues (number of games)
+        var differentCluesCount = gamesForCardSet.Count;
+
+        // Count other clue givers (excluding current user)
+        var otherClueGiversCount = gamesForCardSet
+            .SelectMany(g => g.ClueGivers)
+            .Count();
+
+        return (otherClueGiversCount - 1, differentCluesCount - 1);
     }
 }
 
@@ -621,6 +651,8 @@ public class CreateGameResponseDto
 {
     public Guid GameId { get; set; }
     public int ClueGiverAmt { get; set; }
+    public int OtherClueGiversCount { get; set; }
+    public int DifferentCluesCount { get; set; }
 }
 
 // Internal DTO for card set selection query

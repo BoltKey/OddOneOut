@@ -825,6 +825,18 @@
   color: #fff;
 }
 
+.clue-giver-count {
+  font-size: 0.75rem;
+  font-weight: 400;
+  text-transform: none;
+  color: #666;
+  margin-left: 6px;
+}
+
+.dark-mode .clue-giver-count {
+  color: #aaa;
+}
+
 .other-clue-details {
   display: flex;
   gap: 12px;
