@@ -35,7 +35,7 @@ public class UserController : ControllerBase
         _configuration = configuration;
         _jwtSettings = jwtSettings.Value;
     }
-    
+
     // Helper method to generate JWT token for a user
     private string GenerateJwtToken(User user)
     {
@@ -75,7 +75,7 @@ public class UserController : ControllerBase
         var user = await _context.Users
             .Where(u => u.Id == userId)
             .FirstOrDefaultAsync();
-            
+
         if (user == null) return NotFound("User profile not found.");
 
         // Decay rating for inactive users when they check their profile
@@ -85,7 +85,7 @@ public class UserController : ControllerBase
         // Calculate ranks efficiently
         var guessRank = await _context.Users.CountAsync(u => u.GuessRating > user.GuessRating) + 1;
         var clueRank = await _context.Users.CountAsync(u => u.CachedClueRating > user.CachedClueRating) + 1;
-        
+
         // Get guess count
         var guessCount = await _context.Users
             .Where(u => u.Id == userId)
@@ -152,26 +152,27 @@ public class UserController : ControllerBase
     [HttpPost("signup")]
     public async Task<IActionResult> Signup([FromBody] SignupRequest request)
     {
-        // Check if the user is currently a Guest upgrading their account
-        if (User.Identity.IsAuthenticated)
-        {
-            return await UpgradeGuestToRegistered(request);
-        }
+
         // Optimize: Check in database instead of loading all users
         var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
         var recentAccountCount = await _context.Users
-            .Where(u => u.SourceIp == ipAddress && 
+            .Where(u => u.SourceIp == ipAddress &&
                    u.CreatedAt > DateTime.UtcNow.AddMinutes(-GameConfig.Current.RegisterTimeoutMinutes))
             .CountAsync();
-        
+
         Console.WriteLine($"Recent accounts from this IP: {recentAccountCount}");
+
+        // Otherwise, create a new User
+        var user = new User { UserName = request.Username, Email = null };
+        // Check if the user is currently a Guest upgrading their account
+        if (User.Identity.IsAuthenticated && user.IsGuest)
+        {
+            return await UpgradeGuestToRegistered(request);
+        }
         if (recentAccountCount > 0)
         {
             return BadRequest("You cannot create so many accounts from the same IP. Wait a while please.");
         }
-
-        // Otherwise, create a new User
-        var user = new User { UserName = request.Username, Email = null };
         user.DisplayName = request.Username;
         user.SourceIp = HttpContext.Connection.RemoteIpAddress?.ToString();
         user.GuessEnergy = GameConfig.Current.MaxGuessEnergy;
@@ -215,10 +216,10 @@ public class UserController : ControllerBase
         // Optimize: Check in database instead of loading all users
         var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
         var recentAccountCount = await _context.Users
-            .Where(u => u.SourceIp == ipAddress && 
+            .Where(u => u.SourceIp == ipAddress &&
                    u.CreatedAt > DateTime.UtcNow.AddMinutes(-GameConfig.Current.RegisterTimeoutMinutes))
             .CountAsync();
-        
+
         Console.WriteLine($"Recent accounts from this IP: {recentAccountCount}");
         if (recentAccountCount > 0)
         {
@@ -271,7 +272,7 @@ public class UserController : ControllerBase
     // ==========================================
     // 4. REDDIT/DEVVIT AUTH
     // ==========================================
-    
+
     /// <summary>
     /// Authenticate a Reddit user coming from Devvit/Reddit Games.
     /// This endpoint receives the Reddit user ID from the Devvit context
@@ -311,7 +312,7 @@ public class UserController : ControllerBase
                         return BadRequest("This account is already linked to a different Reddit account.");
                     }
                 }
-                
+
                 // Link the Reddit account to the current user (guest upgrade scenario)
                 currentUser.RedditUserId = request.RedditUserId;
                 if (currentUser.IsGuest)
@@ -343,10 +344,10 @@ public class UserController : ControllerBase
 
         // Create a new user for this Reddit account
         var redditId = request.RedditUserId.Substring(3); // Remove "t2_" prefix for username
-        var username = !string.IsNullOrEmpty(request.RedditUsername) 
+        var username = !string.IsNullOrEmpty(request.RedditUsername)
             ? await GetUniqueUsernameAsync(request.RedditUsername, null)
             : await GetUniqueUsernameAsync($"Reddit_{redditId}", null);
-        
+
         var newUser = new User
         {
             UserName = username,
@@ -373,7 +374,7 @@ public class UserController : ControllerBase
     // ==========================================
     // 4b. ITCH.IO LOGIN
     // ==========================================
-    
+
     /// <summary>
     /// Authenticate an itch.io user.
     /// This endpoint receives the itch.io user ID from the itch.io JavaScript API
@@ -409,7 +410,7 @@ public class UserController : ControllerBase
                         return BadRequest("This account is already linked to a different itch.io account.");
                     }
                 }
-                
+
                 // Link the itch.io account to the current user (guest upgrade scenario)
                 currentUser.ItchioUserId = itchioUserIdStr;
                 if (currentUser.IsGuest)
@@ -440,10 +441,10 @@ public class UserController : ControllerBase
         }
 
         // Create a new user for this itch.io account
-        var username = !string.IsNullOrEmpty(request.ItchioUsername) 
+        var username = !string.IsNullOrEmpty(request.ItchioUsername)
             ? await GetUniqueUsernameAsync(request.ItchioUsername, null)
             : await GetUniqueUsernameAsync($"Itchio_{itchioUserIdStr}", null);
-        
+
         var newUser = new User
         {
             UserName = username,
@@ -487,7 +488,7 @@ public class UserController : ControllerBase
     {
         var info = await _signInManager.GetExternalLoginInfoAsync();
         var clientUrl = _configuration["ClientUrl"] ?? "http://localhost:5173";
-        
+
         if (info == null)
         {
             return popup ? PopupResponse("error", "auth_failed") : Redirect($"{clientUrl}/login?error=auth_failed");
@@ -567,7 +568,7 @@ public class UserController : ControllerBase
 
         return popup ? PopupResponse("error", "unknown") : Redirect($"{clientUrl}/login?error=unknown");
     }
-    
+
     // Helper method to return HTML that posts a message to the opener window and closes itself
     // This is used for popup-based OAuth flow (PWA support)
     // When a user is provided, includes a JWT token for iframe contexts (like itch.io) where cookies don't work
@@ -575,7 +576,7 @@ public class UserController : ControllerBase
     {
         var messageType = status == "success" ? "google-auth-success" : "google-auth-error";
         var errorJson = error != null ? $", error: '{error}'" : "";
-        
+
         // Generate JWT token if user is provided (for iframe/itch.io support)
         var tokenJson = "";
         if (user != null && status == "success")
@@ -583,7 +584,7 @@ public class UserController : ControllerBase
             var token = GenerateJwtToken(user);
             tokenJson = $", token: '{token}'";
         }
-        
+
         var html = $@"
 <!DOCTYPE html>
 <html>
@@ -605,7 +606,7 @@ public class UserController : ControllerBase
     </script>
 </body>
 </html>";
-        
+
         return Content(html, "text/html");
     }
 

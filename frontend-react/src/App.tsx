@@ -91,7 +91,9 @@ function App() {
     null
   );
   const [nextClueRegenTime, setNextClueRegenTime] = useState<Date | null>(null);
-  const [lastCanGiveClues, setLastCanGiveClues] = useState<boolean>(false);
+  const [lastCanGiveClues, setLastCanGiveClues] = useState<boolean | null>(
+    null
+  );
   const [displayingGiveClues, setDisplayingGiveClues] =
     useState<boolean>(false);
   const [darkMode, setDarkMode] = useState<boolean>(() => {
@@ -152,7 +154,10 @@ function App() {
     try {
       const userData = await api.getMe();
       setUser(userData);
-      if (!lastCanGiveClues && lastCanGiveClues !== userData.canGiveClues) {
+      if (
+        lastCanGiveClues === false &&
+        lastCanGiveClues !== userData.canGiveClues
+      ) {
         setDisplayingGiveClues(true);
         setTimeout(() => {
           setDisplayingGiveClues(false);
