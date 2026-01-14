@@ -2,7 +2,11 @@ import { useState, useEffect, createContext, useContext, use } from "react";
 import LoginPage from "./components/LoginPage";
 import GuessingTab from "./components/GuessingTab"; // Make sure this exists
 import { api } from "./services/api";
-import { getDevvitContext, isDevvitEnvironment, type DevvitContext } from "./services/devvit";
+import {
+  getDevvitContext,
+  isDevvitEnvironment,
+  type DevvitContext,
+} from "./services/devvit";
 import type { User } from "./types";
 import "./App.css";
 import ClueGivingTab from "./components/ClueGivingTab";
@@ -21,7 +25,12 @@ import {
   BiSolidMessageRoundedDetail,
 } from "react-icons/bi";
 
-export type OpenModalType = "guessHistory" | "clueHistory" | "leaderboard" | "settings" | null;
+export type OpenModalType =
+  | "guessHistory"
+  | "clueHistory"
+  | "leaderboard"
+  | "settings"
+  | null;
 export type SelectedTabType = "guessing" | "clueGiving";
 
 export const UserStatsContext = createContext<{
@@ -82,6 +91,9 @@ function App() {
     null
   );
   const [nextClueRegenTime, setNextClueRegenTime] = useState<Date | null>(null);
+  const [lastCanGiveClues, setLastCanGiveClues] = useState<boolean>(false);
+  const [displayingGiveClues, setDisplayingGiveClues] =
+    useState<boolean>(false);
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     const savedMode = localStorage.getItem("darkMode");
     if (savedMode !== null) {
@@ -93,14 +105,16 @@ function App() {
     null | "guessHistory" | "clueHistory" | "leaderboard" | "settings"
   >(null);
   // Track if we're running inside Reddit/Devvit
-  const [devvitContext, setDevvitContext] = useState<DevvitContext | null>(null);
+  const [devvitContext, setDevvitContext] = useState<DevvitContext | null>(
+    null
+  );
   const [devvitChecked, setDevvitChecked] = useState(false);
 
   // Wrapper for setOpenModal that handles browser history for back navigation
   const setOpenModal = (modal: typeof openModal) => {
     if (modal !== null && openModal === null) {
       // Opening a modal - push state to history
-      window.history.pushState({ modal: true }, '');
+      window.history.pushState({ modal: true }, "");
     } else if (modal === null && openModal !== null) {
       // Closing modal via UI (not back button) - go back in history
       // Check if we pushed a state (current state has modal: true)
@@ -120,8 +134,8 @@ function App() {
       }
     };
 
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
   }, [openModal]);
 
   useEffect(() => {
@@ -138,6 +152,13 @@ function App() {
     try {
       const userData = await api.getMe();
       setUser(userData);
+      if (!lastCanGiveClues && lastCanGiveClues !== userData.canGiveClues) {
+        setDisplayingGiveClues(true);
+        setTimeout(() => {
+          setDisplayingGiveClues(false);
+        }, 5000);
+      }
+      setLastCanGiveClues(userData.canGiveClues);
       setGuessRating(userData.guessRating);
       setGuessEnergy(userData.guessEnergy);
       setClueEnergy(userData.clueEnergy);
@@ -243,7 +264,9 @@ function App() {
             },
             {
               key: "clueHistory",
-              tooltip: user?.canGiveClues ? "Clue History" : "You need at least 10 guesses to unlock clue giving.",
+              tooltip: user?.canGiveClues
+                ? "Clue History"
+                : "You need at least 10 guesses to unlock clue giving.",
               content: <BiSolidMessageRoundedDetail />,
               disabled: !user?.canGiveClues,
             },
@@ -264,8 +287,8 @@ function App() {
               disabled: false,
             },
           ].map(({ key, content, tooltip, disabled }) => (
-            <Tooltip 
-              title={tooltip} 
+            <Tooltip
+              title={tooltip}
               id={tooltip}
               key={key}
               enterTouchDelay={0}
@@ -273,8 +296,14 @@ function App() {
             >
               <span>
                 <button
-                  className={(openModal === key ? "active" : "") + " nav-button" + (disabled ? " disabled" : "")}
-                  onClick={() => !disabled && setOpenModal(key as typeof openModal)}
+                  className={
+                    (openModal === key ? "active" : "") +
+                    " nav-button" +
+                    (disabled ? " disabled" : "")
+                  }
+                  onClick={() =>
+                    !disabled && setOpenModal(key as typeof openModal)
+                  }
                   disabled={disabled}
                 >
                   {content}
@@ -308,12 +337,17 @@ function App() {
                   <span className="nav-button-main">
                     <FaSearch />
                     <span className="nav-button-label">Guess</span>
-                    <span className={`energy-badge ${
-                      (guessEnergy ?? 0) === 0 ? 'no-energy' :
-                      (guessEnergy ?? 0) >= (user?.maxGuessEnergy ?? 0) ? 'full-energy' :
-                      'partial-energy'
-                    }`}>
-                      {guessEnergy ?? 0}{user?.maxGuessEnergy ? `/${user.maxGuessEnergy}` : ''}
+                    <span
+                      className={`energy-badge ${
+                        (guessEnergy ?? 0) === 0
+                          ? "no-energy"
+                          : (guessEnergy ?? 0) >= (user?.maxGuessEnergy ?? 0)
+                          ? "full-energy"
+                          : "partial-energy"
+                      }`}
+                    >
+                      {guessEnergy ?? 0}
+                      {user?.maxGuessEnergy ? `/${user.maxGuessEnergy}` : ""}
                     </span>
                   </span>
                   <RegenTimer
@@ -327,18 +361,25 @@ function App() {
             },
             {
               key: "clueGiving",
-              tooltip: user?.canGiveClues ? null : `You need at least 10 guesses to unlock clue giving.`,
+              tooltip: user?.canGiveClues
+                ? null
+                : `You need at least 10 guesses to unlock clue giving.`,
               content: (
                 <>
-                  <span className="nav-button-main">
+                  <span className={"nav-button-main"}>
                     <BiSolidMessageRounded />
                     <span className="nav-button-label">Give Clues</span>
-                    <span className={`energy-badge ${
-                      (clueEnergy ?? 0) === 0 ? 'no-energy' :
-                      (clueEnergy ?? 0) >= (user?.maxClueEnergy ?? 0) ? 'full-energy' :
-                      'partial-energy'
-                    }`}>
-                      {clueEnergy ?? 0}{user?.maxClueEnergy ? `/${user.maxClueEnergy}` : ''}
+                    <span
+                      className={`energy-badge ${
+                        (clueEnergy ?? 0) === 0
+                          ? "no-energy"
+                          : (clueEnergy ?? 0) >= (user?.maxClueEnergy ?? 0)
+                          ? "full-energy"
+                          : "partial-energy"
+                      }`}
+                    >
+                      {clueEnergy ?? 0}
+                      {user?.maxClueEnergy ? `/${user.maxClueEnergy}` : ""}
                     </span>
                   </span>
                   <RegenTimer
@@ -360,12 +401,23 @@ function App() {
             >
               <span>
                 <button
-                  className={selectedTab === key ? "active" : ""}
-                  onClick={() => setSelectedTab(key as "guessing" | "clueGiving")}
+                  className={
+                    selectedTab === key
+                      ? "active "
+                      : " " + (displayingGiveClues ? "highlight" : "")
+                  }
+                  onClick={() =>
+                    setSelectedTab(key as "guessing" | "clueGiving")
+                  }
                   disabled={key === "clueGiving" && !user?.canGiveClues}
                 >
                   {content}
                 </button>
+                {key === "clueGiving" && displayingGiveClues && (
+                  <div className="clue-give-unlock-message">
+                    You unlocked clue giving!
+                  </div>
+                )}
               </span>
             </Tooltip>
           ))}

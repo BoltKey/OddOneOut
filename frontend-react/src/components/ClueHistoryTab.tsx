@@ -119,7 +119,7 @@ export default function ClueHistoryTab({
   return (
     <div className="clue-history-wrapper">
       {message && <div className="history-message">{message}</div>}
-      {clueHistory.length > 0 && (
+      {clueHistory.length > 0 ? (
         <div>
           <h3 style={{ marginBottom: "10px", textAlign: "center" }}>
             Your Clue History
@@ -178,65 +178,82 @@ export default function ClueHistoryTab({
                   </div>
 
                   {/* Other Clues on Same Card Set */}
-                  {entry.otherClues && entry.otherClues.length > 0 && (() => {
-                    // Aggregate clues by clue text + oddOneOut
-                    const aggregatedClues = entry.otherClues.reduce((acc, clue) => {
-                      const key = `${clue.clue}|${clue.oddOneOut}`;
-                      if (!acc[key]) {
-                        acc[key] = {
-                          clue: clue.clue,
-                          oddOneOut: clue.oddOneOut,
-                          gameScore: clue.gameScore,
-                          createdAt: clue.createdAt,
-                          count: 1,
-                        };
-                      } else {
-                        acc[key].count++;
-                        // Keep the most recent date
-                        if (new Date(clue.createdAt) > new Date(acc[key].createdAt)) {
-                          acc[key].createdAt = clue.createdAt;
-                        }
-                      }
-                      return acc;
-                    }, {} as Record<string, { clue: string; oddOneOut: string; gameScore: number; createdAt: string; count: number }>);
-                    
-                    const uniqueClues = Object.values(aggregatedClues);
-                    
-                    return (
-                      <div className="clue-history-other-clues">
-                        <div className="other-clues-label">
-                          Other Clues ({uniqueClues.length})
-                        </div>
-                        <div className="other-clues-list">
-                          {uniqueClues.map((otherClue, clueIndex) => (
-                            <div key={clueIndex} className="other-clue-item">
-                              <div className="other-clue-text">
-                                {otherClue.clue}
-                                {otherClue.count > 1 && (
-                                  <span className="clue-giver-count">
-                                    ({otherClue.count} cluegivers)
+                  {entry.otherClues &&
+                    entry.otherClues.length > 0 &&
+                    (() => {
+                      // Aggregate clues by clue text + oddOneOut
+                      const aggregatedClues = entry.otherClues.reduce(
+                        (acc, clue) => {
+                          const key = `${clue.clue}|${clue.oddOneOut}`;
+                          if (!acc[key]) {
+                            acc[key] = {
+                              clue: clue.clue,
+                              oddOneOut: clue.oddOneOut,
+                              gameScore: clue.gameScore,
+                              createdAt: clue.createdAt,
+                              count: 1,
+                            };
+                          } else {
+                            acc[key].count++;
+                            // Keep the most recent date
+                            if (
+                              new Date(clue.createdAt) >
+                              new Date(acc[key].createdAt)
+                            ) {
+                              acc[key].createdAt = clue.createdAt;
+                            }
+                          }
+                          return acc;
+                        },
+                        {} as Record<
+                          string,
+                          {
+                            clue: string;
+                            oddOneOut: string;
+                            gameScore: number;
+                            createdAt: string;
+                            count: number;
+                          }
+                        >
+                      );
+
+                      const uniqueClues = Object.values(aggregatedClues);
+
+                      return (
+                        <div className="clue-history-other-clues">
+                          <div className="other-clues-label">
+                            Other Clues ({uniqueClues.length})
+                          </div>
+                          <div className="other-clues-list">
+                            {uniqueClues.map((otherClue, clueIndex) => (
+                              <div key={clueIndex} className="other-clue-item">
+                                <div className="other-clue-text">
+                                  {otherClue.clue}
+                                  {otherClue.count > 1 && (
+                                    <span className="clue-giver-count">
+                                      ({otherClue.count} cluegivers)
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="other-clue-details">
+                                  <span className="other-clue-misfit">
+                                    Misfit: {otherClue.oddOneOut}
                                   </span>
-                                )}
-                              </div>
-                              <div className="other-clue-details">
-                                <span className="other-clue-misfit">
-                                  Misfit: {otherClue.oddOneOut}
-                                </span>
-                                {otherClue.gameScore !== null && (
-                                  <span className="other-clue-score">
-                                    Score: {otherClue.gameScore.toFixed(1)}
+                                  {otherClue.gameScore !== null && (
+                                    <span className="other-clue-score">
+                                      Score: {otherClue.gameScore.toFixed(1)}
+                                    </span>
+                                  )}
+                                  <span className="other-clue-time">
+                                    {formatDateTime(otherClue.createdAt)}
                                   </span>
-                                )}
-                                <span className="other-clue-time">
-                                  {formatDateTime(otherClue.createdAt)}
-                                </span>
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })()}
+                      );
+                    })()}
 
                   {/* Cards display */}
                   <div className="history-cards-section">
@@ -280,6 +297,8 @@ export default function ClueHistoryTab({
             </div>
           )}
         </div>
+      ) : (
+        <span>You haven't given any clues yet.</span>
       )}
     </div>
   );

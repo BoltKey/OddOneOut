@@ -22,14 +22,9 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
   const [tutorialMessage, setTutorialMessage] =
     useState<React.ReactNode | null>(null);
   const [outOfClues, setOutOfClues] = useState(false);
-  
-  const {
-    loadUser,
-    clueEnergy,
-    nextClueRegenTime,
-    navigateToTab,
-    openModal,
-  } = useContext(UserStatsContext);
+
+  const { loadUser, clueEnergy, nextClueRegenTime, navigateToTab, openModal } =
+    useContext(UserStatsContext);
 
   // Track previous clueEnergy to detect when it increases
   const [prevClueEnergy, setPrevClueEnergy] = useState<number | null>(null);
@@ -56,7 +51,11 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
     } catch (err: any) {
       // Check if user is out of clues
       const errorMsg = err.message?.toLowerCase() || "";
-      if (errorMsg.includes("no clue") || errorMsg.includes("out of") || errorMsg.includes("energy")) {
+      if (
+        errorMsg.includes("no clue") ||
+        errorMsg.includes("out of") ||
+        errorMsg.includes("energy")
+      ) {
         setOutOfClues(true);
         setMessage(null);
       } else {
@@ -73,7 +72,12 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
 
   // When countdown expires and clueEnergy increases, auto-fetch new game
   useEffect(() => {
-    if (prevClueEnergy === 0 && clueEnergy !== null && clueEnergy > 0 && outOfClues) {
+    if (
+      prevClueEnergy === 0 &&
+      clueEnergy !== null &&
+      clueEnergy > 0 &&
+      outOfClues
+    ) {
       fetchAssignedGame();
     }
     setPrevClueEnergy(clueEnergy);
@@ -95,7 +99,7 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
       1: (
         <div>
           <div style={{ marginBottom: "10px" }}>
-            Let's learn how to create clues.
+            Let's learn how to create your own clues!
           </div>
           <button onClick={advanceTutorial}>Let's go!</button>
         </div>
@@ -104,8 +108,8 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
         <>
           <div style={{ marginBottom: "10px" }}>
             You are given <strong>5 words</strong>. Pick one as the{" "}
-            <strong style={{ color: "var(--misfitcolor)" }}>Misfit</strong>.
-            The other 4 words become{" "}
+            <strong style={{ color: "var(--misfitcolor)" }}>Misfit</strong>. The
+            other 4 words become{" "}
             <strong style={{ color: "var(--insetcolor)" }}>Matches</strong>.
             Create a clue that connects them, but <strong>not</strong> the
             Misfit. You have quite limited number of clues you can give, so take
@@ -155,7 +159,10 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
       {outOfClues && (
         <div className="out-of-clues-screen">
           <div className="out-of-clues-icon">⏳</div>
-          <h2 className="out-of-clues-title">You are done for now, wait for guessers and check back later in the clue history how you did!</h2>
+          <h2 className="out-of-clues-title">
+            You are done for now, wait for guessers and check back later in the
+            clue history how you did!
+          </h2>
           <div className="out-of-clues-stats">
             {nextClueRegenTime && (
               <div className="out-of-clues-countdown">
@@ -303,27 +310,33 @@ export default function ClueGivingTab({ userId }: { userId: string }) {
     if (tutorialStep === 3) {
       advanceTutorial();
     }
-    
+
     // Build a single combined message
     const totalClueGiversCount = result.totalClueGiversCount;
     const differentCluesCount = result.differentCluesCount;
-    
+
     let message = "Clue submitted! ";
-    
+
     if (totalClueGiversCount === 1) {
       // You're the only cluegiver for this word set
-      message += "You were the first to give a clue for this word set - you will have to wait for other players to guess.";
+      message +=
+        "You were the first to give a clue for this word set - you will have to wait for other players to guess.";
     } else {
       // Check if there are also different clues
       const otherDifferentClues = differentCluesCount - 1;
       if (otherDifferentClues > 0) {
-        message += ` ${otherDifferentClues} other clue${otherDifferentClues !== 1 ? "s" : ""} were given by ${totalClueGiversCount - 1} other players for this set.`;
-      }
-      else {
-        message += ` ${totalClueGiversCount - 1} other players gave the same clue.`;
+        message += ` ${otherDifferentClues} other clue${
+          otherDifferentClues !== 1 ? "s" : ""
+        } were given by ${
+          totalClueGiversCount - 1
+        } other players for this set.`;
+      } else {
+        message += ` ${
+          totalClueGiversCount - 1
+        } other players gave the same clue.`;
       }
     }
-    
+
     setSubmitStatus(message);
     // Store stats for button visibility
     setSubmitStats({
