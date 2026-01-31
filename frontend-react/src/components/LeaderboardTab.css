@@ -72,11 +72,12 @@
 
 .leaderboard-table .player-col {
   width: auto;
+  text-align: center;
 }
 
 .leaderboard-table .rating-col {
   width: 120px;
-  text-align: right;
+  text-align: center;
 }
 
 .leaderboard-row {

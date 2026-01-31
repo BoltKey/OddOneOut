@@ -151,11 +151,11 @@ public class CardSet
             throw new InvalidOperationException("No word cards available in database.");
 
         var countToTake = Math.Min(wordCount, totalCount);
-        
+
         // Detect provider and use appropriate SQL
         var isSqlite = context.Database.ProviderName?.Contains("Sqlite") == true;
         List<WordCard> randomWords;
-        
+
         if (isSqlite)
         {
             // SQLite uses unquoted table names
@@ -311,7 +311,7 @@ public class GameSettings
     public int MinGuessesToGiveClues { get; set; } = 2;
     public int GuessAssignGamesAmt { get; set; } = 100;
     public float RegisterTimeoutMinutes { get; set; } = 20f;
-    
+
     // Spam detection settings
     public int SpamDetectionWindowSeconds { get; set; } = 15; // Check guesses within last 15 seconds
     public int SpamDetectionMinGuesses { get; set; } = 5; // Minimum guesses to trigger check
@@ -521,7 +521,7 @@ public class User : IdentityUser
                 // -1 for each day since game creation to encourage consistent clue giving
                 var daysSinceCreation = (DateTime.UtcNow - g.CreatedAt).TotalDays;
                 // recent game have higher impact
-                score *= (1.0f - (iters * 0.01f));
+                score *= (1.0f - (iters * 0.05f));
 
                 score = score < 0 ? 0 : score;
                 result += score - (int)daysSinceCreation;
@@ -531,10 +531,10 @@ public class User : IdentityUser
         return result;
     }
     public DateTime lastDecay { get; set; } = DateTime.UtcNow;
-    
+
     // Spam detection: user is blocked from guessing until this time
     public DateTime? SpamCooldownUntil { get; set; }
-    
+
     public void decayRating()
       {
         DateTime lastGuessTime = Guesses.OrderByDescending(g => g.GuessedAt).FirstOrDefault()?.GuessedAt ?? DateTime.UtcNow;
