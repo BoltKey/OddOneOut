@@ -521,10 +521,10 @@ public class User : IdentityUser
                 // -1 for each day since game creation to encourage consistent clue giving
                 var daysSinceCreation = (DateTime.UtcNow - g.CreatedAt).TotalDays;
                 // recent game have higher impact
-                score *= (1.0f - (iters * 0.05f));
+                score *= (1.0f - (iters * 0.05f)) - (int)daysSinceCreation;
 
                 score = score < 0 ? 0 : score;
-                result += score - (int)daysSinceCreation;
+                result += score;
                 iters++;
             }
         }
