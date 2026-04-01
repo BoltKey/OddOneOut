@@ -284,12 +284,12 @@ return Ok(new
                 .Where(u => u.lastDecay < DateTime.UtcNow.AddDays(-1))
                 .Take(50) // Limit to avoid loading too many users
                 .ToListAsync();
-            
+
             // Shuffle in-memory and take 3 random users
             var randomUsers = inactiveUsers
                 .OrderBy(_ => Guid.NewGuid())
                 .Take(3);
-            
+
             foreach (var u in randomUsers)
             {
                 u.decayRating();
@@ -322,8 +322,8 @@ return Ok(new
         // Recalculate ratings for dirty users who might be in top positions
         // We check top 20 by cached rating + any dirty users to ensure accurate leaderboard
         var potentialTopUserIds = await _context.Users
-            .Where(u => !u.IsGuest && (u.ClueRatingDirty || _context.Users
-                .Where(top => !top.IsGuest)
+            .Where(u => !u.IsGuest && u.UserName != "Adam Španěl" && (u.ClueRatingDirty || _context.Users
+                .Where(top => !top.IsGuest && top.UserName != "Adam Španěl")
                 .OrderByDescending(top => top.CachedClueRating)
                 .Take(20)
                 .Select(top => top.Id)
@@ -342,7 +342,7 @@ return Ok(new
 
         // Now fetch accurate leaderboard
         var topUsers = await _context.Users
-            .Where(u => !u.IsGuest)
+            .Where(u => !u.IsGuest && u.UserName != "Adam Španěl")
             .OrderByDescending(u => u.CachedClueRating)
             .Select(u => new
             {
