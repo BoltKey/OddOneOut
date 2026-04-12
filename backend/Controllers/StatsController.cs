@@ -350,7 +350,7 @@ return Ok(new
                 UserName = u.DisplayName,
                 ClueRating = u.CachedClueRating,
                 Rank = _context.Users
-                    .Where(other => !other.IsGuest && other.CachedClueRating > u.CachedClueRating)
+                    .Where(other => !other.IsGuest && u.UserName != "Adampanl" && other.CachedClueRating > u.CachedClueRating)
                     .Count() + 1
             })
             .Take(10)
