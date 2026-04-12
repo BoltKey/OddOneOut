@@ -7,6 +7,11 @@ import {
   isDevvitEnvironment,
   type DevvitContext,
 } from "./services/devvit";
+import {
+  getItchioContext,
+  isItchioEnvironment,
+  type ItchioContext,
+} from "./services/itchio";
 import type { User } from "./types";
 import "./App.css";
 import ClueGivingTab from "./components/ClueGivingTab";
@@ -81,18 +86,18 @@ function App() {
   const [user, setUser] = useState<User | null>(null);
   const [guessRating, setGuessRating] = useState<number | null>(null);
   const [guessRatingChange, setGuessRatingChange] = useState<number | null>(
-    null
+    null,
   );
   const [loading, setLoading] = useState(true);
   const [loggedOut, setLoggedOut] = useState(false);
   const [guessEnergy, setGuessEnergy] = useState<number | null>(null);
   const [clueEnergy, setClueEnergy] = useState<number | null>(null);
   const [nextGuessRegenTime, setNextGuessRegenTime] = useState<Date | null>(
-    null
+    null,
   );
   const [nextClueRegenTime, setNextClueRegenTime] = useState<Date | null>(null);
   const [lastCanGiveClues, setLastCanGiveClues] = useState<boolean | null>(
-    null
+    null,
   );
   const [displayingGiveClues, setDisplayingGiveClues] =
     useState<boolean>(false);
@@ -108,9 +113,12 @@ function App() {
   >(null);
   // Track if we're running inside Reddit/Devvit
   const [devvitContext, setDevvitContext] = useState<DevvitContext | null>(
-    null
+    null,
   );
-  const [devvitChecked, setDevvitChecked] = useState(false);
+  const [itchioContext, setItchioContext] = useState<ItchioContext | null>(
+    null,
+  );
+  const [platformChecked, setPlatformChecked] = useState(false);
 
   // Wrapper for setOpenModal that handles browser history for back navigation
   const setOpenModal = (modal: typeof openModal) => {
@@ -146,7 +154,7 @@ function App() {
   }, [darkMode]);
 
   const [selectedTab, setSelectedTab] = useState<"guessing" | "clueGiving">(
-    "guessing"
+    "guessing",
   );
 
   // Function to load user data (called on mount AND after login)
@@ -178,12 +186,12 @@ function App() {
       setNextClueRegenTime(
         userData.nextClueRegenTime === null
           ? null
-          : new Date(new Date(userData.nextClueRegenTime).getTime() + 2000)
+          : new Date(new Date(userData.nextClueRegenTime).getTime() + 2000),
       );
       setNextGuessRegenTime(
         userData.nextGuessRegenTime === null
           ? null
-          : new Date(new Date(userData.nextGuessRegenTime).getTime() + 2000)
+          : new Date(new Date(userData.nextGuessRegenTime).getTime() + 2000),
       );
       setLoggedOut(false);
     } catch (error) {
@@ -206,14 +214,15 @@ function App() {
     return true;
   };
 
-  // Check for Devvit context and auto-authenticate Reddit users
+  // Check for platform context and auto-authenticate Reddit/itch.io users
   useEffect(() => {
     const initializeAuth = async () => {
+      let authenticated = false;
+
       try {
         // First, check if we're in a Devvit/Reddit environment
         const context = await getDevvitContext();
         setDevvitContext(context);
-        setDevvitChecked(true);
 
         if (context?.userId) {
           // We're in Reddit - try to auto-authenticate
@@ -221,6 +230,7 @@ function App() {
           try {
             await api.redditLogin(context.userId);
             console.log("Reddit auto-login successful");
+            authenticated = true;
           } catch (error) {
             console.error("Reddit auto-login failed:", error);
             // Continue to loadUser - user might already be authenticated
@@ -228,8 +238,29 @@ function App() {
         }
       } catch (error) {
         console.log("Not in Devvit environment");
-        setDevvitChecked(true);
       }
+
+      if (!authenticated) {
+        try {
+          const itchio = await getItchioContext();
+          setItchioContext(itchio);
+
+          if (itchio?.userId) {
+            console.log("Detected itch.io environment, auto-authenticating...");
+            try {
+              await api.itchioLogin(itchio.userId, itchio.username);
+              console.log("Itch.io auto-login successful");
+              authenticated = true;
+            } catch (error) {
+              console.error("Itch.io auto-login failed:", error);
+            }
+          }
+        } catch (error) {
+          console.log("Not in itch.io environment");
+        }
+      }
+
+      setPlatformChecked(true);
 
       // Load user data (whether Reddit login succeeded or we need regular login)
       await loadUser();
@@ -238,7 +269,7 @@ function App() {
     initializeAuth();
   }, []);
 
-  if (loading || !devvitChecked) return <div>Loading...</div>;
+  if (loading || !platformChecked) return <div>Loading...</div>;
 
   // If not logged in, show Login Page
   if (!user || loggedOut) {
@@ -250,6 +281,8 @@ function App() {
         }}
         isRedditContext={isDevvitEnvironment()}
         devvitContext={devvitContext}
+        isItchioContext={isItchioEnvironment()}
+        itchioContext={itchioContext}
       />
     );
   }
@@ -347,8 +380,8 @@ function App() {
                         (guessEnergy ?? 0) === 0
                           ? "no-energy"
                           : (guessEnergy ?? 0) >= (user?.maxGuessEnergy ?? 0)
-                          ? "full-energy"
-                          : "partial-energy"
+                            ? "full-energy"
+                            : "partial-energy"
                       }`}
                     >
                       {guessEnergy ?? 0}
@@ -379,8 +412,8 @@ function App() {
                         (clueEnergy ?? 0) === 0
                           ? "no-energy"
                           : (clueEnergy ?? 0) >= (user?.maxClueEnergy ?? 0)
-                          ? "full-energy"
-                          : "partial-energy"
+                            ? "full-energy"
+                            : "partial-energy"
                       }`}
                     >
                       {clueEnergy ?? 0}
@@ -551,7 +584,7 @@ const RegenTimer = ({
 
 export const useCountdown = (
   targetDate?: Date | null,
-  onExpire?: () => void
+  onExpire?: () => void,
 ) => {
   const [timeLeft, setTimeLeft] = useState<string>("0s");
 

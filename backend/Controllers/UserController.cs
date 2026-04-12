@@ -11,6 +11,8 @@ using System.Security.Claims;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.Extensions.Configuration;
+using System.Net.Http.Headers;
+using System.Text.Json;
 
 [ApiController]
 [Route("api/[controller]")] // Routes will be /api/user/login, /api/user/me, etc.
@@ -388,7 +390,59 @@ public class UserController : ControllerBase
             return BadRequest("Itch.io user ID is required.");
         }
 
-        var itchioUserIdStr = request.ItchioUserId.ToString();
+        return await AuthenticateItchioIdentityAsync(request.ItchioUserId.ToString(), request.ItchioUsername);
+    }
+
+    /// <summary>
+    /// Authenticate an itch.io user via OAuth access token.
+    /// The token is verified against itch.io profile API and then linked/signed-in locally.
+    /// </summary>
+    [HttpPost("itchio-oauth-login")]
+    public async Task<IActionResult> ItchioOAuthLogin([FromBody] ItchioOAuthLoginRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.AccessToken))
+        {
+            return BadRequest("Itch.io access token is required.");
+        }
+
+        using var httpClient = new HttpClient();
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", request.AccessToken);
+
+        var profileResponse = await httpClient.GetAsync("https://api.itch.io/profile");
+        if (!profileResponse.IsSuccessStatusCode)
+        {
+            return Unauthorized("Invalid or expired itch.io access token.");
+        }
+
+        var profileJson = await profileResponse.Content.ReadAsStringAsync();
+        using var jsonDoc = JsonDocument.Parse(profileJson);
+
+        if (!jsonDoc.RootElement.TryGetProperty("user", out var userElement))
+        {
+            return Unauthorized("Unable to read itch.io user profile.");
+        }
+
+        if (!userElement.TryGetProperty("id", out var idElement) || !idElement.TryGetInt64(out var itchioUserId))
+        {
+            return Unauthorized("Itch.io profile does not include a valid user ID.");
+        }
+
+        string? username = null;
+        if (userElement.TryGetProperty("username", out var usernameElement))
+        {
+            username = usernameElement.GetString();
+        }
+
+        if (string.IsNullOrWhiteSpace(username) && userElement.TryGetProperty("display_name", out var displayNameElement))
+        {
+            username = displayNameElement.GetString();
+        }
+
+        return await AuthenticateItchioIdentityAsync(itchioUserId.ToString(), username);
+    }
+
+    private async Task<IActionResult> AuthenticateItchioIdentityAsync(string itchioUserIdStr, string? itchioUsername)
+    {
 
         // Check if user is already authenticated and trying to link accounts
         if (User.Identity.IsAuthenticated)
@@ -402,7 +456,7 @@ public class UserController : ControllerBase
                     if (currentUser.ItchioUserId == itchioUserIdStr)
                     {
                         // Already linked to this itch.io account - just return success
-                        return Ok(new { userId = currentUser.Id, linked = true });
+                        return Ok(new { userId = currentUser.Id, linked = true, token = GenerateJwtToken(currentUser) });
                     }
                     else
                     {
@@ -417,15 +471,15 @@ public class UserController : ControllerBase
                 {
                     currentUser.IsGuest = false;
                     // Set display name from itch.io username if provided
-                    if (!string.IsNullOrEmpty(request.ItchioUsername))
+                    if (!string.IsNullOrEmpty(itchioUsername))
                     {
-                        currentUser.DisplayName = request.ItchioUsername;
-                        currentUser.UserName = await GetUniqueUsernameAsync(request.ItchioUsername, null);
+                        currentUser.DisplayName = itchioUsername;
+                        currentUser.UserName = await GetUniqueUsernameAsync(itchioUsername, null);
                     }
                 }
                 await _userManager.UpdateAsync(currentUser);
                 await _signInManager.RefreshSignInAsync(currentUser);
-                return Ok(new { userId = currentUser.Id, linked = true });
+                return Ok(new { userId = currentUser.Id, linked = true, token = GenerateJwtToken(currentUser) });
             }
         }
 
@@ -437,19 +491,19 @@ public class UserController : ControllerBase
         {
             // Found existing itch.io user - sign them in
             await _signInManager.SignInAsync(existingUser, isPersistent: true);
-            return Ok(new { userId = existingUser.Id, isNew = false });
+            return Ok(new { userId = existingUser.Id, isNew = false, token = GenerateJwtToken(existingUser) });
         }
 
         // Create a new user for this itch.io account
-        var username = !string.IsNullOrEmpty(request.ItchioUsername)
-            ? await GetUniqueUsernameAsync(request.ItchioUsername, null)
+        var username = !string.IsNullOrEmpty(itchioUsername)
+            ? await GetUniqueUsernameAsync(itchioUsername, null)
             : await GetUniqueUsernameAsync($"Itchio_{itchioUserIdStr}", null);
 
         var newUser = new User
         {
             UserName = username,
             ItchioUserId = itchioUserIdStr,
-            DisplayName = request.ItchioUsername ?? $"Itchio_{itchioUserIdStr}",
+            DisplayName = itchioUsername ?? $"Itchio_{itchioUserIdStr}",
             IsGuest = false,
             SourceIp = HttpContext.Connection.RemoteIpAddress?.ToString(),
             GuessEnergy = GameConfig.Current.MaxGuessEnergy,
@@ -462,7 +516,7 @@ public class UserController : ControllerBase
         if (createResult.Succeeded)
         {
             await _signInManager.SignInAsync(newUser, isPersistent: true);
-            return Ok(new { userId = newUser.Id, isNew = true });
+            return Ok(new { userId = newUser.Id, isNew = true, token = GenerateJwtToken(newUser) });
         }
 
         return BadRequest(createResult.Errors);
@@ -613,7 +667,7 @@ public class UserController : ControllerBase
     // ==========================================
     // HELPER METHOD (Put this inside UserController)
     // ==========================================
-    private async Task<string> GetUniqueUsernameAsync(string name, string email)
+    private async Task<string> GetUniqueUsernameAsync(string? name, string? email)
     {
         // 1. Determine the "Base" Name
         string baseName = "Player";
@@ -705,4 +759,9 @@ public class ItchioLoginRequest
 {
     public long ItchioUserId { get; set; }
     public string? ItchioUsername { get; set; }
+}
+
+public class ItchioOAuthLoginRequest
+{
+    public string AccessToken { get; set; }
 }

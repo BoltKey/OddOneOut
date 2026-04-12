@@ -14,13 +14,16 @@ const getAuthHeaders = (): HeadersInit => {
 };
 
 // Helper to make authenticated fetch requests
-const authFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
+const authFetch = async (
+  url: string,
+  options: RequestInit = {},
+): Promise<Response> => {
   const authHeaders = getAuthHeaders();
   const headers = {
     ...authHeaders,
     ...(options.headers || {}),
   };
-  
+
   return fetch(url, {
     ...options,
     headers,
@@ -58,7 +61,7 @@ export const api = {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ username, password }),
-      }
+      },
     );
 
     if (!res.ok) throw new Error("Invalid login attempt.");
@@ -83,7 +86,7 @@ export const api = {
       `${BASE_URL}/user/login-google?useCookies=true&useSessionCookies=true`,
       {
         method: "GET",
-      }
+      },
     );
     if (!res.ok) {
       const err = await res.json();
@@ -92,13 +95,15 @@ export const api = {
     return;
   },
   createGuest: async (guestUserId?: string) => {
-    const guestParam = guestUserId ? `&guestUserId=${encodeURIComponent(guestUserId)}` : "";
+    const guestParam = guestUserId
+      ? `&guestUserId=${encodeURIComponent(guestUserId)}`
+      : "";
     const res = await fetch(
       `${BASE_URL}/user/create-guest?useCookies=true&useSessionCookies=true${guestParam}`,
       {
         method: "POST",
         credentials: "include",
-      }
+      },
     );
     if (!res.ok) {
       throw new Error((await res.text()) || "Guest login failed.");
@@ -135,7 +140,7 @@ export const api = {
     });
     if (!res.ok) {
       throw new Error(
-        (await res.text()) || "Failed to fetch assigned clue giving."
+        (await res.text()) || "Failed to fetch assigned clue giving.",
       );
     }
     return res.json();
@@ -208,18 +213,47 @@ export const api = {
    * This creates or finds a user based on their Reddit user ID.
    */
   redditLogin: async (redditUserId: string, redditUsername?: string) => {
-    const res = await fetch(
-      `${BASE_URL}/user/reddit-login`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ redditUserId, redditUsername }),
-      }
-    );
+    const res = await fetch(`${BASE_URL}/user/reddit-login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ redditUserId, redditUsername }),
+    });
     if (!res.ok) {
       const err = await res.text();
       throw new Error(err || "Reddit login failed.");
+    }
+    return res.json();
+  },
+
+  /**
+   * Authenticate an itch.io user.
+   * This creates or finds a user based on their itch.io user ID.
+   */
+  itchioLogin: async (itchioUserId: number, itchioUsername?: string) => {
+    const res = await fetch(`${BASE_URL}/user/itchio-login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ itchioUserId, itchioUsername }),
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(err || "Itch.io login failed.");
+    }
+    return res.json();
+  },
+
+  itchioOAuthLogin: async (accessToken: string) => {
+    const res = await fetch(`${BASE_URL}/user/itchio-oauth-login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ accessToken }),
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(err || "Itch.io OAuth login failed.");
     }
     return res.json();
   },
