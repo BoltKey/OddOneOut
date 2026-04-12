@@ -322,8 +322,8 @@ return Ok(new
         // Recalculate ratings for dirty users who might be in top positions
         // We check top 20 by cached rating + any dirty users to ensure accurate leaderboard
         var potentialTopUserIds = await _context.Users
-            .Where(u => !u.IsGuest && u.UserName != "Adam Španěl" && (u.ClueRatingDirty || _context.Users
-                .Where(top => !top.IsGuest && top.UserName != "Adam Španěl")
+            .Where(u => !u.IsGuest && u.UserName != "Adampanl" && (u.ClueRatingDirty || _context.Users
+                .Where(top => !top.IsGuest && top.UserName != "Adampanl")
                 .OrderByDescending(top => top.CachedClueRating)
                 .Take(20)
                 .Select(top => top.Id)
@@ -342,7 +342,7 @@ return Ok(new
 
         // Now fetch accurate leaderboard
         var topUsers = await _context.Users
-            .Where(u => !u.IsGuest && u.UserName != "Adam Španěl")
+            .Where(u => !u.IsGuest && u.UserName != "Adampanl")
             .OrderByDescending(u => u.CachedClueRating)
             .Select(u => new
             {
