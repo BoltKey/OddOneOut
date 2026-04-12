@@ -6,7 +6,9 @@ button,
 .button {
   background-color: #ffffffcc;
   color: #333333 !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.12),
+    0 1px 2px rgba(0, 0, 0, 0.24);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -18,7 +20,9 @@ button,
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: box-shadow 0.2s ease, background-color 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
   padding: 10px;
   width: fit-content;
 }
@@ -43,7 +47,9 @@ button:disabled {
 }
 
 :is(button, .button):hover {
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+  box-shadow:
+    0 3px 6px rgba(0, 0, 0, 0.16),
+    0 3px 6px rgba(0, 0, 0, 0.23);
   background-color: #fcfcfc;
   border-color: transparent;
 }
@@ -57,7 +63,9 @@ button:disabled {
 }
 
 button.active {
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+  box-shadow:
+    0 3px 6px rgba(0, 0, 0, 0.16),
+    0 3px 6px rgba(0, 0, 0, 0.23);
   background-color: #e0e0e0;
 }
 .dark-mode button.active {
@@ -172,7 +180,9 @@ input {
   text-align: center;
   font-size: 150%;
   font-weight: bold;
-  transition: background-color 0.3s, color 0.3s;
+  transition:
+    background-color 0.3s,
+    color 0.3s;
 }
 
 .clue-card.selected {
@@ -282,15 +292,13 @@ input {
   padding: 24px;
   background:
     radial-gradient(circle at 20% 20%, #ffffff, transparent 35%),
-    radial-gradient(circle at 80% 20%, #ffe6d9, transparent 30%),
-    #f0f0f0;
+    radial-gradient(circle at 80% 20%, #ffe6d9, transparent 30%), #f0f0f0;
 }
 
 .boot-loader-screen.dark-mode {
   background:
     radial-gradient(circle at 20% 20%, #2f2f2f, transparent 35%),
-    radial-gradient(circle at 80% 20%, #5b3d31, transparent 30%),
-    #121212;
+    radial-gradient(circle at 80% 20%, #5b3d31, transparent 30%), #121212;
 }
 
 .boot-loader-card {
