@@ -269,7 +269,22 @@ function App() {
     initializeAuth();
   }, []);
 
-  if (loading || !platformChecked) return <div>Loading...</div>;
+  if (loading || !platformChecked) {
+    return (
+      <div className={`boot-loader-screen ${darkMode ? "dark-mode" : ""}`}>
+        <div className="boot-loader-card">
+          <div className="logo splashscreen boot-loader-logo" />
+          <p className="boot-loader-title">Booting server</p>
+          <div className="boot-loader-dots" aria-label="Loading">
+            <span />
+            <span />
+            <span />
+          </div>
+          <p className="boot-loader-subtitle">This can take up to 15 seconds</p>
+        </div>
+      </div>
+    );
+  }
 
   // If not logged in, show Login Page
   if (!user || loggedOut) {

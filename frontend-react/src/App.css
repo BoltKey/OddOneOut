@@ -274,6 +274,121 @@ input {
   margin: auto;
 }
 
+.boot-loader-screen {
+  min-height: 100vh;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 20% 20%, #ffffff, transparent 35%),
+    radial-gradient(circle at 80% 20%, #ffe6d9, transparent 30%),
+    #f0f0f0;
+}
+
+.boot-loader-screen.dark-mode {
+  background:
+    radial-gradient(circle at 20% 20%, #2f2f2f, transparent 35%),
+    radial-gradient(circle at 80% 20%, #5b3d31, transparent 30%),
+    #121212;
+}
+
+.boot-loader-card {
+  width: min(460px, 92vw);
+  background: #ffffffdd;
+  border: 1px solid #e5e5e5;
+  border-radius: 14px;
+  padding: 28px 24px;
+  text-align: center;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.14);
+  backdrop-filter: blur(3px);
+}
+
+.boot-loader-screen.dark-mode .boot-loader-card {
+  background: #232323dd;
+  border: 1px solid #3b3b3b;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
+}
+
+.boot-loader-logo {
+  animation: float-logo 2.5s ease-in-out infinite;
+}
+
+.boot-loader-title {
+  margin: 12px 0 8px;
+  color: #202020;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.boot-loader-subtitle {
+  margin: 14px 0 0;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.boot-loader-screen.dark-mode .boot-loader-title {
+  color: #f2f2f2;
+}
+
+.boot-loader-screen.dark-mode .boot-loader-subtitle {
+  color: #b7b7b7;
+}
+
+.boot-loader-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.boot-loader-dots span {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #e54400;
+  animation: boot-dot 0.9s ease-in-out infinite;
+}
+
+.boot-loader-dots span:nth-child(2) {
+  animation-delay: 0.12s;
+}
+
+.boot-loader-dots span:nth-child(3) {
+  animation-delay: 0.24s;
+}
+
+@keyframes boot-dot {
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.45;
+  }
+  40% {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
+}
+
+@keyframes float-logo {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boot-loader-logo,
+  .boot-loader-dots span {
+    animation: none;
+  }
+}
+
 .tab-buttons {
   display: flex;
   gap: 10px;
