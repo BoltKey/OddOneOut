@@ -278,7 +278,10 @@ export default function LoginPage({
           </ul>
         </div>
       )}
-
+      Misfit is an async-multiplayer game, meaning you are guessing based on
+      clues given by other real players. It is recommended to create an account,
+      but you can play as guest if you want.
+      <div className="divider"></div>
       <div className="login-tabs">
         <button
           className={`login-tab ${!isRegistering ? "active" : ""}`}
@@ -299,7 +302,6 @@ export default function LoginPage({
           Create Account
         </button>
       </div>
-
       <div className="login-content">
         <div className="google-login-section">
           <GoogleLoginButton onSuccess={onLoginSuccess} />
@@ -372,7 +374,6 @@ export default function LoginPage({
           </div>
         )}
       </div>
-
       <a
         href="https://www.reddit.com/r/misfitgame/"
         target="_blank"
